@@ -1,0 +1,42 @@
+{
+  "name": "academic-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "aw": "./bin/aw.js",
+    "acad": "./bin/aw.js",
+    "phd": "./bin/aw.js"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "aw": "tsx bin/aw.ts",
+    "acad": "tsx bin/aw.ts",
+    "phd": "tsx bin/aw.ts"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "commander": "^12.1.0",
+    "hono": "^4.6.14",
+    "lucide-react": "^0.473.0",
+    "picocolors": "^1.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "@types/node": "^22.10.5",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  }
+}

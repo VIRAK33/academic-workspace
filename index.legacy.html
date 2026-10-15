@@ -1,0 +1,2542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic & PhD Workspace</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #fafafa;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #e2e8f0;
+      height: 4px;
+      border-radius: 2px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #dc2626;
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    }
+    /* Subtle diagonal hatch pattern matching calendar reference */
+    .calendar-card-hatch {
+      background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.45),
+        rgba(255, 255, 255, 0.45) 5px,
+        transparent 5px,
+        transparent 10px
+      );
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#FAFAFA] text-slate-900 flex flex-col selection:bg-slate-900 selection:text-white">
+
+  <!-- Archived Semester Read-Only Reference Mode Banner -->
+  <div id="archivedModeBanner" class="hidden bg-slate-900 text-slate-200 px-4 py-2 text-xs border-b border-slate-800">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono text-[10px] uppercase tracking-wider">Archive Read-Only</span>
+        <span id="archivedBannerText" class="text-slate-300">Viewing historical semester in reference mode.</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnActivateViewedSemester" type="button" class="px-2.5 py-1 rounded bg-white text-slate-900 hover:bg-slate-100 text-xs font-medium transition">
+          Set as Active Term
+        </button>
+        <button id="btnReturnActiveSemester" type="button" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition">
+          Return to Active
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimalist Slate Header -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/90">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <!-- Top Bar: Brand / Date / Term Switcher / Actions -->
+      <div class="py-3 flex flex-wrap items-center justify-between gap-3">
+        
+        <!-- Left: Week Indicator + Date + Semester Dropdown -->
+        <div class="flex items-center gap-3">
+          <div id="headerWeekBadgeBox" class="h-8 px-2.5 rounded-md bg-slate-900 text-white flex items-center justify-center font-mono text-xs font-semibold tracking-tight tabular-nums">
+            W<span id="headerWeekBadgeNum">5</span>
+          </div>
+          
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 id="headerDateDisplay" class="text-sm sm:text-base font-semibold tracking-tight text-slate-900">
+                Thursday, Oct 15
+              </h1>
+              <span class="text-slate-300">/</span>
+              <span id="headerAcademicWeekBadge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-100 text-slate-700 border border-slate-200/80 tabular-nums">
+                Week 5 / 19
+              </span>
+            </div>
+
+            <!-- Term Selector & Meta -->
+            <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+              <div class="relative inline-flex items-center">
+                <select id="semesterSelectorDropdown" aria-label="Select Semester" class="appearance-none bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium rounded pl-1.5 pr-5 py-0.5 -ml-1.5 cursor-pointer transition focus:outline-none">
+                  <!-- Populated dynamically -->
+                </select>
+                <svg class="w-3 h-3 text-slate-400 pointer-events-none absolute right-1 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+              <span class="text-slate-300 text-xs">·</span>
+              <button id="btnOpenSemesterModal" type="button" class="text-[11px] font-medium text-slate-500 hover:text-slate-900 underline decoration-slate-300 underline-offset-2 transition">
+                Manage Terms
+              </button>
+              <span id="headerSemesterSub" class="text-[11px] font-mono text-slate-400 hidden md:inline">
+                Start: 2026-09-14
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Compact Utility Controls -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button id="btnJumpToday" type="button" class="px-2.5 py-1.5 rounded-md text-xs font-medium bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition flex items-center gap-1.5" title="Jump to Oct 15, 2026 (Week 5)">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-900"></span>
+            <span id="btnJumpTodayLabel">Today</span>
+          </button>
+
+          <!-- Week Jumper -->
+          <div class="relative">
+            <select id="quickWeekSelect" aria-label="Jump to Academic Week" class="appearance-none bg-white hover:bg-slate-50 text-slate-700 text-xs font-mono font-medium rounded-md border border-slate-200 pl-2.5 pr-6 py-1.5 cursor-pointer transition focus:outline-none focus:border-slate-400 tabular-nums">
+              <!-- Populated by JS -->
+            </select>
+            <svg class="w-3 h-3 text-slate-400 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+
+          <button id="btnOpenTimeSlotsModal" type="button" class="px-2.5 py-1.5 rounded-md text-xs font-medium bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition flex items-center gap-1.5" title="Configure university session slots">
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="hidden sm:inline">Slots</span>
+          </button>
+
+          <button id="btnToggleSearch" type="button" class="p-1.5 rounded-md bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 transition" title="Filter courses, tasks & milestones">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+          </button>
+
+          <button id="btnOpenDataModal" type="button" class="px-2.5 py-1.5 rounded-md text-xs font-mono font-medium bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/80 transition flex items-center gap-1" title="Inspect JSON State">
+            <span>JSON</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Collapsible Search Bar -->
+      <div id="searchBarContainer" class="hidden py-2 border-t border-slate-100">
+        <div class="relative">
+          <input id="globalSearchInput" type="text" placeholder="Filter by course code (CS801, CS820), room, instructor, task, or paper..." class="w-full pl-8 pr-16 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:bg-white focus:border-slate-400 transition" />
+          <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+          <button id="btnClearSearch" type="button" class="text-[11px] text-slate-400 hover:text-slate-700 absolute right-2.5 top-1/2 -translate-y-1/2 font-medium">ESC / Clear</button>
+        </div>
+      </div>
+
+      <!-- Minimal Week Strip + Navigation Bar -->
+      <div class="py-2 border-t border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center gap-1 overflow-x-auto no-scrollbar" aria-label="Workspace Views">
+          <button type="button" data-tab="timeline" class="nav-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 text-white transition whitespace-nowrap">
+            <span>Schedule</span>
+            <span id="badgeTimelineCount" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-white/20 text-white tabular-nums">2</span>
+          </button>
+          <button type="button" data-tab="courses" class="nav-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition whitespace-nowrap">
+            <span>Timetable & Matrix</span>
+          </button>
+          <button type="button" data-tab="todo" class="nav-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition whitespace-nowrap">
+            <span>Tasks</span>
+            <span id="badgeTodoCount" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-200/80 text-slate-700 tabular-nums">5</span>
+          </button>
+          <button type="button" data-tab="kanban" class="nav-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition whitespace-nowrap">
+            <span>PhD Pipeline</span>
+            <span id="badgeKanbanCount" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-200/80 text-slate-700 tabular-nums">6</span>
+          </button>
+        </nav>
+
+        <!-- Compact 7-Day Week Strip -->
+        <div class="flex items-center gap-1 self-end md:self-auto w-full md:w-auto justify-between md:justify-end">
+          <button id="btnPrevWeek" type="button" class="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition" title="Previous Week">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <div id="weekDaysStrip" class="grid grid-cols-7 gap-1 flex-1 md:flex-initial">
+            <!-- Populated dynamically -->
+          </div>
+          <button id="btnNextWeek" type="button" class="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition" title="Next Week">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 pb-20">
+
+    <!-- ==========================================
+         VIEW 1: PROPORTIONAL DAILY SCHEDULE & TASKS
+         ========================================== -->
+    <section id="view-timeline" class="space-y-4">
+      
+      <!-- Slim Control Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-200/80 text-xs">
+        <div class="flex items-center gap-2 text-slate-500">
+          <span id="timelineSummaryLine" class="font-medium text-slate-700">Thursday · Week 5</span>
+          <span class="text-slate-300">·</span>
+          <span id="formulaComputedText" class="font-mono text-[11px] text-slate-400">2026-10-15</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <label class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-600 hover:text-slate-900">
+            <input id="toggleShowInactiveCourses" type="checkbox" class="rounded border-slate-300 text-slate-900 focus:ring-0 w-3.5 h-3.5" checked />
+            <span>Show off-week classes</span>
+          </label>
+
+          <div class="flex items-center gap-2 bg-white px-2.5 py-1 rounded border border-slate-200/90">
+            <span class="w-2 h-2 rounded-full bg-[#dc2626]"></span>
+            <label for="simTimeSlider" class="text-[11px] font-medium text-slate-600 tabular-nums">
+              Current Time: <span id="simTimeLabel" class="text-[#dc2626] font-semibold">3:20 PM</span>
+            </label>
+            <input id="simTimeSlider" type="range" min="480" max="1290" value="920" class="w-24 cursor-pointer" title="Drag to move the red current-time indicator across the schedule" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 12-Column Split Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Left 7 Cols: True Proportional Calendar Time-Grid Canvas -->
+        <div class="lg:col-span-7 bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-200/80 flex items-center justify-between bg-slate-50/50">
+            <div class="flex items-center gap-2">
+              <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Class Schedule</h2>
+              <span id="timelineDayNamePill" class="text-[11px] font-mono text-slate-500">Thursday · W5</span>
+              <span class="hidden sm:inline-block text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/70">Proportional Duration Height</span>
+            </div>
+            <button id="btnAddCourseFromTimeline" type="button" class="text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 px-2.5 py-1 rounded transition">
+              + Add Course
+            </button>
+          </div>
+
+          <!-- Proportional Time-Grid Container (Rendered by JS) -->
+          <div id="dailyTimelineContainer" class="relative bg-white select-none overflow-x-hidden">
+            <!-- Populated dynamically with hourly grid lines, proportional course blocks, and red current-time indicator -->
+          </div>
+        </div>
+
+        <!-- Right 5 Cols: Due Tasks + Quick Date Presets -->
+        <div class="lg:col-span-5 space-y-4">
+          
+          <!-- Tasks Card -->
+          <div class="bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-200/80 flex items-center justify-between bg-slate-50/50">
+              <div class="flex items-center gap-2">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Due</h2>
+                <span id="tasksDueHeaderLabel" class="text-xs font-mono text-slate-500">Today (Oct 15)</span>
+              </div>
+              <button id="btnAddTaskInline" type="button" class="px-2.5 py-1 rounded text-xs font-medium bg-slate-900 text-white hover:bg-slate-800 transition">
+                + New Task
+              </button>
+            </div>
+
+            <div id="todayTasksList" class="p-4 space-y-2">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Clean Date Presets Bar -->
+          <div class="bg-white rounded-lg border border-slate-200/90 p-3.5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Quick Date Jump</span>
+              <span class="text-[11px] font-mono text-slate-400" id="miniCardWeekBadge">W5</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button type="button" data-jump-date="2026-10-15" data-jump-sem="sem_2026_fall" class="quick-scenario-btn text-left p-2 rounded border border-slate-200/80 hover:border-slate-400 hover:bg-slate-50 transition">
+                <div class="text-xs font-medium text-slate-900 font-mono">Thu, Oct 15 · W5</div>
+                <div class="text-[11px] text-slate-500 truncate mt-0.5">95m Morning + 215m Merged</div>
+              </button>
+              <button type="button" data-jump-date="2026-10-19" data-jump-sem="sem_2026_fall" class="quick-scenario-btn text-left p-2 rounded border border-slate-200/80 hover:border-slate-400 hover:bg-slate-50 transition">
+                <div class="text-xs font-medium text-slate-900 font-mono">Mon, Oct 19 · W6</div>
+                <div class="text-[11px] text-slate-500 truncate mt-0.5">CS801 (3h 35m Block)</div>
+              </button>
+              <button type="button" data-jump-date="2026-10-21" data-jump-sem="sem_2026_fall" class="quick-scenario-btn text-left p-2 rounded border border-slate-200/80 hover:border-slate-400 hover:bg-slate-50 transition">
+                <div class="text-xs font-medium text-slate-900 font-mono">Wed, Oct 21 · W6</div>
+                <div class="text-[11px] text-slate-500 truncate mt-0.5">CS801 + Evening Seminar</div>
+              </button>
+              <button type="button" data-jump-date="2026-04-02" data-jump-sem="sem_2026_spring" class="quick-scenario-btn text-left p-2 rounded border border-slate-200/80 hover:border-slate-400 hover:bg-slate-50 transition">
+                <div class="text-xs font-medium text-slate-700 font-mono">Spring 2026</div>
+                <div class="text-[11px] text-slate-400 truncate mt-0.5">Archived Term View</div>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 2: COURSE MATRIX & WEEKLY TIMETABLE
+         ========================================== -->
+    <section id="view-courses" class="hidden space-y-6">
+      
+      <!-- Weekly Session Timetable Grid -->
+      <div class="bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Weekly Timetable</h2>
+            <span class="text-xs font-mono text-slate-500">Week <span id="timetableGridWeekNum">5</span></span>
+            <span id="matrixSemesterBadge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 text-slate-600 border border-slate-200">2026-2027 Fall</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btnOpenTimeSlotsFromMatrix" type="button" class="px-2.5 py-1 rounded bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium transition">
+              Edit Session Times
+            </button>
+            <button id="btnOpenAddCourseModal" type="button" class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition">
+              + Add Course
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[680px]">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50/40 text-[11px] font-mono uppercase text-slate-500">
+                <th class="py-2.5 px-3 w-32 border-r border-slate-200 font-medium">Session</th>
+                <th class="py-2.5 px-3 border-r border-slate-200 font-medium w-1/5">Mon</th>
+                <th class="py-2.5 px-3 border-r border-slate-200 font-medium w-1/5">Tue</th>
+                <th class="py-2.5 px-3 border-r border-slate-200 font-medium w-1/5">Wed</th>
+                <th class="py-2.5 px-3 border-r border-slate-200 font-medium w-1/5">Thu</th>
+                <th class="py-2.5 px-3 font-medium w-1/5">Fri</th>
+              </tr>
+            </thead>
+            <tbody id="weeklyTimetableGridBody" class="divide-y divide-slate-200 text-xs">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Course Active-Week Matrix (Weeks 1-19) -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Course Directory & Active Week Matrix (1–19)
+          </h3>
+          <span class="text-[11px] text-slate-400">Click any week number to toggle active status</span>
+        </div>
+        <div id="coursesMatrixContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 3: TASKS & TO-DO MANAGER
+         ========================================== -->
+    <section id="view-todo" class="hidden">
+      <div class="bg-white rounded-lg border border-slate-200/90 overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-200/80 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-1.5" id="todoCategoryFilters">
+            <button type="button" data-filter-tag="ALL" class="todo-filter-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-900 text-white transition">All</button>
+            <button type="button" data-filter-tag="#Research" class="todo-filter-btn px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 transition">#Research</button>
+            <button type="button" data-filter-tag="#Class" class="todo-filter-btn px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 transition">#Class</button>
+            <button type="button" data-filter-tag="#Paper" class="todo-filter-btn px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 transition">#Paper</button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <select id="todoStatusFilter" class="text-xs bg-white border border-slate-200 rounded px-2.5 py-1 font-medium text-slate-700 focus:outline-none focus:border-slate-400">
+              <option value="all">All Status</option>
+              <option value="pending">Open</option>
+              <option value="completed">Completed</option>
+            </select>
+            <button id="btnOpenTaskModalTodo" type="button" class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition">
+              + New Task
+            </button>
+          </div>
+        </div>
+
+        <div id="fullTodoListContainer" class="divide-y divide-slate-200/70">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         VIEW 4: PHD RESEARCH KANBAN BOARD
+         ========================================== -->
+    <section id="view-kanban" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-900">PhD Research Pipeline</h2>
+          <p class="text-xs text-slate-500">Track manuscripts, experiments, and thesis chapters across stages</p>
+        </div>
+        <button id="btnOpenKanbanModal" type="button" class="px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition">
+          + Add Milestone
+        </button>
+      </div>
+
+      <div id="kanbanBoardGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Minimal Floating Action Button -->
+  <button id="fabAddTask" type="button" aria-label="Quick Add Task" class="fixed bottom-5 right-5 z-40 h-10 px-3.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-md flex items-center gap-1.5 text-xs font-medium transition">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    <span>New Task</span>
+  </button>
+
+  <!-- Hidden legacy top modal triggers preserved for JS hook compatibility -->
+  <div class="hidden">
+    <button id="btnOpenCourseModalTop" type="button"></button>
+    <button id="btnOpenTaskModalTop" type="button"></button>
+  </div>
+
+  <!-- ==========================================
+       MODAL 1: TASK CREATION
+       ========================================== -->
+  <div id="taskModalBackdrop" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-xl sm:rounded-lg shadow-xl border border-slate-200 overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">New Task</h3>
+        <button id="btnCloseTaskModal" type="button" class="p-1 rounded text-slate-400 hover:text-slate-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="taskCreationForm" class="p-4 space-y-4">
+        <div>
+          <label for="inputTaskTitle" class="block text-xs font-medium text-slate-700 mb-1">Description</label>
+          <input id="inputTaskTitle" type="text" required placeholder="e.g., Draft ablation study for Graph-RAG paper..." class="w-full px-3 py-2 text-xs sm:text-sm rounded-md border border-slate-200 focus:outline-none focus:border-slate-900" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1.5">Due Date</label>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button type="button" data-date-chip="today" class="date-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-900 text-white transition">
+              Today
+            </button>
+            <button type="button" data-date-chip="tomorrow" class="date-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+              Tomorrow
+            </button>
+            <button type="button" data-date-chip="pick_week" class="date-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+              By Week...
+            </button>
+            <input id="inputTaskDueDate" type="date" value="2026-10-15" class="ml-auto text-xs bg-white border border-slate-200 rounded px-2 py-1 font-mono text-slate-700 focus:outline-none focus:border-slate-900" />
+          </div>
+
+          <div id="taskWeekPickerRow" class="hidden mt-2 p-2 bg-slate-50 border border-slate-200 rounded flex items-center justify-between gap-2">
+            <span class="text-xs text-slate-600">Set to Friday of:</span>
+            <select id="inputTaskWeekSelect" class="text-xs font-mono font-medium bg-white border border-slate-200 rounded px-2 py-1 text-slate-800">
+              <!-- Populated 1..19 -->
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1.5">Tags</label>
+          <div class="flex flex-wrap items-center gap-1.5" id="taskTagChipGroup">
+            <button type="button" data-tag-chip="#Research" class="tag-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-900 text-white border border-slate-900 transition">
+              #Research
+            </button>
+            <button type="button" data-tag-chip="#Class" class="tag-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition">
+              #Class
+            </button>
+            <button type="button" data-tag-chip="#Paper" class="tag-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition">
+              #Paper
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btnCancelTaskModal" type="button" class="px-3 py-1.5 rounded text-xs font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="px-3 py-1.5 rounded text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 2: ADD COURSE MODAL
+       ========================================== -->
+  <div id="courseModalBackdrop" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-lg rounded-t-xl sm:rounded-lg shadow-xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Add University Course</h3>
+        <button id="btnCloseCourseModal" type="button" class="p-1 rounded text-slate-400 hover:text-slate-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="courseCreationForm" class="p-4 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div>
+            <label for="inputCourseCode" class="block text-xs font-medium text-slate-700 mb-1">Code</label>
+            <input id="inputCourseCode" type="text" value="CS501" required placeholder="CS801" class="w-full px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200 focus:outline-none focus:border-slate-900" />
+          </div>
+          <div class="sm:col-span-2">
+            <label for="inputCourseName" class="block text-xs font-medium text-slate-700 mb-1">Course Title</label>
+            <input id="inputCourseName" type="text" required placeholder="Deep Learning for Graphs" class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 focus:outline-none focus:border-slate-900" />
+          </div>
+          <div>
+            <label for="inputCourseColor" class="block text-xs font-medium text-slate-700 mb-1">Accent</label>
+            <input id="inputCourseColor" type="color" value="#2563eb" class="w-full h-8 p-0.5 rounded border border-slate-200 cursor-pointer bg-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="inputCourseLocation" class="block text-xs font-medium text-slate-700 mb-1">Location / Room</label>
+            <input id="inputCourseLocation" type="text" required placeholder="11B206" class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 focus:outline-none focus:border-slate-900" />
+          </div>
+          <div>
+            <label for="inputCourseTeacher" class="block text-xs font-medium text-slate-700 mb-1">Instructor</label>
+            <input id="inputCourseTeacher" type="text" placeholder="Prof. Zhao" class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 focus:outline-none focus:border-slate-900" />
+          </div>
+        </div>
+
+        <div class="p-3 rounded-md bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label class="text-xs font-semibold text-slate-700">Schedule & Sessions</label>
+            <select id="inputCourseDay" class="px-2 py-1 text-xs font-medium rounded border border-slate-200 bg-white">
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4" selected>Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+              <option value="7">Sunday</option>
+            </select>
+          </div>
+
+          <div id="courseModalSessionCheckboxes" class="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+            <!-- Populated from state.timeSlots -->
+          </div>
+
+          <div class="pt-2 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
+            <label class="inline-flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+              <input id="inputCourseEnableSecondDay" type="checkbox" class="rounded border-slate-300 text-slate-900 focus:ring-0" />
+              <span>Repeat on second weekday:</span>
+            </label>
+            <select id="inputCourseSecondDay" class="px-2 py-1 text-xs font-medium rounded border border-slate-200 bg-white">
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3" selected>Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+            </select>
+          </div>
+
+          <div class="px-2.5 py-1.5 rounded bg-white border border-slate-200 flex items-center justify-between text-xs">
+            <span class="text-slate-500">Merged Time Window:</span>
+            <span id="mergedBlockLivePreview" class="font-mono font-medium text-slate-900">Sessions 5-6 & 7-8 (14:30 - 18:05)</span>
+          </div>
+
+          <div class="hidden">
+            <input id="inputCourseSessions" type="text" value="5-6, 7-8" />
+            <input id="inputCourseStart" type="time" value="14:30" />
+            <input id="inputCourseEnd" type="time" value="18:05" />
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="inputCourseWeeks" class="block text-xs font-medium text-slate-700">Active Weeks</label>
+            <div class="flex gap-2">
+              <button type="button" data-week-preset="1-16" class="week-preset-btn text-[11px] font-mono text-slate-500 hover:text-slate-900 underline">1-16</button>
+              <button type="button" data-week-preset="6-17" class="week-preset-btn text-[11px] font-mono text-slate-500 hover:text-slate-900 underline">6-17</button>
+              <button type="button" data-week-preset="1-4, 9-14" class="week-preset-btn text-[11px] font-mono text-slate-500 hover:text-slate-900 underline">1-4, 9-14</button>
+            </div>
+          </div>
+          <input id="inputCourseWeeks" type="text" value="6-17" required placeholder="e.g., 6-17 or 1-4, 9-14" class="w-full px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200 focus:outline-none focus:border-slate-900" />
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btnCancelCourseModal" type="button" class="px-3 py-1.5 rounded text-xs font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="px-3 py-1.5 rounded text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white">Save Course</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 3: SEMESTER ARCHIVER & MANAGER
+       ========================================== -->
+  <div id="semesterModalBackdrop" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-xl sm:rounded-lg shadow-xl border border-slate-200 overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Academic Terms</h3>
+        <button id="btnCloseSemesterModal" type="button" class="p-1 rounded text-slate-400 hover:text-slate-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <div id="semesterManagerList" class="space-y-1.5">
+          <!-- Populated by JS -->
+        </div>
+
+        <form id="semesterCreationForm" class="p-3.5 rounded-md bg-slate-50 border border-slate-200 space-y-3">
+          <div class="text-xs font-semibold text-slate-700">New Term</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div class="sm:col-span-2">
+              <label for="inputSemName" class="block text-[11px] text-slate-500 mb-1">Name</label>
+              <input id="inputSemName" type="text" required placeholder="2026-2027 Spring" class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 bg-white" />
+            </div>
+            <div>
+              <label for="inputSemWeeks" class="block text-[11px] text-slate-500 mb-1">Weeks</label>
+              <input id="inputSemWeeks" type="number" min="1" max="30" value="19" required class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 bg-white font-mono" />
+            </div>
+          </div>
+
+          <div>
+            <label for="inputSemStartDate" class="block text-[11px] text-slate-500 mb-1">Week 1 Monday</label>
+            <input id="inputSemStartDate" type="date" value="2027-03-01" required class="w-full px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200 bg-white" />
+          </div>
+
+          <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+            <input id="inputSemSetActive" type="checkbox" checked class="rounded border-slate-300 text-slate-900 focus:ring-0" />
+            <span>Set as active term (archives current active term)</span>
+          </label>
+
+          <div class="flex justify-end">
+            <button type="submit" class="px-3 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition">
+              Create Term
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 4: UNIVERSITY TIME SLOTS CONFIGURATOR
+       ========================================== -->
+  <div id="timeSlotsModalBackdrop" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-xl sm:rounded-lg shadow-xl border border-slate-200 overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Session Time Slots</h3>
+        <button id="btnCloseTimeSlotsModal" type="button" class="p-1 rounded text-slate-400 hover:text-slate-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="timeSlotsForm" class="p-4 space-y-3">
+        <div id="timeSlotsEditorRows" class="space-y-2">
+          <!-- Populated by JS -->
+        </div>
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end">
+          <button type="submit" class="px-3 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition">
+            Save Slots
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 5: ADD KANBAN MILESTONE
+       ========================================== -->
+  <div id="kanbanModalBackdrop" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-xl sm:rounded-lg shadow-xl border border-slate-200 overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">New Research Milestone</h3>
+        <button id="btnCloseKanbanModal" type="button" class="p-1 rounded text-slate-400 hover:text-slate-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="kanbanCreationForm" class="p-4 space-y-3.5">
+        <div>
+          <label for="inputKanbanTitle" class="block text-xs font-medium text-slate-700 mb-1">Deliverable Title</label>
+          <input id="inputKanbanTitle" type="text" required placeholder="Run multi-hop QA benchmark on Graph-RAG" class="w-full px-2.5 py-1.5 text-xs sm:text-sm rounded border border-slate-200 focus:outline-none focus:border-slate-900" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="inputKanbanStage" class="block text-xs font-medium text-slate-700 mb-1">Stage</label>
+            <select id="inputKanbanStage" class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 bg-white">
+              <option value="lit_review">Literature Review</option>
+              <option value="experiments">Experiments</option>
+              <option value="drafting">Drafting</option>
+              <option value="under_review">Under Review</option>
+            </select>
+          </div>
+          <div>
+            <label for="inputKanbanWeek" class="block text-xs font-medium text-slate-700 mb-1">Target Week</label>
+            <input id="inputKanbanWeek" type="text" value="W6" required class="w-full px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200" />
+          </div>
+        </div>
+
+        <div>
+          <label for="inputKanbanProject" class="block text-xs font-medium text-slate-700 mb-1">Project Tag</label>
+          <input id="inputKanbanProject" type="text" value="Graph-RAG Paper" required class="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200" />
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btnCancelKanbanModal" type="button" class="px-3 py-1.5 rounded text-xs font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="px-3 py-1.5 rounded text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white">Add Milestone</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 6: JSON STATE INSPECTOR
+       ========================================== -->
+  <div id="dataModalBackdrop" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+      <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Workspace State JSON</h3>
+        <button id="btnCloseDataModal" type="button" class="p-1 rounded text-slate-400 hover:text-slate-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto custom-scrollbar flex-1">
+        <pre id="jsonStatePreview" class="p-3.5 rounded bg-slate-950 text-slate-200 font-mono text-[11px] overflow-x-auto leading-relaxed"></pre>
+      </div>
+
+      <div class="px-4 py-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+        <button id="btnResetDemoData" type="button" class="text-xs font-medium text-rose-600 hover:text-rose-700">Reset Default Data</button>
+        <div class="flex items-center gap-2">
+          <button id="btnCopyJson" type="button" class="px-3 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition">Copy JSON</button>
+          <button id="btnCloseDataModalBottom" type="button" class="px-3 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-medium transition">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subtle Toast Notification -->
+  <div id="toastBanner" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden px-3.5 py-2 rounded-md bg-slate-900 text-white text-xs font-medium shadow-md flex items-center gap-2">
+    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+    <span id="toastMessage">Saved</span>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'semester_aware_planner_v3_proportional';
+
+    function getDefaultState() {
+      return {
+        viewedSemesterId: 'sem_2026_fall',
+        selectedDate: '2026-10-15',
+        activeTab: 'timeline',
+        showInactiveCourses: true,
+        // Set default simulated time to 15:20 (3:20 PM) so it slices right through afternoon classes like the reference screenshot
+        simulatedMinutes: 15 * 60 + 20,
+        searchQuery: '',
+        todoFilterTag: 'ALL',
+        todoFilterStatus: 'all',
+
+        semesters: [
+          {
+            id: 'sem_2026_fall',
+            name: '2026-2027 Fall',
+            startDate: '2026-09-14',
+            totalWeeks: 19,
+            isActive: true,
+            isArchived: false
+          },
+          {
+            id: 'sem_2026_spring',
+            name: '2025-2026 Spring',
+            startDate: '2026-03-02',
+            totalWeeks: 19,
+            isActive: false,
+            isArchived: true
+          },
+          {
+            id: 'sem_2025_fall',
+            name: '2025-2026 Fall',
+            startDate: '2025-09-15',
+            totalWeeks: 19,
+            isActive: false,
+            isArchived: true
+          }
+        ],
+
+        timeSlots: [
+          { session: '1-2', startTime: '08:25', endTime: '10:00' },
+          { session: '3-4', startTime: '10:25', endTime: '12:00' },
+          { session: '5-6', startTime: '14:30', endTime: '16:05' },
+          { session: '7-8', startTime: '16:30', endTime: '18:05' },
+          { session: '9-10', startTime: '19:30', endTime: '21:10' }
+        ],
+
+        courses: [
+          {
+            id: 'c_chinese_1',
+            semesterId: 'sem_2026_fall',
+            code: 'CS801',
+            name: 'Foundations of Deep Learning',
+            teacher: 'Prof. Alan Turing',
+            location: '11B206',
+            color: '#2563EB',
+            activeWeeks: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+            schedules: [
+              { dayOfWeek: 1, sessions: ['5-6', '7-8'], startTime: '14:30', endTime: '18:05' },
+              { dayOfWeek: 3, sessions: ['5-6', '7-8'], startTime: '14:30', endTime: '18:05' }
+            ]
+          },
+          {
+            id: 'c_survey_china',
+            semesterId: 'sem_2026_fall',
+            code: 'CS820',
+            name: 'Research Methodologies & Scientific Communication',
+            teacher: 'Prof. Grace Hopper',
+            location: '11C307',
+            color: '#2563EB',
+            activeWeeks: [5, 6, 7, 8, 9, 10, 11, 12, 13],
+            schedules: [
+              { dayOfWeek: 4, sessions: ['5-6', '7-8'], startTime: '14:30', endTime: '18:05' }
+            ]
+          },
+          {
+            id: 'c_algo_design',
+            semesterId: 'sem_2026_fall',
+            code: 'CS402',
+            name: 'Advanced Algorithm Design & Analysis',
+            teacher: 'Prof. Chen',
+            location: 'Bldg 42, 422206',
+            color: '#D97706',
+            activeWeeks: [1, 2, 3, 4, 9, 10, 11, 12, 13, 14],
+            schedules: [
+              { dayOfWeek: 1, sessions: ['1-2', '3-4'], startTime: '08:25', endTime: '12:00' }
+            ]
+          },
+          {
+            id: 'c_stat_learning',
+            semesterId: 'sem_2026_fall',
+            code: 'MATH508',
+            name: 'Statistical Learning for Data Science',
+            teacher: 'Dr. Liu',
+            location: 'Bldg 42, 422402',
+            color: '#059669',
+            activeWeeks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            schedules: [
+              { dayOfWeek: 2, sessions: ['3-4'], startTime: '10:25', endTime: '12:00' },
+              { dayOfWeek: 4, sessions: ['1-2'], startTime: '08:25', endTime: '10:00' }
+            ]
+          },
+          {
+            id: 'c_phd_seminar',
+            semesterId: 'sem_2026_fall',
+            code: 'PHD801',
+            name: 'PhD Graph-RAG Lab Seminar',
+            teacher: 'Advisor Lab',
+            location: 'Bldg 42, 422206',
+            color: '#4F46E5',
+            activeWeeks: [1, 3, 5, 6, 7, 9, 11, 13, 15, 17],
+            schedules: [
+              { dayOfWeek: 3, sessions: ['9-10'], startTime: '19:30', endTime: '21:10' },
+              { dayOfWeek: 5, sessions: ['5-6'], startTime: '14:30', endTime: '16:05' }
+            ]
+          },
+          {
+            id: 'c_spring_ml',
+            semesterId: 'sem_2026_spring',
+            code: 'CS510',
+            name: 'Deep Representation Learning (Grade: A)',
+            teacher: 'Prof. Zhang',
+            location: 'Bldg 42, 422104',
+            color: '#2563EB',
+            activeWeeks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            schedules: [
+              { dayOfWeek: 1, sessions: ['3-4', '5-6'], startTime: '10:25', endTime: '16:05' },
+              { dayOfWeek: 4, sessions: ['5-6', '7-8'], startTime: '14:30', endTime: '18:05' }
+            ]
+          },
+          {
+            id: 'c_spring_matrix',
+            semesterId: 'sem_2026_spring',
+            code: 'MATH601',
+            name: 'Matrix Theory & Convex Optimization (Grade: A+)',
+            teacher: 'Prof. Wu',
+            location: '11C202',
+            color: '#0284C7',
+            activeWeeks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            schedules: [
+              { dayOfWeek: 2, sessions: ['1-2', '3-4'], startTime: '08:25', endTime: '12:00' }
+            ]
+          }
+        ],
+
+        tasks: [
+          {
+            id: 't0',
+            semesterId: 'sem_2026_fall',
+            title: 'Finish Literature Review section for Graph-RAG',
+            category: 'Research',
+            tags: ['#Research', '#Paper'],
+            dueDate: '2026-10-15',
+            status: 'completed'
+          },
+          {
+            id: 't1',
+            semesterId: 'sem_2026_fall',
+            title: 'Complete the PhD research proposal draft',
+            category: 'Research',
+            tags: ['#Research', '#Paper'],
+            dueDate: '2026-10-15',
+            status: 'in_progress'
+          },
+          {
+            id: 't2',
+            semesterId: 'sem_2026_fall',
+            title: 'Review lecture notes & proofs for CS820 Research Methodologies',
+            category: 'Coursework',
+            tags: ['#Class'],
+            dueDate: '2026-10-15',
+            status: 'in_progress'
+          },
+          {
+            id: 't3',
+            semesterId: 'sem_2026_fall',
+            title: 'Submit finalized research proposal PDF to supervisor',
+            category: 'Research',
+            tags: ['#Research'],
+            dueDate: '2026-10-16',
+            status: 'in_progress'
+          },
+          {
+            id: 't4',
+            semesterId: 'sem_2026_fall',
+            title: 'Complete problem set 3 for CS801 Deep Learning Foundations',
+            category: 'Coursework',
+            tags: ['#Class'],
+            dueDate: '2026-10-19',
+            status: 'in_progress'
+          },
+          {
+            id: 't5',
+            semesterId: 'sem_2026_fall',
+            title: 'Run latency ablation on 3-hop subgraph retrieval dataset',
+            category: 'Research',
+            tags: ['#Research', '#Paper'],
+            dueDate: '2026-10-22',
+            status: 'in_progress'
+          },
+          {
+            id: 't_arch_1',
+            semesterId: 'sem_2026_spring',
+            title: 'Final Project Report: Graph Contrastive Learning',
+            category: 'Research',
+            tags: ['#Research', '#Paper'],
+            dueDate: '2026-04-02',
+            status: 'completed'
+          }
+        ],
+
+        kanban: [
+          {
+            id: 'k1',
+            title: 'Taxonomy of Hybrid Vector + Graph Retrieval (2023–2026)',
+            stage: 'lit_review',
+            targetWeek: 'W5',
+            project: 'Graph-RAG Paper'
+          },
+          {
+            id: 'k2',
+            title: 'Survey Dynamic Programming Lower Bounds for Sparse Graphs',
+            stage: 'lit_review',
+            targetWeek: 'W7',
+            project: 'Thesis Proposal'
+          },
+          {
+            id: 'k3',
+            title: 'Multi-hop QA Evaluation on HotpotQA & MuSiQue',
+            stage: 'experiments',
+            targetWeek: 'W6',
+            project: 'Graph-RAG Paper'
+          },
+          {
+            id: 'k4',
+            title: 'Section 3: Hierarchical Community Summarization Method',
+            stage: 'drafting',
+            targetWeek: 'W5',
+            project: 'Graph-RAG Paper'
+          },
+          {
+            id: 'k5',
+            title: 'PhD Qualification Research Proposal Draft v2',
+            stage: 'drafting',
+            targetWeek: 'W5',
+            project: 'Thesis Proposal'
+          },
+          {
+            id: 'k6',
+            title: 'Workshop Paper: Low-Resource Citation Graph Alignment',
+            stage: 'under_review',
+            targetWeek: 'W9',
+            project: 'Workshop Track'
+          }
+        ]
+      };
+    }
+
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.semesters) && Array.isArray(parsed.timeSlots)) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+      return getDefaultState();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function getViewedSemester() {
+      return state.semesters.find(s => s.id === state.viewedSemesterId) || state.semesters[0];
+    }
+
+    function getActiveSemester() {
+      return state.semesters.find(s => s.isActive) || state.semesters[0];
+    }
+
+    function showToast(msg) {
+      const banner = document.getElementById('toastBanner');
+      const text = document.getElementById('toastMessage');
+      text.textContent = msg;
+      banner.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 2200);
+    }
+
+    function parseIsoDate(isoStr) {
+      const [y, m, d] = isoStr.split('-').map(Number);
+      return new Date(Date.UTC(y, m - 1, d));
+    }
+
+    function formatIsoDate(dateUtc) {
+      const y = dateUtc.getUTCFullYear();
+      const m = String(dateUtc.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(dateUtc.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function addDays(isoStr, deltaDays) {
+      const dt = parseIsoDate(isoStr);
+      dt.setUTCDate(dt.getUTCDate() + deltaDays);
+      return formatIsoDate(dt);
+    }
+
+    function calculateAcademicWeek(selectedIso, semesterStartIso) {
+      const sel = parseIsoDate(selectedIso);
+      const start = parseIsoDate(semesterStartIso);
+      const diffDays = Math.floor((sel.getTime() - start.getTime()) / 86400000);
+      return Math.floor(diffDays / 7) + 1;
+    }
+
+    function getIsoDayOfWeek(isoStr) {
+      const dt = parseIsoDate(isoStr);
+      const jsDay = dt.getUTCDay();
+      return jsDay === 0 ? 7 : jsDay;
+    }
+
+    const DAY_NAMES_FULL = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const DAY_NAMES_SHORT = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    function formatHumanDate(isoStr) {
+      const dt = parseIsoDate(isoStr);
+      const dayOfWeek = getIsoDayOfWeek(isoStr);
+      const month = MONTH_NAMES_SHORT[dt.getUTCMonth()];
+      const dayNum = dt.getUTCDate();
+      return `${DAY_NAMES_FULL[dayOfWeek]}, ${month} ${dayNum}`;
+    }
+
+    function timeToMinutes(hhmm) {
+      const [h, m] = (hhmm || '08:00').split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function minutesToTime(mins) {
+      const h = String(Math.floor(mins / 60)).padStart(2, '0');
+      const m = String(mins % 60).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
+    // Format minutes into 12-hour AM/PM string like "2:20 PM" or "1:30 PM" (matching reference image)
+    function format12HourTime(mins, includeMinutes = true) {
+      const h24 = Math.floor(mins / 60);
+      const m = mins % 60;
+      const period = h24 >= 12 ? 'PM' : 'AM';
+      const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+      if (!includeMinutes && m === 0) {
+        return `${h12} ${period}`;
+      }
+      return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+    }
+
+    function format24To12Range(startHHMM, endHHMM) {
+      return `${format12HourTime(timeToMinutes(startHHMM))} - ${format12HourTime(timeToMinutes(endHHMM))}`;
+    }
+
+    // Convert hex color to soft pastel tint & border for the calendar card
+    function hexToCalendarTheme(hex) {
+      const clean = (hex || '#2563eb').replace('#', '');
+      const num = parseInt(clean, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return {
+        bg: `rgba(${r}, ${g}, ${b}, 0.08)`,
+        border: `rgba(${r}, ${g}, ${b}, 0.28)`,
+        accent: `rgb(${r}, ${g}, ${b})`
+      };
+    }
+
+    function computeMergedSessionBounds(sessionLabels) {
+      const matchedSlots = state.timeSlots.filter(ts => sessionLabels.includes(ts.session));
+      if (matchedSlots.length === 0) {
+        return { startTime: '14:30', endTime: '16:05' };
+      }
+      const sorted = [...matchedSlots].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+      return {
+        startTime: sorted[0].startTime,
+        endTime: sorted[sorted.length - 1].endTime
+      };
+    }
+
+    function getTodayCourses(selectedIso, viewedSemester, courses, includeOffWeek = false) {
+      const currentWeek = calculateAcademicWeek(selectedIso, viewedSemester.startDate);
+      const dayOfWeek = getIsoDayOfWeek(selectedIso);
+
+      const results = [];
+      courses.forEach(course => {
+        if (course.semesterId !== viewedSemester.id) return;
+        const isWeekActive = course.activeWeeks.includes(currentWeek);
+        if (!isWeekActive && !includeOffWeek) return;
+
+        const matchingSchedules = (course.schedules || []).filter(s => s.dayOfWeek === dayOfWeek);
+        matchingSchedules.forEach(todaySchedule => {
+          const bounds = computeMergedSessionBounds(todaySchedule.sessions || []);
+          const startTime = bounds.startTime || todaySchedule.startTime;
+          const endTime = bounds.endTime || todaySchedule.endTime;
+          results.push({
+            ...course,
+            isWeekActive,
+            todaySchedule: {
+              ...todaySchedule,
+              startTime,
+              endTime
+            },
+            timeDisplay: `${startTime}–${endTime}`,
+            timeDisplay12h: format24To12Range(startTime, endTime),
+            sessionsDisplay: `Sessions ${(todaySchedule.sessions || []).join(' & ')}`
+          });
+        });
+      });
+
+      return results.sort((a, b) => timeToMinutes(a.todaySchedule.startTime) - timeToMinutes(b.todaySchedule.startTime));
+    }
+
+    function formatWeekRanges(weeksArr) {
+      if (!weeksArr || weeksArr.length === 0) return 'None';
+      const sorted = [...weeksArr].sort((a, b) => a - b);
+      const ranges = [];
+      let start = sorted[0];
+      let prev = sorted[0];
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === prev + 1) {
+          prev = sorted[i];
+        } else {
+          ranges.push(start === prev ? `${start}` : `${start}–${prev}`);
+          start = sorted[i];
+          prev = sorted[i];
+        }
+      }
+      ranges.push(start === prev ? `${start}` : `${start}–${prev}`);
+      return 'W' + ranges.join(', ');
+    }
+
+    function parseWeekInputString(str, maxWeeks = 19) {
+      const set = new Set();
+      const parts = str.split(',');
+      for (const raw of parts) {
+        const p = raw.trim();
+        if (!p) continue;
+        if (p.includes('-') || p.includes('–')) {
+          const [a, b] = p.split(/[-–]/).map(x => parseInt(x.trim(), 10));
+          if (!isNaN(a) && !isNaN(b)) {
+            const lo = Math.max(1, Math.min(a, b));
+            const hi = Math.min(maxWeeks, Math.max(a, b));
+            for (let w = lo; w <= hi; w++) set.add(w);
+          }
+        } else {
+          const n = parseInt(p, 10);
+          if (!isNaN(n) && n >= 1 && n <= maxWeeks) set.add(n);
+        }
+      }
+      return Array.from(set).sort((a, b) => a - b);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // =========================================================================
+    // RENDER FUNCTIONS
+    // =========================================================================
+    function renderAll() {
+      saveState();
+      renderHeaderAndSemesterBar();
+      renderTabsState();
+      renderTimelineView();
+      renderCoursesMatrixView();
+      renderTodoView();
+      renderKanbanView();
+    }
+
+    function renderHeaderAndSemesterBar() {
+      const sem = getViewedSemester();
+      const currentWeek = calculateAcademicWeek(state.selectedDate, sem.startDate);
+      const humanDate = formatHumanDate(state.selectedDate);
+
+      const archivedBanner = document.getElementById('archivedModeBanner');
+      const badgeBox = document.getElementById('headerWeekBadgeBox');
+      if (sem.isArchived || !sem.isActive) {
+        archivedBanner.classList.remove('hidden');
+        document.getElementById('archivedBannerText').textContent =
+          `${sem.name} — Historical archive view.`;
+        badgeBox.className = 'h-8 px-2.5 rounded-md bg-slate-600 text-white flex items-center justify-center font-mono text-xs font-semibold tracking-tight tabular-nums';
+      } else {
+        archivedBanner.classList.add('hidden');
+        badgeBox.className = 'h-8 px-2.5 rounded-md bg-slate-900 text-white flex items-center justify-center font-mono text-xs font-semibold tracking-tight tabular-nums';
+      }
+
+      const semSelect = document.getElementById('semesterSelectorDropdown');
+      semSelect.innerHTML = '';
+      state.semesters.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name}${s.isActive ? '' : ' (Archive)'}`;
+        if (s.id === sem.id) opt.selected = true;
+        semSelect.appendChild(opt);
+      });
+
+      document.getElementById('headerDateDisplay').textContent = `${humanDate}, ${state.selectedDate.slice(0, 4)}`;
+      document.getElementById('headerWeekBadgeNum').textContent = currentWeek;
+      document.getElementById('headerSemesterSub').textContent = `Start: ${sem.startDate}`;
+
+      const badge = document.getElementById('headerAcademicWeekBadge');
+      if (currentWeek >= 1 && currentWeek <= sem.totalWeeks) {
+        badge.textContent = `Week ${currentWeek} / ${sem.totalWeeks}`;
+        badge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-100 text-slate-700 border border-slate-200/80 tabular-nums';
+      } else {
+        badge.textContent = `Off-Term (W${currentWeek})`;
+        badge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-amber-50 text-amber-800 border border-amber-200 tabular-nums';
+      }
+
+      const weekSelect = document.getElementById('quickWeekSelect');
+      weekSelect.innerHTML = '';
+      for (let w = 1; w <= sem.totalWeeks; w++) {
+        const opt = document.createElement('option');
+        opt.value = String(w);
+        opt.textContent = `Week ${w}`;
+        if (w === currentWeek) opt.selected = true;
+        weekSelect.appendChild(opt);
+      }
+
+      const selUtc = parseIsoDate(state.selectedDate);
+      const sunOffset = -selUtc.getUTCDay();
+      const sundayIso = addDays(state.selectedDate, sunOffset);
+
+      const stripLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+      const stripEl = document.getElementById('weekDaysStrip');
+      stripEl.innerHTML = '';
+
+      for (let i = 0; i < 7; i++) {
+        const dayIso = addDays(sundayIso, i);
+        const dt = parseIsoDate(dayIso);
+        const dayNum = dt.getUTCDate();
+        const isSelected = dayIso === state.selectedDate;
+        const activeMatches = getTodayCourses(dayIso, sem, state.courses, false);
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = isSelected
+          ? 'flex items-center gap-1 px-2 py-1 rounded bg-slate-900 text-white text-xs font-mono transition tabular-nums'
+          : 'flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 text-slate-600 text-xs font-mono transition tabular-nums';
+
+        btn.innerHTML = `
+          <span class="text-[10px] text-slate-400">${stripLabels[i]}</span>
+          <span class="font-semibold">${dayNum}</span>
+          ${activeMatches.length > 0 ? `<span class="w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-slate-900'}"></span>` : ''}
+        `;
+        btn.addEventListener('click', () => {
+          state.selectedDate = dayIso;
+          renderAll();
+        });
+        stripEl.appendChild(btn);
+      }
+    }
+
+    function renderTabsState() {
+      const sem = getViewedSemester();
+      const tabBtns = document.querySelectorAll('.nav-tab-btn');
+      tabBtns.forEach(btn => {
+        const tab = btn.getAttribute('data-tab');
+        if (tab === state.activeTab) {
+          btn.className = 'nav-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 text-white transition whitespace-nowrap';
+        } else {
+          btn.className = 'nav-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition whitespace-nowrap';
+        }
+      });
+
+      ['timeline', 'courses', 'todo', 'kanban'].forEach(t => {
+        const sec = document.getElementById(`view-${t}`);
+        if (t === state.activeTab) {
+          sec.classList.remove('hidden');
+        } else {
+          sec.classList.add('hidden');
+        }
+      });
+
+      const activeToday = getTodayCourses(state.selectedDate, sem, state.courses, false);
+      document.getElementById('badgeTimelineCount').textContent = activeToday.length;
+      document.getElementById('badgeTodoCount').textContent = state.tasks.filter(t => t.semesterId === sem.id && t.status !== 'completed').length;
+      document.getElementById('badgeKanbanCount').textContent = state.kanban.length;
+    }
+
+    // =========================================================================
+    // PROPORTIONAL CALENDAR TIME-GRID & RED CURRENT-TIME INDICATOR
+    // =========================================================================
+    const GRID_START_HOUR = 8;   // 8:00 AM (480 mins)
+    const GRID_END_HOUR = 21;    // 9:00 PM (1260 mins, padded to 21:30)
+    const PX_PER_MINUTE = 1.15;  // 69px per hour — true proportional scaling
+    const TOP_PAD_PX = 20;
+    const BOTTOM_PAD_PX = 28;
+    const LEFT_GUTTER_PX = 76;   // Width of the left time column
+
+    function renderTimelineView() {
+      const sem = getViewedSemester();
+      const currentWeek = calculateAcademicWeek(state.selectedDate, sem.startDate);
+      const targetDow = getIsoDayOfWeek(state.selectedDate);
+      const dayName = DAY_NAMES_FULL[targetDow];
+
+      document.getElementById('formulaComputedText').textContent = state.selectedDate;
+      document.getElementById('timelineSummaryLine').textContent = `${sem.name} · ${dayName} · Week ${currentWeek}`;
+      document.getElementById('timelineDayNamePill').textContent = `${dayName} · W${currentWeek}`;
+      document.getElementById('miniCardWeekBadge').textContent = `W${currentWeek}`;
+      document.getElementById('toggleShowInactiveCourses').checked = !!state.showInactiveCourses;
+
+      const sim12hStr = format12HourTime(state.simulatedMinutes, true);
+      document.getElementById('simTimeLabel').textContent = sim12hStr;
+      document.getElementById('simTimeSlider').value = String(state.simulatedMinutes);
+
+      const q = state.searchQuery.trim().toLowerCase();
+      const allDayFlattened = getTodayCourses(state.selectedDate, sem, state.courses, true).filter(item => {
+        if (!q) return true;
+        return (
+          item.name.toLowerCase().includes(q) ||
+          (item.code && item.code.toLowerCase().includes(q)) ||
+          item.location.toLowerCase().includes(q) ||
+          (item.teacher && item.teacher.toLowerCase().includes(q))
+        );
+      });
+
+      const activeList = allDayFlattened.filter(item => item.isWeekActive);
+      const displayList = state.showInactiveCourses ? allDayFlattened : activeList;
+
+      const container = document.getElementById('dailyTimelineContainer');
+      container.innerHTML = '';
+
+      const startDayMins = GRID_START_HOUR * 60;
+      const endDayMins = (GRID_END_HOUR + 0.5) * 60; // 21:30
+      const totalCanvasHeight = Math.round((endDayMins - startDayMins) * PX_PER_MINUTE + TOP_PAD_PX + BOTTOM_PAD_PX);
+
+      // Wrapper canvas with exact pixel height
+      const canvas = document.createElement('div');
+      canvas.className = 'relative w-full';
+      canvas.style.height = `${totalCanvasHeight}px`;
+
+      // Vertical hairline axis divider at left gutter (76px)
+      const verticalAxis = document.createElement('div');
+      verticalAxis.className = 'absolute top-0 bottom-0 border-r border-slate-200/90 pointer-events-none';
+      verticalAxis.style.left = `${LEFT_GUTTER_PX}px`;
+      canvas.appendChild(verticalAxis);
+
+      // 1. Render Hour Grid Lines & Left Gutter Labels (8 AM .. 9 PM)
+      for (let h = GRID_START_HOUR; h <= GRID_END_HOUR; h++) {
+        const hourMins = h * 60;
+        const yPx = Math.round(TOP_PAD_PX + (hourMins - startDayMins) * PX_PER_MINUTE);
+
+        // Hide the static hour label if the red current-time indicator is within 14 minutes of it
+        const isNearCurrentIndicator = Math.abs(state.simulatedMinutes - hourMins) < 14;
+
+        // Left gutter label (e.g., "1 PM", "2 PM")
+        const labelEl = document.createElement('div');
+        labelEl.className = `absolute left-0 pr-3 text-right text-[11px] font-medium text-slate-500 tabular-nums -translate-y-1/2 pointer-events-none transition-opacity ${
+          isNearCurrentIndicator ? 'opacity-0' : 'opacity-100'
+        }`;
+        labelEl.style.top = `${yPx}px`;
+        labelEl.style.width = `${LEFT_GUTTER_PX}px`;
+        labelEl.textContent = format12HourTime(hourMins, false);
+        canvas.appendChild(labelEl);
+
+        // Full-width horizontal hour hairline starting from the vertical axis
+        const lineEl = document.createElement('div');
+        lineEl.className = 'absolute right-0 border-t border-slate-100 pointer-events-none';
+        lineEl.style.top = `${yPx}px`;
+        lineEl.style.left = `${LEFT_GUTTER_PX}px`;
+        canvas.appendChild(lineEl);
+      }
+
+      // 2. Render Proportional Course Blocks (Height = durationMins * PX_PER_MINUTE)
+      displayList.forEach(item => {
+        const startMins = Math.max(startDayMins, timeToMinutes(item.todaySchedule.startTime));
+        const endMins = Math.min(endDayMins, timeToMinutes(item.todaySchedule.endTime));
+        const durationMins = Math.max(30, endMins - startMins);
+
+        const topPx = Math.round(TOP_PAD_PX + (startMins - startDayMins) * PX_PER_MINUTE);
+        const heightPx = Math.round(durationMins * PX_PER_MINUTE);
+        const isActiveThisWeek = item.isWeekActive;
+        const theme = hexToCalendarTheme(item.color || '#2563EB');
+
+        const blockEl = document.createElement('div');
+        blockEl.style.top = `${topPx}px`;
+        blockEl.style.height = `${heightPx}px`;
+        blockEl.style.left = `${LEFT_GUTTER_PX + 10}px`;
+        blockEl.style.right = '14px';
+
+        if (isActiveThisWeek) {
+          blockEl.className = 'absolute z-10 rounded-xl border px-3.5 py-2.5 transition-shadow hover:shadow-sm calendar-card-hatch overflow-hidden flex flex-col justify-between';
+          blockEl.style.backgroundColor = theme.bg;
+          blockEl.style.borderColor = theme.border;
+
+          const durationHrs = Math.floor(durationMins / 60);
+          const durationRemMins = durationMins % 60;
+          const durationBadge = durationHrs > 0
+            ? `${durationHrs}h${durationRemMins > 0 ? ` ${durationRemMins}m` : ''}`
+            : `${durationRemMins}m`;
+
+          blockEl.innerHTML = `
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-xs sm:text-[13px] font-semibold text-slate-900 leading-snug">${escapeHtml(item.name)}</span>
+                  <span class="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-white/80 text-slate-700 border border-slate-200/70">${escapeHtml(item.code)}</span>
+                </div>
+                <span class="text-[10px] font-mono font-medium text-slate-500 bg-white/75 px-1.5 py-0.5 rounded border border-slate-200/60 shrink-0 tabular-nums">
+                  ${durationBadge}
+                </span>
+              </div>
+              <div class="text-xs text-slate-600 mt-0.5 tabular-nums font-normal">
+                ${escapeHtml(item.timeDisplay12h)}
+              </div>
+              ${heightPx >= 95 ? `
+                <div class="text-[11px] text-slate-500 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <span class="font-medium text-slate-700">Room ${escapeHtml(item.location)}</span>
+                  <span>·</span>
+                  <span>${escapeHtml(item.sessionsDisplay)}</span>
+                  ${item.teacher ? `<span>·</span><span>${escapeHtml(item.teacher)}</span>` : ''}
+                </div>
+              ` : ''}
+            </div>
+
+            ${heightPx >= 140 ? `
+              <div class="pt-2 border-t border-slate-200/50 flex items-center justify-between text-[10px] font-mono text-slate-500">
+                <span>${ (item.todaySchedule.sessions || []).length > 1 ? `Merged ${item.todaySchedule.sessions.length} consecutive sessions` : 'Single session block' }</span>
+                <span>${formatWeekRanges(item.activeWeeks)}</span>
+              </div>
+            ` : ''}
+          `;
+        } else {
+          // Off-week course block shown in subtle dashed outline at its true time position
+          blockEl.className = 'absolute z-10 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-3.5 py-2 opacity-65 hover:opacity-95 transition flex items-start justify-between gap-2 overflow-hidden';
+          blockEl.innerHTML = `
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-medium text-slate-500 line-through">${escapeHtml(item.name)}</span>
+                <span class="text-[10px] font-mono text-slate-400">(${escapeHtml(item.code)})</span>
+              </div>
+              <div class="text-[11px] text-slate-400 tabular-nums">
+                ${escapeHtml(item.timeDisplay12h)} · Off in Week ${currentWeek} (${formatWeekRanges(item.activeWeeks)})
+              </div>
+            </div>
+            ${!sem.isArchived ? `
+              <button type="button" data-toggle-course-week="${item.id}" class="px-2 py-0.5 rounded text-[10px] font-medium bg-white border border-slate-200 text-slate-700 hover:border-slate-400 transition shrink-0">
+                + Enable W${currentWeek}
+              </button>
+            ` : ''}
+          `;
+        }
+
+        canvas.appendChild(blockEl);
+      });
+
+      // Empty state overlay note if no courses at all on this day
+      if (displayList.length === 0) {
+        const emptyNote = document.createElement('div');
+        emptyNote.className = 'absolute inset-x-0 top-16 flex justify-center pointer-events-none z-10';
+        emptyNote.innerHTML = `
+          <div class="px-4 py-2.5 rounded-lg bg-slate-50/90 border border-dashed border-slate-200 text-center">
+            <div class="text-xs font-medium text-slate-600">No classes scheduled on ${dayName} (Week ${currentWeek})</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Time grid remains active (8:00 AM – 9:00 PM)</div>
+          </div>
+        `;
+        canvas.appendChild(emptyNote);
+      }
+
+      // 3. Render Precision Red Current-Time Indicator (Matching Reference Image)
+      if (state.simulatedMinutes >= startDayMins && state.simulatedMinutes <= endDayMins) {
+        const nowY = Math.round(TOP_PAD_PX + (state.simulatedMinutes - startDayMins) * PX_PER_MINUTE);
+
+        const indicatorWrapper = document.createElement('div');
+        indicatorWrapper.className = 'absolute left-0 right-0 z-20 pointer-events-none';
+        indicatorWrapper.style.top = `${nowY}px`;
+
+        indicatorWrapper.innerHTML = `
+          <!-- Red Timestamp in Left Gutter -->
+          <div class="absolute left-0 pr-3 text-right text-[11px] font-semibold text-[#dc2626] tabular-nums -translate-y-1/2"
+               style="width: ${LEFT_GUTTER_PX}px;">
+            ${sim12hStr}
+          </div>
+          <!-- Red Dot Centered on Vertical Axis Line -->
+          <div class="absolute w-2.5 h-2.5 rounded-full bg-[#dc2626] -translate-x-1/2 -translate-y-1/2 shadow-2xs"
+               style="left: ${LEFT_GUTTER_PX}px;"></div>
+          <!-- Crisp 1.5px Red Horizontal Line Spanning Across Schedule & Cards -->
+          <div class="absolute right-0 h-[1.5px] bg-[#dc2626] -translate-y-1/2"
+               style="left: ${LEFT_GUTTER_PX}px;"></div>
+        `;
+
+        canvas.appendChild(indicatorWrapper);
+      }
+
+      container.appendChild(canvas);
+
+      // Attach listeners for enabling off-week courses
+      container.querySelectorAll('[data-toggle-course-week]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cId = btn.getAttribute('data-toggle-course-week');
+          const course = state.courses.find(c => c.id === cId);
+          if (course && !course.activeWeeks.includes(currentWeek)) {
+            course.activeWeeks.push(currentWeek);
+            course.activeWeeks.sort((a, b) => a - b);
+            showToast(`Enabled Week ${currentWeek} for ${course.code}`);
+            renderAll();
+          }
+        });
+      });
+
+      // Render Tasks Due on Selected Date
+      const humanShort = formatHumanDate(state.selectedDate).split(',')[1].trim();
+      document.getElementById('tasksDueHeaderLabel').textContent =
+        state.selectedDate === '2026-10-15' ? `Today (${humanShort})` : humanShort;
+
+      const todayTasksEl = document.getElementById('todayTasksList');
+      todayTasksEl.innerHTML = '';
+
+      const tasksForDay = state.tasks.filter(t => {
+        const matchesSem = !t.semesterId || t.semesterId === sem.id;
+        const matchesDate = t.dueDate === state.selectedDate;
+        const matchesSearch = !q || t.title.toLowerCase().includes(q);
+        return matchesSem && matchesDate && matchesSearch;
+      });
+
+      if (tasksForDay.length === 0) {
+        todayTasksEl.innerHTML = `
+          <div class="py-6 text-center rounded border border-dashed border-slate-200 space-y-1">
+            <p class="text-xs text-slate-400">No tasks due on ${humanShort}.</p>
+            <button type="button" id="btnEmptyAddTask" class="text-xs font-medium text-slate-700 hover:text-slate-900 underline">+ Add task</button>
+          </div>
+        `;
+        const emptyBtn = document.getElementById('btnEmptyAddTask');
+        if (emptyBtn) {
+          emptyBtn.addEventListener('click', () => openTaskModal(state.selectedDate));
+        }
+      } else {
+        tasksForDay.forEach(task => {
+          todayTasksEl.appendChild(createTaskRowNode(task));
+        });
+      }
+    }
+
+    function renderCoursesMatrixView() {
+      const sem = getViewedSemester();
+      const currentWeek = calculateAcademicWeek(state.selectedDate, sem.startDate);
+      document.getElementById('matrixSemesterBadge').textContent =
+        `${sem.name}${sem.isArchived ? ' (Archive)' : ''}`;
+      document.getElementById('timetableGridWeekNum').textContent = currentWeek;
+
+      const tbody = document.getElementById('weeklyTimetableGridBody');
+      tbody.innerHTML = '';
+
+      const semCourses = state.courses.filter(c => c.semesterId === sem.id);
+      const slotCount = state.timeSlots.length;
+      const skipMatrix = {};
+
+      for (let r = 0; r < slotCount; r++) {
+        const slot = state.timeSlots[r];
+        const tr = document.createElement('tr');
+
+        const tdSlot = document.createElement('td');
+        tdSlot.className = 'py-3 px-3 bg-slate-50/50 border-r border-slate-200 align-top';
+        tdSlot.innerHTML = `
+          <div class="font-mono font-semibold text-slate-800 text-xs">S${escapeHtml(slot.session)}</div>
+          <div class="font-mono text-[10px] text-slate-400 mt-0.5 tabular-nums">${slot.startTime}–${slot.endTime}</div>
+        `;
+        tr.appendChild(tdSlot);
+
+        for (let day = 1; day <= 5; day++) {
+          if (skipMatrix[`${r}_${day}`]) continue;
+
+          let matchedCourse = null;
+          let matchedSched = null;
+          let spanCount = 1;
+
+          for (const c of semCourses) {
+            for (const sch of (c.schedules || [])) {
+              if (sch.dayOfWeek === day && Array.isArray(sch.sessions) && sch.sessions[0] === slot.session) {
+                matchedCourse = c;
+                matchedSched = sch;
+                let k = 1;
+                while (r + k < slotCount && sch.sessions.includes(state.timeSlots[r + k].session)) {
+                  skipMatrix[`${r + k}_${day}`] = true;
+                  k++;
+                }
+                spanCount = k;
+                break;
+              }
+            }
+            if (matchedCourse) break;
+          }
+
+          const td = document.createElement('td');
+          if (spanCount > 1) td.rowSpan = spanCount;
+          td.className = `p-1.5 align-top ${day < 5 ? 'border-r border-slate-200' : ''}`;
+
+          if (matchedCourse && matchedSched) {
+            const isWeekActive = matchedCourse.activeWeeks.includes(currentWeek);
+            const bounds = computeMergedSessionBounds(matchedSched.sessions);
+            td.innerHTML = `
+              <div class="h-full p-2.5 rounded border transition border-l-[3px] ${
+                isWeekActive
+                  ? 'bg-slate-50/90 border-slate-200 text-slate-900'
+                  : 'bg-slate-50/30 text-slate-400 border-dashed border-slate-200 opacity-60'
+              }" style="border-left-color: ${isWeekActive ? (matchedCourse.color || '#0f172a') : '#cbd5e1'}">
+                <div class="flex items-center justify-between gap-1">
+                  <span class="font-mono text-[10px] font-semibold text-slate-700">
+                    ${escapeHtml(matchedCourse.code || 'CRS')}
+                  </span>
+                  <span class="font-mono text-[10px] text-slate-400 tabular-nums">
+                    ${bounds.startTime}–${bounds.endTime}
+                  </span>
+                </div>
+                <div class="font-semibold text-xs mt-1 leading-snug text-slate-900">${escapeHtml(matchedCourse.name)}</div>
+                <div class="text-[11px] mt-1 text-slate-500">
+                  ${escapeHtml(matchedCourse.location)}${matchedCourse.teacher ? ` · ${escapeHtml(matchedCourse.teacher)}` : ''}
+                </div>
+                <div class="mt-2 pt-1.5 border-t border-slate-200/70 text-[10px] font-mono text-slate-400">
+                  S${matchedSched.sessions.join('+')} · ${formatWeekRanges(matchedCourse.activeWeeks)}
+                </div>
+              </div>
+            `;
+          } else {
+            td.innerHTML = `<div class="h-12"></div>`;
+          }
+
+          tr.appendChild(td);
+        }
+
+        tbody.appendChild(tr);
+      }
+
+      const container = document.getElementById('coursesMatrixContainer');
+      container.innerHTML = '';
+
+      semCourses.forEach(course => {
+        const card = document.createElement('div');
+        card.className = 'p-4 rounded-lg bg-white border border-slate-200/90 space-y-3 flex flex-col justify-between';
+
+        let weekBoxesHtml = '';
+        for (let w = 1; w <= sem.totalWeeks; w++) {
+          const isActive = course.activeWeeks.includes(w);
+          const isCurrent = w === currentWeek;
+          weekBoxesHtml += `
+            <button type="button" data-course-id="${course.id}" data-week-num="${w}"
+              class="h-6 rounded font-mono text-[10px] font-medium transition flex items-center justify-center tabular-nums ${
+                isActive
+                  ? 'bg-slate-900 text-white hover:bg-slate-800'
+                  : 'bg-slate-50 text-slate-400 border border-slate-200/80 hover:border-slate-400'
+              } ${isCurrent ? 'ring-1 ring-rose-500 ring-offset-1' : ''}"
+              title="Toggle Week ${w}">
+              ${w}
+            </button>
+          `;
+        }
+
+        const schedulePillsHtml = (course.schedules || []).map(sch => {
+          const bounds = computeMergedSessionBounds(sch.sessions || []);
+          return `
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-[11px] font-mono text-slate-700">
+              <strong class="font-sans font-semibold text-slate-900">${DAY_NAMES_SHORT[sch.dayOfWeek]}</strong>
+              <span>S${(sch.sessions || []).join('+')}</span>
+              <span class="text-slate-400">(${bounds.startTime}–${bounds.endTime})</span>
+            </span>
+          `;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full" style="background-color: ${escapeHtml(course.color || '#0f172a')}"></span>
+                  <span class="font-mono text-xs font-semibold text-slate-600">${escapeHtml(course.code || 'CRS')}</span>
+                  <h3 class="text-sm font-semibold text-slate-900">${escapeHtml(course.name)}</h3>
+                </div>
+                <p class="text-xs text-slate-500">
+                  ${escapeHtml(course.location)}${course.teacher ? ` · ${escapeHtml(course.teacher)}` : ''}
+                </p>
+              </div>
+              <button type="button" data-delete-course="${course.id}" class="text-slate-300 hover:text-rose-600 p-1 rounded" title="Delete course">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              ${schedulePillsHtml}
+            </div>
+          </div>
+
+          <div class="space-y-1.5 pt-2.5 border-t border-slate-100">
+            <div class="flex items-center justify-between text-[11px] font-mono">
+              <span class="text-slate-500">${formatWeekRanges(course.activeWeeks)}</span>
+              <span class="text-slate-400">Current: W${currentWeek}</span>
+            </div>
+            <div class="grid grid-cols-10 gap-1">
+              ${weekBoxesHtml}
+            </div>
+          </div>
+        `;
+
+        card.querySelectorAll('[data-week-num]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (sem.isArchived) {
+              showToast('Archived term is read-only');
+              return;
+            }
+            const w = parseInt(btn.getAttribute('data-week-num'), 10);
+            const idx = course.activeWeeks.indexOf(w);
+            if (idx >= 0) {
+              course.activeWeeks.splice(idx, 1);
+            } else {
+              course.activeWeeks.push(w);
+              course.activeWeeks.sort((a, b) => a - b);
+            }
+            renderAll();
+          });
+        });
+
+        const delBtn = card.querySelector('[data-delete-course]');
+        delBtn.addEventListener('click', () => {
+          if (sem.isArchived) {
+            showToast('Archived term is read-only');
+            return;
+          }
+          state.courses = state.courses.filter(c => c.id !== course.id);
+          showToast('Course removed');
+          renderAll();
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    function createTaskRowNode(task) {
+      const sem = getViewedSemester();
+      const isDone = task.status === 'completed';
+      const taskWeek = calculateAcademicWeek(task.dueDate, sem.startDate);
+      const row = document.createElement('div');
+      row.className = `px-3 py-2.5 rounded-md border transition flex items-start justify-between gap-3 ${
+        isDone ? 'bg-slate-50/60 border-slate-200/60 opacity-60' : 'bg-white border-slate-200/90 hover:border-slate-300'
+      }`;
+
+      const tagsHtml = (task.tags || []).map(tag => {
+        return `<span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-100 text-slate-600 border border-slate-200/80">${escapeHtml(tag)}</span>`;
+      }).join('');
+
+      row.innerHTML = `
+        <label class="flex items-start gap-2.5 cursor-pointer select-none flex-1">
+          <input type="checkbox" ${isDone ? 'checked' : ''} class="mt-0.5 w-3.5 h-3.5 rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer" />
+          <div class="space-y-1 flex-1">
+            <div class="text-xs font-medium ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}">
+              ${escapeHtml(task.title)}
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              ${tagsHtml}
+              <span class="text-[10px] font-mono text-slate-400 tabular-nums">${task.dueDate} · W${taskWeek}</span>
+            </div>
+          </div>
+        </label>
+        <button type="button" class="text-slate-300 hover:text-rose-600 p-0.5 rounded transition" title="Delete Task">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      `;
+
+      const checkbox = row.querySelector('input[type="checkbox"]');
+      checkbox.addEventListener('change', () => {
+        task.status = checkbox.checked ? 'completed' : 'in_progress';
+        renderAll();
+      });
+
+      const delBtn = row.querySelector('button');
+      delBtn.addEventListener('click', () => {
+        state.tasks = state.tasks.filter(t => t.id !== task.id);
+        showToast('Task removed');
+        renderAll();
+      });
+
+      return row;
+    }
+
+    function renderTodoView() {
+      const sem = getViewedSemester();
+      const q = state.searchQuery.trim().toLowerCase();
+      const listEl = document.getElementById('fullTodoListContainer');
+      listEl.innerHTML = '';
+
+      document.querySelectorAll('.todo-filter-btn').forEach(btn => {
+        const tag = btn.getAttribute('data-filter-tag');
+        if (tag === state.todoFilterTag) {
+          btn.className = 'todo-filter-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-900 text-white transition';
+        } else {
+          btn.className = 'todo-filter-btn px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 transition';
+        }
+      });
+
+      const filtered = state.tasks.filter(task => {
+        if (task.semesterId && task.semesterId !== sem.id) return false;
+        if (state.todoFilterTag !== 'ALL' && !(task.tags || []).includes(state.todoFilterTag)) return false;
+        if (state.todoFilterStatus === 'pending' && task.status === 'completed') return false;
+        if (state.todoFilterStatus === 'completed' && task.status !== 'completed') return false;
+        if (q && !task.title.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="py-10 text-center text-xs text-slate-400">
+            No matching tasks in ${escapeHtml(sem.name)}.
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(task => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'p-2.5';
+        wrapper.appendChild(createTaskRowNode(task));
+        listEl.appendChild(wrapper);
+      });
+    }
+
+    const KANBAN_COLUMNS = [
+      { id: 'lit_review', title: 'Literature Review' },
+      { id: 'experiments', title: 'Experiments' },
+      { id: 'drafting', title: 'Drafting' },
+      { id: 'under_review', title: 'Under Review' }
+    ];
+
+    function renderKanbanView() {
+      const q = state.searchQuery.trim().toLowerCase();
+      const grid = document.getElementById('kanbanBoardGrid');
+      grid.innerHTML = '';
+
+      KANBAN_COLUMNS.forEach((col, colIndex) => {
+        const cards = state.kanban.filter(item => {
+          if (item.stage !== col.id) return false;
+          if (q && !item.title.toLowerCase().includes(q) && !item.project.toLowerCase().includes(q)) return false;
+          return true;
+        });
+
+        const colEl = document.createElement('div');
+        colEl.className = 'bg-slate-100/70 rounded-lg border border-slate-200/80 p-3 space-y-2.5';
+        colEl.innerHTML = `
+          <div class="flex items-center justify-between px-0.5">
+            <span class="text-xs font-semibold text-slate-700">${col.title}</span>
+            <span class="text-[11px] font-mono text-slate-400">${cards.length}</span>
+          </div>
+          <div class="space-y-2 min-h-[100px]" data-stage-list="${col.id}"></div>
+        `;
+
+        const listContainer = colEl.querySelector(`[data-stage-list="${col.id}"]`);
+        if (cards.length === 0) {
+          listContainer.innerHTML = `
+            <div class="h-24 rounded border border-dashed border-slate-200 flex items-center justify-center text-[11px] text-slate-400">
+              Empty
+            </div>
+          `;
+        } else {
+          cards.forEach(card => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'p-3 rounded-md bg-white border border-slate-200/90 space-y-2 hover:border-slate-300 transition';
+            cardEl.innerHTML = `
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-600">${escapeHtml(card.project)}</span>
+                <span class="text-[10px] font-mono text-slate-400">${escapeHtml(card.targetWeek)}</span>
+              </div>
+              <h4 class="text-xs font-medium text-slate-900 leading-snug">${escapeHtml(card.title)}</h4>
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div class="flex items-center gap-1">
+                  ${colIndex > 0 ? `<button type="button" data-move-dir="-1" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:bg-slate-100 transition">←</button>` : ''}
+                  ${colIndex < KANBAN_COLUMNS.length - 1 ? `<button type="button" data-move-dir="1" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-700 bg-slate-100 hover:bg-slate-200 transition">→</button>` : ''}
+                </div>
+                <button type="button" data-del-kanban="${card.id}" class="text-slate-300 hover:text-rose-600 p-0.5 rounded" title="Delete">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            `;
+
+            cardEl.querySelectorAll('[data-move-dir]').forEach(moveBtn => {
+              moveBtn.addEventListener('click', () => {
+                const dir = parseInt(moveBtn.getAttribute('data-move-dir'), 10);
+                const nextCol = KANBAN_COLUMNS[colIndex + dir];
+                if (nextCol) {
+                  card.stage = nextCol.id;
+                  renderAll();
+                }
+              });
+            });
+
+            cardEl.querySelector('[data-del-kanban]').addEventListener('click', () => {
+              state.kanban = state.kanban.filter(k => k.id !== card.id);
+              showToast('Milestone deleted');
+              renderAll();
+            });
+
+            listContainer.appendChild(cardEl);
+          });
+        }
+
+        grid.appendChild(colEl);
+      });
+    }
+
+    // =========================================================================
+    // MODALS & CONTROLLERS
+    // =========================================================================
+    let selectedTaskTags = new Set(['#Research']);
+    let selectedModalSessions = new Set(['5-6', '7-8']);
+
+    function renderCourseModalSessionCheckboxes() {
+      const container = document.getElementById('courseModalSessionCheckboxes');
+      container.innerHTML = '';
+
+      state.timeSlots.forEach(ts => {
+        const checked = selectedModalSessions.has(ts.session);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = checked
+          ? 'p-2 rounded border border-slate-900 bg-slate-900 text-white text-left transition'
+          : 'p-2 rounded border border-slate-200 bg-white text-slate-700 hover:border-slate-400 text-left transition';
+        btn.innerHTML = `
+          <div class="text-xs font-mono font-semibold">S${escapeHtml(ts.session)}</div>
+          <div class="text-[10px] font-mono ${checked ? 'text-slate-300' : 'text-slate-400'}">${ts.startTime}–${ts.endTime}</div>
+        `;
+        btn.addEventListener('click', () => {
+          if (selectedModalSessions.has(ts.session)) {
+            if (selectedModalSessions.size > 1) selectedModalSessions.delete(ts.session);
+          } else {
+            selectedModalSessions.add(ts.session);
+          }
+          renderCourseModalSessionCheckboxes();
+          updateMergedBlockLivePreview();
+        });
+        container.appendChild(btn);
+      });
+      updateMergedBlockLivePreview();
+    }
+
+    function updateMergedBlockLivePreview() {
+      const ordered = state.timeSlots
+        .map(ts => ts.session)
+        .filter(s => selectedModalSessions.has(s));
+      const bounds = computeMergedSessionBounds(ordered);
+      document.getElementById('mergedBlockLivePreview').textContent =
+        `S${ordered.join('+')} (${bounds.startTime}–${bounds.endTime})`;
+      document.getElementById('inputCourseSessions').value = ordered.join(', ');
+      document.getElementById('inputCourseStart').value = bounds.startTime;
+      document.getElementById('inputCourseEnd').value = bounds.endTime;
+    }
+
+    function renderSemesterManagerList() {
+      const list = document.getElementById('semesterManagerList');
+      list.innerHTML = '';
+
+      state.semesters.forEach(s => {
+        const row = document.createElement('div');
+        row.className = `p-2.5 rounded border flex items-center justify-between gap-2 ${
+          s.isActive ? 'bg-slate-50 border-slate-300' : 'bg-white border-slate-200'
+        }`;
+        row.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-900">${escapeHtml(s.name)}</span>
+              ${s.isActive
+                ? `<span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-900 text-white">Active</span>`
+                : `<span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-100 text-slate-500">Archive</span>`
+              }
+            </div>
+            <div class="text-[10px] font-mono text-slate-400 mt-0.5">
+              Start: ${s.startDate} · ${s.totalWeeks}W
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button type="button" data-switch-sem="${s.id}" class="px-2 py-1 rounded text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700">
+              Open
+            </button>
+            ${!s.isActive ? `
+              <button type="button" data-activate-sem="${s.id}" class="px-2 py-1 rounded text-xs font-medium bg-slate-900 text-white">
+                Set Active
+              </button>
+            ` : ''}
+          </div>
+        `;
+
+        row.querySelector('[data-switch-sem]').addEventListener('click', () => {
+          switchViewedSemester(s.id);
+          document.getElementById('semesterModalBackdrop').classList.add('hidden');
+        });
+
+        const actBtn = row.querySelector('[data-activate-sem]');
+        if (actBtn) {
+          actBtn.addEventListener('click', () => {
+            setActiveSemester(s.id);
+            renderSemesterManagerList();
+          });
+        }
+
+        list.appendChild(row);
+      });
+    }
+
+    function switchViewedSemester(semId) {
+      const target = state.semesters.find(s => s.id === semId);
+      if (!target) return;
+      state.viewedSemesterId = target.id;
+      state.selectedDate = addDays(target.startDate, 4 * 7 + 3);
+      showToast(`Viewing ${target.name}`);
+      renderAll();
+    }
+
+    function setActiveSemester(semId) {
+      state.semesters.forEach(s => {
+        if (s.id === semId) {
+          s.isActive = true;
+          s.isArchived = false;
+        } else {
+          s.isActive = false;
+          s.isArchived = true;
+        }
+      });
+      state.viewedSemesterId = semId;
+      const active = getActiveSemester();
+      state.selectedDate = addDays(active.startDate, 4 * 7 + 3);
+      showToast(`${active.name} set as active`);
+      renderAll();
+    }
+
+    function renderTimeSlotsEditor() {
+      const container = document.getElementById('timeSlotsEditorRows');
+      container.innerHTML = '';
+
+      state.timeSlots.forEach((slot, idx) => {
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-3 gap-2 items-center p-2 rounded bg-slate-50 border border-slate-200';
+        row.innerHTML = `
+          <div class="text-xs font-mono font-semibold text-slate-700">Session ${escapeHtml(slot.session)}</div>
+          <div>
+            <input type="time" data-slot-start="${idx}" value="${slot.startTime}" class="w-full px-2 py-1 text-xs font-mono rounded border border-slate-200 bg-white" />
+          </div>
+          <div>
+            <input type="time" data-slot-end="${idx}" value="${slot.endTime}" class="w-full px-2 py-1 text-xs font-mono rounded border border-slate-200 bg-white" />
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function openTaskModal(defaultDateIso) {
+      const sem = getViewedSemester();
+      const modal = document.getElementById('taskModalBackdrop');
+      document.getElementById('inputTaskTitle').value = '';
+      document.getElementById('inputTaskDueDate').value = defaultDateIso || state.selectedDate;
+      document.getElementById('taskWeekPickerRow').classList.add('hidden');
+
+      const weekSel = document.getElementById('inputTaskWeekSelect');
+      weekSel.innerHTML = '';
+      const curW = calculateAcademicWeek(state.selectedDate, sem.startDate);
+      for (let w = 1; w <= sem.totalWeeks; w++) {
+        const opt = document.createElement('option');
+        opt.value = String(w);
+        opt.textContent = `Week ${w}`;
+        if (w === curW) opt.selected = true;
+        weekSel.appendChild(opt);
+      }
+
+      modal.classList.remove('hidden');
+      setTimeout(() => document.getElementById('inputTaskTitle').focus(), 50);
+    }
+
+    function closeTaskModal() {
+      document.getElementById('taskModalBackdrop').classList.add('hidden');
+    }
+
+    function initEventListeners() {
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.activeTab = btn.getAttribute('data-tab');
+          renderAll();
+        });
+      });
+
+      document.getElementById('semesterSelectorDropdown').addEventListener('change', (e) => {
+        switchViewedSemester(e.target.value);
+      });
+
+      document.getElementById('btnActivateViewedSemester').addEventListener('click', () => {
+        setActiveSemester(state.viewedSemesterId);
+      });
+      document.getElementById('btnReturnActiveSemester').addEventListener('click', () => {
+        const active = getActiveSemester();
+        switchViewedSemester(active.id);
+      });
+
+      const closeSemModal = () => document.getElementById('semesterModalBackdrop').classList.add('hidden');
+      document.getElementById('btnOpenSemesterModal').addEventListener('click', () => {
+        renderSemesterManagerList();
+        document.getElementById('semesterModalBackdrop').classList.remove('hidden');
+      });
+      document.getElementById('btnCloseSemesterModal').addEventListener('click', closeSemModal);
+
+      document.getElementById('semesterCreationForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('inputSemName').value.trim();
+        const totalWeeks = parseInt(document.getElementById('inputSemWeeks').value, 10) || 19;
+        const startDate = document.getElementById('inputSemStartDate').value || '2027-03-01';
+        const makeActive = document.getElementById('inputSemSetActive').checked;
+        if (!name) return;
+
+        const newId = 'sem_' + Date.now();
+        if (makeActive) {
+          state.semesters.forEach(s => {
+            s.isActive = false;
+            s.isArchived = true;
+          });
+        }
+        state.semesters.unshift({
+          id: newId,
+          name,
+          startDate,
+          totalWeeks,
+          isActive: makeActive,
+          isArchived: !makeActive
+        });
+        state.viewedSemesterId = newId;
+        state.selectedDate = startDate;
+        document.getElementById('inputSemName').value = '';
+        closeSemModal();
+        showToast(`Created ${name}`);
+        renderAll();
+      });
+
+      const closeSlotsModal = () => document.getElementById('timeSlotsModalBackdrop').classList.add('hidden');
+      const openSlotsModal = () => {
+        renderTimeSlotsEditor();
+        document.getElementById('timeSlotsModalBackdrop').classList.remove('hidden');
+      };
+      document.getElementById('btnOpenTimeSlotsModal').addEventListener('click', openSlotsModal);
+      document.getElementById('btnOpenTimeSlotsFromMatrix').addEventListener('click', openSlotsModal);
+      document.getElementById('btnCloseTimeSlotsModal').addEventListener('click', closeSlotsModal);
+
+      document.getElementById('timeSlotsForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('[data-slot-start]').forEach(inp => {
+          const idx = parseInt(inp.getAttribute('data-slot-start'), 10);
+          if (state.timeSlots[idx] && inp.value) state.timeSlots[idx].startTime = inp.value;
+        });
+        document.querySelectorAll('[data-slot-end]').forEach(inp => {
+          const idx = parseInt(inp.getAttribute('data-slot-end'), 10);
+          if (state.timeSlots[idx] && inp.value) state.timeSlots[idx].endTime = inp.value;
+        });
+        closeSlotsModal();
+        showToast('Time slots updated');
+        renderAll();
+      });
+
+      document.getElementById('btnPrevWeek').addEventListener('click', () => {
+        state.selectedDate = addDays(state.selectedDate, -7);
+        renderAll();
+      });
+      document.getElementById('btnNextWeek').addEventListener('click', () => {
+        state.selectedDate = addDays(state.selectedDate, 7);
+        renderAll();
+      });
+      document.getElementById('btnJumpToday').addEventListener('click', () => {
+        state.viewedSemesterId = 'sem_2026_fall';
+        state.selectedDate = '2026-10-15';
+        state.simulatedMinutes = 15 * 60 + 20;
+        showToast('Reset to Today (Oct 15 · W5)');
+        renderAll();
+      });
+
+      document.getElementById('quickWeekSelect').addEventListener('change', (e) => {
+        const sem = getViewedSemester();
+        const targetWeek = parseInt(e.target.value, 10);
+        const currentDow = getIsoDayOfWeek(state.selectedDate);
+        const offsetDays = (targetWeek - 1) * 7 + (currentDow - 1);
+        state.selectedDate = addDays(sem.startDate, offsetDays);
+        renderAll();
+      });
+
+      document.querySelectorAll('.quick-scenario-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const jumpSem = btn.getAttribute('data-jump-sem');
+          const jumpDate = btn.getAttribute('data-jump-date');
+          if (jumpSem) state.viewedSemesterId = jumpSem;
+          if (jumpDate) state.selectedDate = jumpDate;
+          renderAll();
+        });
+      });
+
+      document.getElementById('toggleShowInactiveCourses').addEventListener('change', (e) => {
+        state.showInactiveCourses = e.target.checked;
+        renderAll();
+      });
+
+      document.getElementById('simTimeSlider').addEventListener('input', (e) => {
+        state.simulatedMinutes = parseInt(e.target.value, 10);
+        renderTimelineView();
+      });
+
+      document.getElementById('btnToggleSearch').addEventListener('click', () => {
+        const bar = document.getElementById('searchBarContainer');
+        bar.classList.toggle('hidden');
+        if (!bar.classList.contains('hidden')) {
+          document.getElementById('globalSearchInput').focus();
+        }
+      });
+      document.getElementById('globalSearchInput').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        renderAll();
+      });
+      document.getElementById('btnClearSearch').addEventListener('click', () => {
+        state.searchQuery = '';
+        document.getElementById('globalSearchInput').value = '';
+        document.getElementById('searchBarContainer').classList.add('hidden');
+        renderAll();
+      });
+
+      document.querySelectorAll('.todo-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.todoFilterTag = btn.getAttribute('data-filter-tag');
+          renderTodoView();
+        });
+      });
+      document.getElementById('todoStatusFilter').addEventListener('change', (e) => {
+        state.todoFilterStatus = e.target.value;
+        renderTodoView();
+      });
+
+      document.getElementById('fabAddTask').addEventListener('click', () => openTaskModal(state.selectedDate));
+      document.getElementById('btnOpenTaskModalTop').addEventListener('click', () => openTaskModal(state.selectedDate));
+      document.getElementById('btnAddTaskInline').addEventListener('click', () => openTaskModal(state.selectedDate));
+      document.getElementById('btnOpenTaskModalTodo').addEventListener('click', () => openTaskModal(state.selectedDate));
+      document.getElementById('btnCloseTaskModal').addEventListener('click', closeTaskModal);
+      document.getElementById('btnCancelTaskModal').addEventListener('click', closeTaskModal);
+
+      document.querySelectorAll('.date-chip-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sem = getViewedSemester();
+          const mode = btn.getAttribute('data-date-chip');
+          document.querySelectorAll('.date-chip-btn').forEach(b => {
+            b.className = 'date-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+          });
+          btn.className = 'date-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-900 text-white transition';
+
+          const weekRow = document.getElementById('taskWeekPickerRow');
+          if (mode === 'today') {
+            weekRow.classList.add('hidden');
+            document.getElementById('inputTaskDueDate').value = '2026-10-15';
+          } else if (mode === 'tomorrow') {
+            weekRow.classList.add('hidden');
+            document.getElementById('inputTaskDueDate').value = '2026-10-16';
+          } else if (mode === 'pick_week') {
+            weekRow.classList.remove('hidden');
+            const w = parseInt(document.getElementById('inputTaskWeekSelect').value, 10) || 5;
+            document.getElementById('inputTaskDueDate').value = addDays(sem.startDate, (w - 1) * 7 + 4);
+          }
+        });
+      });
+
+      document.getElementById('inputTaskWeekSelect').addEventListener('change', (e) => {
+        const sem = getViewedSemester();
+        const w = parseInt(e.target.value, 10) || 1;
+        document.getElementById('inputTaskDueDate').value = addDays(sem.startDate, (w - 1) * 7 + 4);
+      });
+
+      document.querySelectorAll('.tag-chip-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tag = btn.getAttribute('data-tag-chip');
+          if (selectedTaskTags.has(tag)) {
+            if (selectedTaskTags.size > 1) selectedTaskTags.delete(tag);
+          } else {
+            selectedTaskTags.add(tag);
+          }
+          document.querySelectorAll('.tag-chip-btn').forEach(b => {
+            const t = b.getAttribute('data-tag-chip');
+            if (selectedTaskTags.has(t)) {
+              b.className = 'tag-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-900 text-white border border-slate-900 transition';
+            } else {
+              b.className = 'tag-chip-btn px-2.5 py-1 rounded text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition';
+            }
+          });
+        });
+      });
+
+      document.getElementById('taskCreationForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const sem = getViewedSemester();
+        const title = document.getElementById('inputTaskTitle').value.trim();
+        const dueDate = document.getElementById('inputTaskDueDate').value || state.selectedDate;
+        if (!title) return;
+
+        const tagsArr = Array.from(selectedTaskTags);
+        state.tasks.unshift({
+          id: 't_' + Date.now(),
+          semesterId: sem.id,
+          title,
+          category: tagsArr.includes('#Class') ? 'Coursework' : 'Research',
+          tags: tagsArr,
+          dueDate,
+          status: 'in_progress'
+        });
+        state.selectedDate = dueDate;
+        closeTaskModal();
+        showToast('Task saved');
+        renderAll();
+      });
+
+      const openCourseModal = () => {
+        const sem = getViewedSemester();
+        if (sem.isArchived) {
+          showToast('Switch to active term to add courses');
+          return;
+        }
+        document.getElementById('inputCourseDay').value = String(getIsoDayOfWeek(state.selectedDate));
+        renderCourseModalSessionCheckboxes();
+        document.getElementById('courseModalBackdrop').classList.remove('hidden');
+      };
+      const closeCourseModal = () => {
+        document.getElementById('courseModalBackdrop').classList.add('hidden');
+      };
+      document.getElementById('btnAddCourseFromTimeline').addEventListener('click', openCourseModal);
+      document.getElementById('btnOpenAddCourseModal').addEventListener('click', openCourseModal);
+      document.getElementById('btnOpenCourseModalTop').addEventListener('click', openCourseModal);
+      document.getElementById('btnCloseCourseModal').addEventListener('click', closeCourseModal);
+      document.getElementById('btnCancelCourseModal').addEventListener('click', closeCourseModal);
+
+      document.querySelectorAll('.week-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('inputCourseWeeks').value = btn.getAttribute('data-week-preset');
+        });
+      });
+
+      document.getElementById('courseCreationForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const sem = getViewedSemester();
+        const code = document.getElementById('inputCourseCode').value.trim() || 'CRS101';
+        const name = document.getElementById('inputCourseName').value.trim();
+        const color = document.getElementById('inputCourseColor').value || '#2563eb';
+        const location = document.getElementById('inputCourseLocation').value.trim();
+        const teacher = document.getElementById('inputCourseTeacher').value.trim();
+        const dayOfWeek = parseInt(document.getElementById('inputCourseDay').value, 10);
+        const enableSecond = document.getElementById('inputCourseEnableSecondDay').checked;
+        const secondDay = parseInt(document.getElementById('inputCourseSecondDay').value, 10);
+        const weeksStr = document.getElementById('inputCourseWeeks').value;
+        const activeWeeks = parseWeekInputString(weeksStr, sem.totalWeeks);
+
+        const orderedSessions = state.timeSlots
+          .map(ts => ts.session)
+          .filter(s => selectedModalSessions.has(s));
+        const bounds = computeMergedSessionBounds(orderedSessions);
+
+        if (!name || activeWeeks.length === 0 || orderedSessions.length === 0) return;
+
+        const schedules = [
+          {
+            dayOfWeek,
+            sessions: orderedSessions,
+            startTime: bounds.startTime,
+            endTime: bounds.endTime
+          }
+        ];
+
+        if (enableSecond && secondDay !== dayOfWeek) {
+          schedules.push({
+            dayOfWeek: secondDay,
+            sessions: [...orderedSessions],
+            startTime: bounds.startTime,
+            endTime: bounds.endTime
+          });
+        }
+
+        state.courses.push({
+          id: 'c_' + Date.now(),
+          semesterId: sem.id,
+          code,
+          name,
+          teacher,
+          location,
+          color,
+          activeWeeks,
+          schedules
+        });
+
+        closeCourseModal();
+        document.getElementById('inputCourseName').value = '';
+        showToast(`Added ${code}`);
+        renderAll();
+      });
+
+      const closeKanbanModal = () => document.getElementById('kanbanModalBackdrop').classList.add('hidden');
+      document.getElementById('btnOpenKanbanModal').addEventListener('click', () => {
+        document.getElementById('kanbanModalBackdrop').classList.remove('hidden');
+      });
+      document.getElementById('btnCloseKanbanModal').addEventListener('click', closeKanbanModal);
+      document.getElementById('btnCancelKanbanModal').addEventListener('click', closeKanbanModal);
+
+      document.getElementById('kanbanCreationForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('inputKanbanTitle').value.trim();
+        const stage = document.getElementById('inputKanbanStage').value;
+        const targetWeek = document.getElementById('inputKanbanWeek').value.trim();
+        const project = document.getElementById('inputKanbanProject').value.trim();
+        if (!title) return;
+
+        state.kanban.push({
+          id: 'k_' + Date.now(),
+          title,
+          stage,
+          targetWeek,
+          project
+        });
+        document.getElementById('inputKanbanTitle').value = '';
+        closeKanbanModal();
+        showToast('Milestone added');
+        renderAll();
+      });
+
+      const closeDataModal = () => document.getElementById('dataModalBackdrop').classList.add('hidden');
+      document.getElementById('btnOpenDataModal').addEventListener('click', () => {
+        const exportObj = {
+          semesters: state.semesters,
+          timeSlots: state.timeSlots,
+          courses: state.courses,
+          tasks: state.tasks,
+          kanban: state.kanban
+        };
+        document.getElementById('jsonStatePreview').textContent = JSON.stringify(exportObj, null, 2);
+        document.getElementById('dataModalBackdrop').classList.remove('hidden');
+      });
+      document.getElementById('btnCloseDataModal').addEventListener('click', closeDataModal);
+      document.getElementById('btnCloseDataModalBottom').addEventListener('click', closeDataModal);
+
+      document.getElementById('btnCopyJson').addEventListener('click', () => {
+        const text = document.getElementById('jsonStatePreview').textContent;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => showToast('JSON copied'));
+        }
+      });
+
+      document.getElementById('btnResetDemoData').addEventListener('click', () => {
+        state = getDefaultState();
+        saveState();
+        closeDataModal();
+        showToast('Reset to default dataset');
+        renderAll();
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initEventListeners();
+      renderAll();
+    });
+  </script>
+</body>
+</html>

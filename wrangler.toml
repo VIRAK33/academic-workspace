@@ -1,0 +1,22 @@
+name = "academic-phd-workspace"
+main = "src/server/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Static Assets for Vite build
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+# Cloudflare D1 Relational SQLite Database
+[[d1_databases]]
+binding = "DB"
+database_name = "academic_workspace_db"
+database_id = "local-d1-db"
+migrations_dir = "migrations"
+
+# Cloudflare R2 Object Storage (Papers, Experiment Plots, Thesis Drafts)
+[[r2_buckets]]
+binding = "ACADEMIC_STORAGE"
+bucket_name = "academic-workspace-files"
+preview_bucket_name = "academic-workspace-files-preview"
