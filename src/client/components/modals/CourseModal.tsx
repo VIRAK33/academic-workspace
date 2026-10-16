@@ -49,6 +49,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
   const [schedules, setSchedules] = useState<ScheduleDraft[]>([
     { dayOfWeek: 1, sessions: ['5-6', '7-8'] },
   ]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -157,8 +158,6 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
     next[scheduleIndex] = { ...next[scheduleIndex], sessions: updatedSessions };
     setSchedules(next);
   };
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

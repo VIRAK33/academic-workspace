@@ -46,6 +46,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
   const [notes, setNotes] = useState('');
   const [color, setColor] = useState('#6366F1');
   const [activeWeeksPreset, setActiveWeeksPreset] = useState<'all' | 'odd' | 'even'>('all');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -104,8 +105,6 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
       setEndTime(slot.endTime);
     }
   };
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

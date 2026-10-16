@@ -18,6 +18,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
   const [selectedTags, setSelectedTags] = useState<string[]>(['#Research']);
   const [customTagInput, setCustomTagInput] = useState('');
   const [availableTags, setAvailableTags] = useState<string[]>(PRESET_TAGS);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync available tags with preset tags plus any custom tags found across tasks
   useEffect(() => {
@@ -38,22 +39,27 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || isSubmitting) return;
 
-    const newTask: Task = {
-      id: 't_' + Date.now().toString(36),
-      semesterId: viewedSemester.id,
-      title: title.trim(),
-      category: selectedTags.includes('#Class') ? 'Coursework' : 'Research',
-      tags: selectedTags,
-      dueDate,
-      status: 'in_progress',
-      priority: 'high',
-    };
+    try {
+      setIsSubmitting(true);
+      const newTask: Task = {
+        id: 't_' + Date.now().toString(36),
+        semesterId: viewedSemester.id,
+        title: title.trim(),
+        category: selectedTags.includes('#Class') ? 'Coursework' : 'Research',
+        tags: selectedTags,
+        dueDate,
+        status: 'in_progress',
+        priority: 'high',
+      };
 
-    await saveTask(newTask);
-    setTitle('');
-    onClose();
+      await saveTask(newTask);
+      setTitle('');
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleTag = (tag: string) => {
@@ -221,9 +227,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
             </button>
             <button
               type="submit"
-              className="px-3 py-1.5 rounded text-xs font-medium bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900"
+              disabled={isSubmitting}
+              className="px-3 py-1.5 rounded text-xs font-medium bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900 disabled:opacity-50 transition"
             >
-              Save Task
+              {isSubmitting ? 'Saving...' : 'Save Task'}
             </button>
           </div>
         </form>
