@@ -1,0 +1,221 @@
+import React, { useState, useEffect } from 'react';
+import { X, Clock, RotateCcw, Check } from 'lucide-react';
+import { format12HourTime } from '../../hooks/useWorkspace';
+
+interface ScheduleHoursModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  startHour: number;
+  endHour: number;
+  onSave: (start: number, end: number) => void;
+}
+
+const START_HOUR_OPTIONS = [
+  { value: 5, label: '5:00 AM' },
+  { value: 6, label: '6:00 AM' },
+  { value: 7, label: '7:00 AM' },
+  { value: 8, label: '8:00 AM (Default)' },
+  { value: 9, label: '9:00 AM' },
+  { value: 10, label: '10:00 AM' },
+];
+
+const END_HOUR_OPTIONS = [
+  { value: 18, label: '6:00 PM' },
+  { value: 19, label: '7:00 PM' },
+  { value: 20, label: '8:00 PM' },
+  { value: 21, label: '9:00 PM' },
+  { value: 21.5, label: '9:30 PM (Default)' },
+  { value: 22, label: '10:00 PM' },
+  { value: 22.5, label: '10:30 PM' },
+  { value: 23, label: '11:00 PM' },
+  { value: 23.5, label: '11:30 PM' },
+  { value: 24, label: '12:00 AM (Midnight)' },
+];
+
+const PRESETS = [
+  { label: 'Full Day', start: 7, end: 23, desc: '7:00 AM – 11:00 PM' },
+  { label: 'Standard', start: 8, end: 21.5, desc: '8:00 AM – 9:30 PM' },
+  { label: 'Early Bird', start: 6, end: 22, desc: '6:00 AM – 10:00 PM' },
+  { label: 'Night Owl', start: 9, end: 24, desc: '9:00 AM – Midnight' },
+];
+
+export const ScheduleHoursModal: React.FC<ScheduleHoursModalProps> = ({
+  isOpen,
+  onClose,
+  startHour,
+  endHour,
+  onSave,
+}) => {
+  const [selectedStart, setSelectedStart] = useState<number>(startHour);
+  const [selectedEnd, setSelectedEnd] = useState<number>(endHour);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedStart(startHour);
+      setSelectedEnd(endHour);
+    }
+  }, [isOpen, startHour, endHour]);
+
+  if (!isOpen) return null;
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedStart >= selectedEnd) {
+      return;
+    }
+    onSave(selectedStart, selectedEnd);
+    onClose();
+  };
+
+  const handleReset = () => {
+    setSelectedStart(8);
+    setSelectedEnd(21.5);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                Schedule Display Hours
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Customize daily active timeline window
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Content Form */}
+        <form onSubmit={handleSave} className="p-4 space-y-4">
+          {/* Presets */}
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              Quick Presets
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {PRESETS.map((p) => {
+                const isActive = selectedStart === p.start && selectedEnd === p.end;
+                return (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => {
+                      setSelectedStart(p.start);
+                      setSelectedEnd(p.end);
+                    }}
+                    className={`p-2 rounded-lg text-left border transition flex flex-col justify-between ${
+                      isActive
+                        ? 'border-indigo-500 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 ring-1 ring-indigo-500/30'
+                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold">{p.label}</span>
+                      {isActive && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                      {p.desc}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Time pickers */}
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <div>
+              <label htmlFor="scheduleStartHourSelect" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Day Start Hour
+              </label>
+              <select
+                id="scheduleStartHourSelect"
+                value={selectedStart}
+                onChange={(e) => setSelectedStart(Number(e.target.value))}
+                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500"
+              >
+                {START_HOUR_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="scheduleEndHourSelect" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Day End Hour
+              </label>
+              <select
+                id="scheduleEndHourSelect"
+                value={selectedEnd}
+                onChange={(e) => setSelectedEnd(Number(e.target.value))}
+                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500"
+              >
+                {END_HOUR_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Current Selection Preview */}
+          <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs font-mono">
+            <span className="text-slate-500 dark:text-slate-400">Timeline Window:</span>
+            <span className="font-semibold text-slate-900 dark:text-white">
+              {format12HourTime(selectedStart * 60, false)} – {format12HourTime(selectedEnd * 60, false)}
+            </span>
+          </div>
+
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+            💡 If any classes, routines, or events fall earlier or later on a specific day, the timeline automatically extends to guarantee nothing is clipped.
+          </p>
+
+          {/* Footer Actions */}
+          <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5 px-2 py-1 rounded transition"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset Default</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition"
+              >
+                Save Hours
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

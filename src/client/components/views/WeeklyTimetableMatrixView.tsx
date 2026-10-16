@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useWorkspace, DAY_NAMES_SHORT, timeToMinutes, addDays, getTodayIsoDate } from '../../hooks/useWorkspace';
-import { Plus, Trash2, Pencil, Sparkles, BellRing, Calendar, Clock } from 'lucide-react';
+import { Plus, Trash2, Pencil, Sparkles, BellRing, Calendar, Clock, ChevronDown, SlidersHorizontal, BookOpen } from 'lucide-react';
 import { Course, ScheduleEvent } from '../../../types';
 import { Twemoji } from '../common/Twemoji';
 import { CourseDetailsModal } from '../modals/CourseDetailsModal';
@@ -47,6 +47,24 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
 
   const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
   const [viewingEvent, setViewingEvent] = useState<ScheduleEvent | null>(null);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
+  const actionMenuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
+        setIsAddMenuOpen(false);
+        setIsToolsMenuOpen(false);
+      }
+    };
+    if (isAddMenuOpen || isToolsMenuOpen) {
+      document.addEventListener('pointerdown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideClick);
+    };
+  }, [isAddMenuOpen, isToolsMenuOpen]);
 
   const semCourses = courses.filter((c) => c.semesterId === viewedSemester.id);
   const semEvents = (events || []).filter((e) => e.semesterId === viewedSemester.id);
@@ -110,106 +128,211 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
     <div className="space-y-6">
       {/* Weekly Timetable Grid */}
       <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs">
-        <div className="px-4 py-3 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          {/* Header Title + Badges */}
+        <div className="px-4 py-3 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          {/* Left: Title + Segmented 5D/7D toggle + Filter Chips */}
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Weekly Timetable
             </h2>
-            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 hidden sm:inline-block">
-              Week {currentAcademicWeek}
-            </span>
-            <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hidden sm:inline-block">
-              {viewedSemester.name}
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hidden sm:inline-block">
+              W{currentAcademicWeek} · {viewedSemester.name}
             </span>
 
-            {/* Weekend 5-Day vs 7-Day Toggle */}
-            <button
-              type="button"
-              onClick={() => setShowWeekend(!showWeekend)}
-              className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium border transition ${
-                showWeekend
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-xs'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50'
-              }`}
-              title="Toggle weekend columns (Saturday & Sunday)"
-            >
-              {showWeekend ? '7-Day View' : '5-Day View'}
-            </button>
+            {/* Segmented 5-Day / 7-Day Pill Control */}
+            <div className="inline-flex items-center rounded-lg p-0.5 bg-slate-200/60 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setShowWeekend(false)}
+                className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium transition ${
+                  !showWeekend
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+                title="5-day view (Monday to Friday)"
+              >
+                5 Days
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowWeekend(true)}
+                className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium transition ${
+                  showWeekend
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+                title="7-day view (Monday to Sunday)"
+              >
+                7 Days
+              </button>
+            </div>
 
-            {/* Filter checkboxes */}
-            <div className="flex items-center gap-2 pl-1 border-l border-slate-200 dark:border-slate-700">
-              <label className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={showRoutines}
-                  onChange={(e) => setShowRoutines(e.target.checked)}
-                  className="rounded text-indigo-600 focus:ring-indigo-500 h-3 w-3"
-                />
+            {/* Filter Chips */}
+            <div className="flex items-center gap-1.5 pl-1 border-l border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setShowRoutines(!showRoutines)}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border transition cursor-pointer select-none ${
+                  showRoutines
+                    ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 shadow-2xs'
+                    : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 opacity-60'
+                }`}
+                title="Toggle routines visibility in grid"
+              >
+                <Twemoji emoji="🔁" className="w-3 h-3" />
                 <span>Routines</span>
-              </label>
-              <label className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={showEvents}
-                  onChange={(e) => setShowEvents(e.target.checked)}
-                  className="rounded text-indigo-600 focus:ring-indigo-500 h-3 w-3"
-                />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowEvents(!showEvents)}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border transition cursor-pointer select-none ${
+                  showEvents
+                    ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800 shadow-2xs'
+                    : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 opacity-60'
+                }`}
+                title="Toggle events visibility in grid"
+              >
+                <Twemoji emoji="📅" className="w-3 h-3" />
                 <span>Events</span>
-              </label>
+              </button>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Right: Consolidated Action Suite (AI Import, Tools ▾, + Add ▾) */}
+          <div ref={actionMenuRef} className="flex items-center gap-2 shrink-0 relative">
+            {/* 1. AI Import Button */}
             {onOpenAiImportModal && (
               <button
                 type="button"
                 onClick={onOpenAiImportModal}
-                className="px-2.5 py-1 rounded bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs"
+                className="px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
                 title="Extract and import timetable with AI"
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                <span>AI Import</span>
+                <span className="hidden sm:inline">AI Import</span>
               </button>
             )}
-            {onOpenRemindersModal && (
+
+            {/* 2. Tools & Settings Dropdown */}
+            <div className="relative">
               <button
                 type="button"
-                onClick={onOpenRemindersModal}
-                className="px-2.5 py-1 rounded bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-medium transition flex items-center gap-1.5"
-                title="Class reminders & calendar sync"
+                onClick={() => {
+                  setIsToolsMenuOpen(!isToolsMenuOpen);
+                  setIsAddMenuOpen(false);
+                }}
+                className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+                  isToolsMenuOpen
+                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white'
+                    : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                }`}
+                title="Timetable configuration & utilities"
               >
-                <BellRing className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Reminders</span>
+                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+                <span>Tools</span>
+                <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isToolsMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={onOpenTimeSlotsModal}
-              className="px-2.5 py-1 rounded bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-medium transition"
-            >
-              Slots
-            </button>
-            {onOpenEventModal && (
+
+              {isToolsMenuOpen && (
+                <div className="absolute right-0 mt-1.5 w-60 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Timetable Configuration
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsToolsMenuOpen(false);
+                      onOpenTimeSlotsModal();
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                  >
+                    <div className="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      <Clock className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-slate-900 dark:text-white">Session Time Slots</div>
+                      <div className="text-[10px] text-slate-400">Configure university S1–S10 times</div>
+                    </div>
+                  </button>
+                  {onOpenRemindersModal && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        onOpenRemindersModal();
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                    >
+                      <div className="p-1 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                        <BellRing className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-white">Class Reminders & Export</div>
+                        <div className="text-[10px] text-slate-400">Class alerts & ICS calendar sync</div>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 3. Primary Add Dropdown */}
+            <div className="relative">
               <button
                 type="button"
-                onClick={onOpenEventModal}
-                className="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition flex items-center gap-1 shadow-2xs"
-                title="Add a recurring routine habit or one-off event"
+                onClick={() => {
+                  setIsAddMenuOpen(!isAddMenuOpen);
+                  setIsToolsMenuOpen(false);
+                }}
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Add new course or event"
               >
-                <Plus className="w-3 h-3" />
-                <span>Routine/Event</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add</span>
+                <ChevronDown className={`w-3 h-3 text-white/80 transition-transform ${isAddMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={onOpenCourseModal}
-              className="px-2.5 py-1 rounded bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900 text-xs font-medium transition flex items-center gap-1 shadow-2xs"
-            >
-              <Plus className="w-3 h-3" />
-              <span>Course</span>
-            </button>
+
+              {isAddMenuOpen && (
+                <div className="absolute right-0 mt-1.5 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Create New
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddMenuOpen(false);
+                      onOpenCourseModal();
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                  >
+                    <div className="p-1 rounded bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
+                      <BookOpen className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-slate-900 dark:text-white">New Course</div>
+                      <div className="text-[10px] text-slate-400">Lectures, sessions, room & teacher</div>
+                    </div>
+                  </button>
+                  {onOpenEventModal && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddMenuOpen(false);
+                        onOpenEventModal();
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
+                    >
+                      <div className="p-1 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                        <Calendar className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-white">Routine or Event</div>
+                        <div className="text-[10px] text-slate-400">Recurring habit or one-off event</div>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

@@ -142,6 +142,24 @@ export function useWorkspace() {
     localStorage.setItem('aw_matrix_show_weekend', String(val));
   }, []);
 
+  const [scheduleStartHour, setScheduleStartHourState] = useState<number>(() => {
+    const saved = localStorage.getItem('aw_schedule_start_hour');
+    return saved ? Number(saved) : 8;
+  });
+  const setScheduleStartHour = useCallback((val: number) => {
+    setScheduleStartHourState(val);
+    localStorage.setItem('aw_schedule_start_hour', String(val));
+  }, []);
+
+  const [scheduleEndHour, setScheduleEndHourState] = useState<number>(() => {
+    const saved = localStorage.getItem('aw_schedule_end_hour');
+    return saved ? Number(saved) : 21.5;
+  });
+  const setScheduleEndHour = useCallback((val: number) => {
+    setScheduleEndHourState(val);
+    localStorage.setItem('aw_schedule_end_hour', String(val));
+  }, []);
+
   const [viewedSemesterId, setViewedSemesterId] = useState<string>('sem_2026_fall');
   const [selectedDate, setSelectedDate] = useState<string>(() => getTodayIsoDate());
   const [activeTab, setActiveTab] = useState<TabKey>('timeline');
@@ -649,6 +667,10 @@ export function useWorkspace() {
     setShowEvents,
     showWeekend,
     setShowWeekend,
+    scheduleStartHour,
+    setScheduleStartHour,
+    scheduleEndHour,
+    setScheduleEndHour,
     searchQuery,
     setSearchQuery,
     showInactiveCourses,

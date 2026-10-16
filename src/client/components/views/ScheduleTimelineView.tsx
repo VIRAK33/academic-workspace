@@ -19,6 +19,7 @@ import { Plus, Check, Clock, Pencil, Calendar } from 'lucide-react';
 import { Twemoji } from '../common/Twemoji';
 import { CourseDetailsModal } from '../modals/CourseDetailsModal';
 import { EventDetailsModal } from '../modals/EventDetailsModal';
+import { ScheduleHoursModal } from '../modals/ScheduleHoursModal';
 
 interface ScheduleTimelineViewProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -78,6 +79,11 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
     timeSlots,
     showInactiveCourses,
     setShowInactiveCourses,
+    scheduleStartHour,
+    setScheduleStartHour,
+    scheduleEndHour,
+    setScheduleEndHour,
+    showToast,
     simulatedMinutes,
     setSimulatedMinutes,
     isLiveClock,
@@ -89,6 +95,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
 
   const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
   const [viewingEvent, setViewingEvent] = useState<ScheduleEvent | null>(null);
+  const [isHoursModalOpen, setIsHoursModalOpen] = useState(false);
 
   const targetDow = getIsoDayOfWeek(selectedDate);
   const dayName = DAY_NAMES_FULL[targetDow];
@@ -205,27 +212,29 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
     return list;
   }, [displayCourses, todayEvents]);
 
-  // Dynamic canvas bounds (expands if early morning or late evening commitments exist)
+  // Dynamic canvas bounds (uses user-defined schedule window, expanding if commitments fall outside)
   const gridStartHour = useMemo(() => {
-    if (allEventsForDay.length === 0) return BASE_START_HOUR;
+    const baseStart = Math.floor(scheduleStartHour || 8);
+    if (allEventsForDay.length === 0) return baseStart;
     const minMins = Math.min(...allEventsForDay.map(i => i.startMins));
-    if (minMins < BASE_START_HOUR * 60) {
-      return Math.max(5, Math.floor(minMins / 60));
+    if (minMins < baseStart * 60) {
+      return Math.max(0, Math.floor(minMins / 60));
     }
-    return BASE_START_HOUR;
-  }, [allEventsForDay]);
+    return baseStart;
+  }, [allEventsForDay, scheduleStartHour]);
 
   const gridEndHour = useMemo(() => {
-    if (allEventsForDay.length === 0) return BASE_END_HOUR;
+    const baseEnd = scheduleEndHour || 21.5;
+    if (allEventsForDay.length === 0) return baseEnd;
     const maxMins = Math.max(...allEventsForDay.map(i => i.endMins));
-    if (maxMins > (BASE_END_HOUR + 0.5) * 60) {
-      return Math.min(23, Math.ceil(maxMins / 60));
+    if (maxMins > baseEnd * 60) {
+      return Math.min(24, Math.ceil(maxMins / 60));
     }
-    return BASE_END_HOUR;
-  }, [allEventsForDay]);
+    return baseEnd;
+  }, [allEventsForDay, scheduleEndHour]);
 
   const startDayMins = gridStartHour * 60;
-  const endDayMins = (gridEndHour + 0.5) * 60;
+  const endDayMins = Math.round(gridEndHour * 60);
   const totalCanvasHeight = Math.round((endDayMins - startDayMins) * PX_PER_MINUTE + TOP_PAD_PX + BOTTOM_PAD_PX);
 
   // Combine items & compute non-overlapping side-by-side columns based on true visual collisions
@@ -611,15 +620,28 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
     <div className="space-y-4">
       {/* Slim Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-slate-800 text-xs">
-        <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
-          <input
-            type="checkbox"
-            checked={showInactiveCourses}
-            onChange={(e) => setShowInactiveCourses(e.target.checked)}
-            className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-0 w-3.5 h-3.5"
-          />
-          <span>Show off-week classes</span>
-        </label>
+        <div className="flex items-center gap-3">
+          <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
+            <input
+              type="checkbox"
+              checked={showInactiveCourses}
+              onChange={(e) => setShowInactiveCourses(e.target.checked)}
+              className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-0 w-3.5 h-3.5"
+            />
+            <span>Show off-week classes</span>
+          </label>
+          <span className="text-slate-300 dark:text-slate-700">|</span>
+          <button
+            type="button"
+            onClick={() => setIsHoursModalOpen(true)}
+            className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer"
+            title="Edit schedule daily display hours (e.g. 7 AM – 11 PM)"
+          >
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <span>Hours: <strong className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{format12HourTime(startDayMins, false)} – {format12HourTime(endDayMins, false)}</strong></span>
+            <Pencil className="w-2.5 h-2.5 text-slate-400 ml-0.5" />
+          </button>
+        </div>
 
         {!isLiveClock && (
           <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-200/90 dark:border-slate-700">
@@ -656,9 +678,16 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                 {dayName} · W{currentAcademicWeek}
               </span>
             </div>
-            <span className="text-[10px] font-mono text-slate-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/70 dark:border-slate-700">
-              {format12HourTime(startDayMins, false)} – {format12HourTime(endDayMins, false)}
-            </span>
+            <button
+              type="button"
+              onClick={() => setIsHoursModalOpen(true)}
+              className="text-[10px] font-mono text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 px-2 py-0.5 rounded border border-slate-200/90 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs group cursor-pointer"
+              title="Click to edit schedule active hours (e.g. 7 AM – 11 PM)"
+            >
+              <Clock className="w-3 h-3 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+              <span>{format12HourTime(startDayMins, false)} – {format12HourTime(endDayMins, false)}</span>
+              <Pencil className="w-2.5 h-2.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+            </button>
           </div>
 
           {/* Canvas */}
@@ -670,7 +699,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
             />
 
             {/* Hour Grid Lines */}
-            {Array.from({ length: gridEndHour - gridStartHour + 1 }, (_, idx) => {
+            {Array.from({ length: Math.max(1, Math.floor(gridEndHour) - gridStartHour + 1) }, (_, idx) => {
               const h = gridStartHour + idx;
               const hourMins = h * 60;
               const yPx = Math.round(TOP_PAD_PX + (hourMins - startDayMins) * PX_PER_MINUTE);
@@ -1165,6 +1194,19 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
           if (onEditEvent) onEditEvent(ev);
         }}
         currentAcademicWeek={currentAcademicWeek}
+      />
+
+      {/* Schedule Hours Configuration Modal */}
+      <ScheduleHoursModal
+        isOpen={isHoursModalOpen}
+        onClose={() => setIsHoursModalOpen(false)}
+        startHour={scheduleStartHour}
+        endHour={scheduleEndHour}
+        onSave={(newStart, newEnd) => {
+          setScheduleStartHour(newStart);
+          setScheduleEndHour(newEnd);
+          showToast(`Schedule hours set to ${format12HourTime(newStart * 60, false)} – ${format12HourTime(newEnd * 60, false)}`);
+        }}
       />
     </div>
   );
