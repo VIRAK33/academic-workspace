@@ -84,6 +84,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
     saveCourse,
     saveTask,
     searchQuery,
+    advisorMeetings,
   } = ws;
 
   const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
@@ -398,13 +399,13 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
     });
   }, [tasks, viewedSemester.id, selectedDate, searchQuery]);
 
-  // Dynamic Quick Scenarios computed relative to current real-time / engine date (getTodayIsoDate())
+  // Combined Academic Situation Archetypes + Action Horizon Scenarios
   const quickScenarios = useMemo(() => {
     const todayIso = getTodayIsoDate();
     const todayDow = getIsoDayOfWeek(todayIso);
 
-    // Helper to evaluate commitments on any given ISO date
-    const evaluateDay = (isoDate: string) => {
+    // Helper: evaluate full day details
+    const getDayDetails = (isoDate: string) => {
       const dow = getIsoDayOfWeek(isoDate);
       const week = calculateAcademicWeek(isoDate, viewedSemester.startDate);
       const dayShort = DAY_NAMES_SHORT[dow] || '';
@@ -413,15 +414,27 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
       const monthShort = MONTH_NAMES_SHORT[dt.getUTCMonth()];
       const headerStr = `${dayShort}, ${monthShort} ${dayNum} · W${week}`;
 
-      // Courses on this day
-      const dayCourses = courses.filter(c => {
-        if (c.semesterId !== viewedSemester.id) return false;
+      // Active courses
+      const dayCourses: Array<{ course: Course; schedule: Course['schedules'][0]; startTime: string; endTime: string }> = [];
+      courses.forEach(c => {
+        if (c.semesterId !== viewedSemester.id) return;
         const isWeekActive = (c.activeWeeks || []).map(Number).includes(week);
-        if (!isWeekActive) return false;
-        return (c.schedules || []).some(s => Number(s.dayOfWeek) === dow);
+        if (!isWeekActive) return;
+        const scheds = (c.schedules || []).filter(s => Number(s.dayOfWeek) === dow);
+        scheds.forEach(s => {
+          let st = s.startTime;
+          let et = s.endTime;
+          if (!st || !et) {
+            const b = computeMergedSessionBounds((s.sessions || []).map(String));
+            st = st || b.startTime;
+            et = et || b.endTime;
+          }
+          dayCourses.push({ course: c, schedule: s, startTime: st, endTime: et });
+        });
       });
+      dayCourses.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 
-      // Events on this day
+      // Active events & routines
       const dayEvents = (events || []).filter(ev => {
         if (ev.semesterId !== viewedSemester.id) return false;
         if (ev.type === 'routine') {
@@ -435,145 +448,164 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
         return false;
       });
 
-      // Tasks due on this day
+      // Tasks
       const dayTasks = tasks.filter(t => t.status !== 'archived' && t.dueDate === isoDate);
+
+      // Advisor meetings
+      const dayMeetings = (advisorMeetings || []).filter(m => m.meetingDate === isoDate);
 
       return {
         isoDate,
         dow,
         week,
         headerStr,
-        courses: dayCourses,
-        events: dayEvents,
-        tasks: dayTasks,
-        totalCount: dayCourses.length + dayEvents.length + dayTasks.length,
+        dayCourses,
+        dayEvents,
+        dayTasks,
+        dayMeetings,
+        totalClasses: dayCourses.length,
       };
     };
 
-    // 1. Scenario: Today
-    const todayData = evaluateDay(todayIso);
-    let todaySubtitle = '';
-    if (todayData.courses.length > 0) {
-      const futureCourses = todayCourses.filter(item => timeToMinutes(item.startTime) >= simulatedMinutes);
-      if (futureCourses.length > 0) {
-        todaySubtitle = `Next: ${futureCourses[0].course.code} (${futureCourses[0].startTime})`;
-      } else {
-        todaySubtitle = todayData.courses.map(c => c.code).join(' + ');
-      }
-    } else if (todayData.events.length > 0) {
-      todaySubtitle = todayData.events[0].title;
-    } else if (todayData.tasks.length > 0) {
-      todaySubtitle = `${todayData.tasks.length} task${todayData.tasks.length > 1 ? 's' : ''} due`;
+    // --- 1. NEXT LECTURE (Action & Attendance) ---
+    let nextLectureIso = todayIso;
+    let nextLectureSubtitle = 'No classes';
+    const todayDetails = getDayDetails(todayIso);
+    const upcomingTodayCourse = todayDetails.dayCourses.find(c => timeToMinutes(c.startTime) >= simulatedMinutes - 20);
+
+    if (upcomingTodayCourse) {
+      nextLectureIso = todayIso;
+      nextLectureSubtitle = `${upcomingTodayCourse.course.code} at ${format12HourTime(timeToMinutes(upcomingTodayCourse.startTime), true)} · ${upcomingTodayCourse.course.location || 'Classroom'}`;
     } else {
-      todaySubtitle = todayData.dow >= 6 ? 'Weekend break' : 'No classes today (Free)';
-    }
-
-    // 2. Scenario: Tomorrow
-    const tomorrowIso = addDays(todayIso, 1);
-    const tomorrowData = evaluateDay(tomorrowIso);
-    let tomorrowSubtitle = '';
-    if (tomorrowData.courses.length > 0) {
-      tomorrowSubtitle = tomorrowData.courses.map(c => c.code).join(' + ');
-    } else if (tomorrowData.events.length > 0) {
-      tomorrowSubtitle = tomorrowData.events[0].title;
-    } else if (tomorrowData.tasks.length > 0) {
-      tomorrowSubtitle = `${tomorrowData.tasks.length} task${tomorrowData.tasks.length > 1 ? 's' : ''} due`;
-    } else {
-      tomorrowSubtitle = tomorrowData.dow >= 6 ? 'Weekend' : 'No classes scheduled';
-    }
-
-    // 3. Scenario: Next Action Day (check days +1 through +7 for earliest commitment)
-    let nextActionIso = '';
-    let nextActionData: ReturnType<typeof evaluateDay> | null = null;
-    for (let offset = 1; offset <= 7; offset++) {
-      const candidateIso = addDays(todayIso, offset);
-      const evalCandidate = evaluateDay(candidateIso);
-      if (evalCandidate.totalCount > 0) {
-        nextActionIso = candidateIso;
-        nextActionData = evalCandidate;
-        break;
-      }
-    }
-    if (!nextActionData) {
-      nextActionIso = addDays(todayIso, 2);
-      nextActionData = evaluateDay(nextActionIso);
-    }
-    let nextActionSubtitle = '';
-    if (nextActionData.courses.length > 0) {
-      nextActionSubtitle = nextActionData.courses.map(c => c.code).join(' + ');
-    } else if (nextActionData.events.length > 0) {
-      nextActionSubtitle = nextActionData.events[0].title;
-    } else if (nextActionData.tasks.length > 0) {
-      nextActionSubtitle = `${nextActionData.tasks.length} task${nextActionData.tasks.length > 1 ? 's' : ''} due`;
-    } else {
-      nextActionSubtitle = 'Upcoming day';
-    }
-
-    // 4. Scenario: Next Week / Start of Next Academic Week
-    const daysUntilNextMonday = (8 - todayDow) % 7 || 7;
-    let nextWeekIso = addDays(todayIso, daysUntilNextMonday);
-
-    // If nextActionIso already points to nextWeekIso, pick the following commitment day
-    if (nextActionIso === nextWeekIso) {
-      let followingActionIso = '';
-      for (let offset = daysUntilNextMonday + 1; offset <= daysUntilNextMonday + 6; offset++) {
-        const candidate = addDays(todayIso, offset);
-        if (evaluateDay(candidate).totalCount > 0) {
-          followingActionIso = candidate;
+      for (let offset = 1; offset <= 10; offset++) {
+        const dIso = addDays(todayIso, offset);
+        const details = getDayDetails(dIso);
+        if (details.dayCourses.length > 0) {
+          nextLectureIso = dIso;
+          const firstClass = details.dayCourses[0];
+          nextLectureSubtitle = `${firstClass.course.code} at ${format12HourTime(timeToMinutes(firstClass.startTime), true)} · ${firstClass.course.location || 'Classroom'}`;
           break;
         }
       }
-      if (followingActionIso) {
-        nextWeekIso = followingActionIso;
-      } else {
-        nextWeekIso = addDays(nextActionIso, 2);
+    }
+    const nextLectureDetails = getDayDetails(nextLectureIso);
+
+    // --- 2. PEAK CLASS DAY (Heavy workload day) ---
+    let peakDayIso = '';
+    let maxClasses = -1;
+    for (let offset = 0; offset <= 11; offset++) {
+      const dIso = addDays(todayIso, offset);
+      const details = getDayDetails(dIso);
+      if (details.dow <= 5 && details.totalClasses > maxClasses) {
+        maxClasses = details.totalClasses;
+        peakDayIso = dIso;
       }
     }
-    const nextWeekData = evaluateDay(nextWeekIso);
-    let nextWeekSubtitle = '';
-    if (nextWeekData.courses.length > 0) {
-      nextWeekSubtitle = nextWeekData.courses.map(c => c.code).join(' + ');
-    } else if (nextWeekData.events.length > 0) {
-      nextWeekSubtitle = nextWeekData.events[0].title;
-    } else {
-      nextWeekSubtitle = `Week ${nextWeekData.week} kickoff`;
+    if (!peakDayIso || maxClasses <= 0) {
+      peakDayIso = addDays(todayIso, (8 - todayDow) % 7 || 7);
     }
+    const peakDayDetails = getDayDetails(peakDayIso);
+    let peakSubtitle = '';
+    if (peakDayDetails.totalClasses > 0) {
+      const codes = Array.from(new Set(peakDayDetails.dayCourses.map(c => c.course.code)));
+      peakSubtitle = `${peakDayDetails.totalClasses} classes (${codes.join(' + ')})`;
+    } else {
+      peakSubtitle = 'Light academic week';
+    }
+
+    // --- 3. DEEP WORK DAY (Zero-class research & lab focus) ---
+    let deepWorkIso = '';
+    for (let offset = (todayDetails.totalClasses === 0 && todayDow <= 5 ? 0 : 1); offset <= 10; offset++) {
+      const dIso = addDays(todayIso, offset);
+      const details = getDayDetails(dIso);
+      if (details.dow <= 5 && details.totalClasses === 0 && dIso !== nextLectureIso) {
+        deepWorkIso = dIso;
+        break;
+      }
+    }
+    if (!deepWorkIso) {
+      deepWorkIso = addDays(todayIso, 2);
+    }
+    const deepWorkDetails = getDayDetails(deepWorkIso);
+    let deepWorkSubtitle = '0 classes · Open for Lab & Coding';
+    if (deepWorkDetails.dayEvents.length > 0) {
+      deepWorkSubtitle = `0 classes · ${deepWorkDetails.dayEvents[0].title}`;
+    }
+
+    // --- 4. ADVISOR & MILESTONES (Meetings, Seminars, Critical Deadlines) ---
+    let milestoneIso = '';
+    let milestoneSubtitle = '';
+    for (let offset = 0; offset <= 14; offset++) {
+      const dIso = addDays(todayIso, offset);
+      const details = getDayDetails(dIso);
+      if (details.dayMeetings.length > 0) {
+        milestoneIso = dIso;
+        milestoneSubtitle = 'Advisor Meeting scheduled';
+        break;
+      }
+      const labMeeting = details.dayEvents.find(e => e.title.toLowerCase().includes('lab') || e.title.toLowerCase().includes('advisor') || e.title.toLowerCase().includes('seminar'));
+      if (labMeeting) {
+        milestoneIso = dIso;
+        milestoneSubtitle = labMeeting.title;
+        break;
+      }
+      const highTask = details.dayTasks.find(t => t.priority === 'high');
+      if (highTask) {
+        milestoneIso = dIso;
+        milestoneSubtitle = `Due: ${highTask.title}`;
+        break;
+      }
+    }
+    if (!milestoneIso) {
+      milestoneIso = addDays(todayIso, ((12 - todayDow) % 7 || 7));
+      const fbDetails = getDayDetails(milestoneIso);
+      milestoneSubtitle = fbDetails.dayCourses.length > 0 ? `${fbDetails.dayCourses.map(c => c.course.code).join(' + ')}` : 'Weekly milestone review';
+    }
+    const milestoneDetails = getDayDetails(milestoneIso);
 
     return [
       {
-        id: 'today',
-        label: 'Today',
-        isoDate: todayIso,
-        headerStr: todayData.headerStr,
-        subtitle: todaySubtitle,
+        id: 'next_lecture',
+        label: 'Next Lecture',
+        tag: 'Classroom',
+        isoDate: nextLectureIso,
+        headerStr: nextLectureDetails.headerStr,
+        subtitle: nextLectureSubtitle,
         badgeColor: 'text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800',
+        activeRing: 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 ring-indigo-500/30',
       },
       {
-        id: 'tomorrow',
-        label: 'Tomorrow',
-        isoDate: tomorrowIso,
-        headerStr: tomorrowData.headerStr,
-        subtitle: tomorrowSubtitle,
-        badgeColor: 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800',
+        id: 'peak_day',
+        label: 'Peak Class Day',
+        tag: 'Heavy Load',
+        isoDate: peakDayIso,
+        headerStr: peakDayDetails.headerStr,
+        subtitle: peakSubtitle,
+        badgeColor: 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800',
+        activeRing: 'border-amber-500 bg-amber-50/70 dark:bg-amber-950/40 ring-amber-500/30',
       },
       {
-        id: 'next_action',
-        label: 'Next Action',
-        isoDate: nextActionIso,
-        headerStr: nextActionData.headerStr,
-        subtitle: nextActionSubtitle,
+        id: 'deep_work',
+        label: 'Deep Work Day',
+        tag: 'Focus Day',
+        isoDate: deepWorkIso,
+        headerStr: deepWorkDetails.headerStr,
+        subtitle: deepWorkSubtitle,
         badgeColor: 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800',
+        activeRing: 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-emerald-500/30',
       },
       {
-        id: 'next_week',
-        label: `Next Week · W${nextWeekData.week}`,
-        isoDate: nextWeekIso,
-        headerStr: nextWeekData.headerStr,
-        subtitle: nextWeekSubtitle,
+        id: 'advisor_milestone',
+        label: 'Advisor & Lab',
+        tag: 'Milestone',
+        isoDate: milestoneIso,
+        headerStr: milestoneDetails.headerStr,
+        subtitle: milestoneSubtitle,
         badgeColor: 'text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border-purple-200 dark:border-purple-800',
+        activeRing: 'border-purple-500 bg-purple-50/70 dark:bg-purple-950/40 ring-purple-500/30',
       },
     ];
-  }, [courses, events, tasks, viewedSemester, simulatedMinutes, todayCourses]);
+  }, [courses, events, tasks, advisorMeetings, viewedSemester, simulatedMinutes, timeSlots]);
 
   return (
     <div className="space-y-4">
@@ -1080,11 +1112,18 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                       <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${sc.badgeColor}`}>
                         {sc.label}
                       </span>
-                      {isSelected && (
-                        <span className="text-[9px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                          Active
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {sc.tag && (
+                          <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500">
+                            {sc.tag}
+                          </span>
+                        )}
+                        {isSelected && (
+                          <span className="text-[9px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                            Active
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-[11px] font-semibold text-slate-900 dark:text-slate-100 font-mono tabular-nums mt-0.5">
                       {sc.headerStr}
