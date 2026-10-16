@@ -385,44 +385,34 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
     <div className="space-y-4">
       {/* Slim Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-slate-800 text-xs">
-        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-          <span className="font-medium text-slate-700 dark:text-slate-300">
-            {dayName} · Week {currentAcademicWeek}
-          </span>
-          <span className="text-slate-300 dark:text-slate-700">·</span>
-          <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">{selectedDate}</span>
-        </div>
+        <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
+          <input
+            type="checkbox"
+            checked={showInactiveCourses}
+            onChange={(e) => setShowInactiveCourses(e.target.checked)}
+            className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-0 w-3.5 h-3.5"
+          />
+          <span>Show off-week classes</span>
+        </label>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
+        {!isLiveClock && (
+          <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-200/90 dark:border-slate-700">
+            <span className="w-2 h-2 rounded-full bg-[#dc2626]" />
+            <label htmlFor="simTimeSlider" className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">
+              Time: <span className="text-[#dc2626] font-semibold">{sim12hStr}</span>
+            </label>
             <input
-              type="checkbox"
-              checked={showInactiveCourses}
-              onChange={(e) => setShowInactiveCourses(e.target.checked)}
-              className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-0 w-3.5 h-3.5"
+              id="simTimeSlider"
+              type="range"
+              min="420"
+              max="1380"
+              value={simulatedMinutes}
+              onChange={(e) => setSimulatedMinutes(parseInt(e.target.value, 10))}
+              className="w-24 cursor-pointer"
+              title="Drag to simulate time indicator"
             />
-            <span>Show off-week classes</span>
-          </label>
-
-          {!isLiveClock && (
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-200/90 dark:border-slate-700">
-              <span className="w-2 h-2 rounded-full bg-[#dc2626]" />
-              <label htmlFor="simTimeSlider" className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">
-                Time: <span className="text-[#dc2626] font-semibold">{sim12hStr}</span>
-              </label>
-              <input
-                id="simTimeSlider"
-                type="range"
-                min="420"
-                max="1380"
-                value={simulatedMinutes}
-                onChange={(e) => setSimulatedMinutes(parseInt(e.target.value, 10))}
-                className="w-24 cursor-pointer"
-                title="Drag to simulate time indicator"
-              />
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* 12-Column Split Layout */}

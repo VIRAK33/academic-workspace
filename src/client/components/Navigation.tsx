@@ -18,9 +18,10 @@ import {
 interface NavigationProps {
   ws: ReturnType<typeof useWorkspace>;
   onOpenGuideModal?: () => void;
+  onOpenCustomizeViews?: () => void;
 }
 
-export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal }) => {
+export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal, onOpenCustomizeViews }) => {
   const {
     activeTab,
     setActiveTab,
@@ -123,8 +124,8 @@ export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal }) 
             })}
           </nav>
 
-          {/* Customization Control */}
-          <div className="flex items-center shrink-0 relative" ref={dropdownRef}>
+          {/* Customization Control (Desktop only, mobile has it in drawer menu) */}
+          <div className="hidden md:flex items-center shrink-0 relative" ref={dropdownRef}>
             {/* Customize Dropdown Button */}
             <button
               type="button"

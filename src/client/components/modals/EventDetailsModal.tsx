@@ -37,12 +37,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-100">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[88vh] animate-in fade-in zoom-in-95 duration-100">
         
         {/* Header Bar */}
         <div
-          className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between bg-slate-50/60 dark:bg-slate-800/40 relative"
+          className="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between bg-slate-50/60 dark:bg-slate-800/40 relative shrink-0"
           style={{ borderTopWidth: '4px', borderTopColor: event.color || '#059669' }}
         >
           <div className="space-y-1.5 pr-6">
@@ -65,7 +65,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               )}
             </div>
 
-            <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
               {event.title}
             </h3>
           </div>
@@ -81,7 +81,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-3.5 overflow-y-auto custom-scrollbar flex-1 text-xs">
+        <div className="p-3.5 sm:p-5 space-y-3 sm:space-y-3.5 overflow-y-auto custom-scrollbar flex-1 text-xs">
           
           {/* Time & Schedule Box */}
           <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
@@ -144,7 +144,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
+        <div className="px-4 py-3 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
           <div>
             {onDelete && (
               <button

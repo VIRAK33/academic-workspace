@@ -14,6 +14,7 @@ interface HeaderProps {
   onOpenAiImportModal: () => void;
   onOpenRemindersModal: () => void;
   onOpenGuideModal: () => void;
+  onOpenCustomizeViews: () => void;
 }
 
 interface HeaderTooltipButtonProps {
@@ -80,6 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAiImportModal,
   onOpenRemindersModal,
   onOpenGuideModal,
+  onOpenCustomizeViews,
 }) => {
   const {
     viewedSemester,
@@ -100,6 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
     showToast,
     workspaceMode,
     setWorkspaceMode,
+    enabledTabs,
   } = ws;
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -193,8 +196,8 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
 
-              {/* Term Selector & Meta */}
-              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              {/* Term Selector */}
+              <div className="flex items-center gap-2 mt-0.5">
                 <div className="relative inline-flex items-center">
                   <select
                     value={viewedSemesterId}
@@ -210,16 +213,8 @@ export const Header: React.FC<HeaderProps> = ({
                   </select>
                   <ChevronDown className="w-3 h-3 text-slate-400 pointer-events-none absolute right-1 top-1/2 -translate-y-1/2" />
                 </div>
-                <span className="text-slate-300 dark:text-slate-700 text-xs">·</span>
-                <button
-                  type="button"
-                  onClick={onOpenSemesterModal}
-                  className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 underline decoration-slate-300 underline-offset-2 transition"
-                >
-                  Manage Terms
-                </button>
                 <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 hidden md:inline">
-                  Start: {viewedSemester.startDate}
+                  · Start: {viewedSemester.startDate}
                 </span>
               </div>
             </div>
@@ -308,6 +303,39 @@ export const Header: React.FC<HeaderProps> = ({
 
                   {/* General Schedule Utilities */}
                   <div className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        onOpenCustomizeViews();
+                      }}
+                      className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
+                    >
+                      <SlidersHorizontal className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <div>
+                        <div className="font-medium text-xs flex items-center gap-1.5">
+                          <span>Customize Views</span>
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-semibold">{enabledTabs.length}/8</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400">Toggle tabs, order & presets</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        onOpenSemesterModal();
+                      }}
+                      className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
+                    >
+                      <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <div>
+                        <div className="font-medium text-xs">Manage Semesters & Terms</div>
+                        <div className="text-[10px] text-slate-400">Create, switch, or edit terms & dates</div>
+                      </div>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => {
@@ -738,11 +766,40 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   onClick={() => {
                     setIsMobileDrawerOpen(false);
+                    onOpenCustomizeViews();
+                  }}
+                  className="w-full flex items-center justify-between p-2 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-900/40 text-xs text-indigo-700 dark:text-indigo-300 font-medium transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <SlidersHorizontal className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <span>Customize Views</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/70 text-indigo-700 dark:text-indigo-300 font-semibold">
+                    {enabledTabs.length}/8
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
+                    onOpenSemesterModal();
+                  }}
+                  className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
+                >
+                  <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
+                  <span>Manage Semesters & Terms</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
                     onOpenGuideModal();
                   }}
-                  className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-900/40 text-xs text-indigo-700 dark:text-indigo-300 font-medium transition"
+                  className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
                 >
-                  <Compass className="w-4 h-4 text-indigo-500" />
+                  <Compass className="w-4 h-4 text-indigo-500 shrink-0" />
                   <span>Getting Started Guide</span>
                 </button>
 

@@ -31,6 +31,7 @@ import { AiScheduleImportModal } from './components/modals/AiScheduleImportModal
 import { ClassRemindersModal } from './components/modals/ClassRemindersModal';
 import { WelcomeGuideModal } from './components/modals/WelcomeGuideModal';
 import { EventModal } from './components/modals/EventModal';
+import { CustomizeViewsModal } from './components/modals/CustomizeViewsModal';
 import { useAuth } from './hooks/useAuth';
 
 import { Plus } from 'lucide-react';
@@ -58,6 +59,7 @@ export function App() {
   const [isKanbanModalOpen, setIsKanbanModalOpen] = useState(false);
   const [isAiImportModalOpen, setIsAiImportModalOpen] = useState(false);
   const [isRemindersModalOpen, setIsRemindersModalOpen] = useState(false);
+  const [isCustomizeViewsOpen, setIsCustomizeViewsOpen] = useState(false);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
   const [isWelcomeGuideOpen, setIsWelcomeGuideOpen] = useState(() => {
@@ -107,10 +109,15 @@ export function App() {
         onOpenAiImportModal={() => setIsAiImportModalOpen(true)}
         onOpenRemindersModal={() => setIsRemindersModalOpen(true)}
         onOpenGuideModal={() => setIsWelcomeGuideOpen(true)}
+        onOpenCustomizeViews={() => setIsCustomizeViewsOpen(true)}
       />
 
       {/* Tabs Navigation */}
-      <Navigation ws={ws} onOpenGuideModal={() => setIsWelcomeGuideOpen(true)} />
+      <Navigation
+        ws={ws}
+        onOpenGuideModal={() => setIsWelcomeGuideOpen(true)}
+        onOpenCustomizeViews={() => setIsCustomizeViewsOpen(true)}
+      />
 
       {/* Main View Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-24">
@@ -244,6 +251,11 @@ export function App() {
         isOpen={isWelcomeGuideOpen}
         onClose={() => setIsWelcomeGuideOpen(false)}
         onOpenAiImportModal={() => setIsAiImportModalOpen(true)}
+      />
+      <CustomizeViewsModal
+        ws={ws}
+        isOpen={isCustomizeViewsOpen}
+        onClose={() => setIsCustomizeViewsOpen(false)}
       />
     </div>
   );

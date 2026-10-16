@@ -115,10 +115,10 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Weekly Timetable
             </h2>
-            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 hidden sm:inline-block">
               Week {currentAcademicWeek}
             </span>
-            <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hidden sm:inline-block">
               {viewedSemester.name}
             </span>
 

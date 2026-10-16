@@ -94,15 +94,15 @@ export const SemesterModal: React.FC<SemesterModalProps> = ({ ws, isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg rounded-t-xl sm:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[88vh]">
         {/* Modal Header */}
-        <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Manage Academic Terms
             </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
               Configure semesters, start dates, active status, and term archives.
             </p>
           </div>
@@ -119,7 +119,7 @@ export const SemesterModal: React.FC<SemesterModalProps> = ({ ws, isOpen, onClos
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+        <div className="p-3.5 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1">
           {/* AI Import Shortcut */}
           {onOpenAiImportModal && (
             <div className="p-3 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-900/50 flex items-center justify-between gap-3">
@@ -406,7 +406,7 @@ export const SemesterModal: React.FC<SemesterModalProps> = ({ ws, isOpen, onClos
         </div>
 
         {/* Modal Footer */}
-        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between shrink-0">
+        <div className="px-4 py-3 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between shrink-0">
           <span className="text-[10px] font-mono text-slate-400">
             Current Active Term: {semesters.find(s => s.isActive)?.name || 'None'}
           </span>
