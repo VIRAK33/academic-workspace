@@ -1,12 +1,12 @@
 const CACHE_NAME = 'phd-workspace-v1';
 const PRECACHE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.svg',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/icon-maskable.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './favicon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable.png'
 ];
 
 // Install: Cache core application shell
@@ -57,7 +57,7 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          return caches.match('/index.html') || caches.match('/');
+          return caches.match('./index.html') || caches.match('./') || caches.match('/index.html');
         })
     );
     return;

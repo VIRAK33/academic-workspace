@@ -6,7 +6,7 @@ import './index.css';
 // Register PWA Service Worker for offline-first capabilities
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(
+    navigator.serviceWorker.register('./sw.js').then(
       (reg) => {
         reg.onupdatefound = () => {
           const installingWorker = reg.installing;
