@@ -625,8 +625,9 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
         <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs">
           {/* Canvas Card Header with unified controls */}
           <div className="px-3.5 py-2.5 border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 bg-slate-50/50 dark:bg-slate-800/40">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 sm:hidden shrink-0" />
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200 hidden sm:inline">
                 Schedule Timeline
               </h2>
               <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
@@ -643,7 +644,8 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                   onChange={(e) => setShowInactiveCourses(e.target.checked)}
                   className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-0 w-3.5 h-3.5"
                 />
-                <span>Off-week classes</span>
+                <span className="hidden sm:inline">Off-week classes</span>
+                <span className="sm:hidden">Off-week</span>
               </label>
 
               <span className="text-slate-200 dark:text-slate-700 hidden sm:inline">|</span>

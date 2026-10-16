@@ -93,7 +93,7 @@ export const TasksTodoView: React.FC<TasksTodoViewProps> = ({ ws, onOpenTaskModa
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <span>Recently Done</span>
+            <span>Done</span>
             {completedCount > 0 && (
               <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-semibold">
                 {completedCount}
@@ -110,7 +110,7 @@ export const TasksTodoView: React.FC<TasksTodoViewProps> = ({ ws, onOpenTaskModa
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            All Active
+            Active
           </button>
 
           <button
