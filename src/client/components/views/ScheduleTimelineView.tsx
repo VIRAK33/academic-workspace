@@ -618,76 +618,67 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Slim Control Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-slate-800 text-xs">
-        <div className="flex items-center gap-3">
-          <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
-            <input
-              type="checkbox"
-              checked={showInactiveCourses}
-              onChange={(e) => setShowInactiveCourses(e.target.checked)}
-              className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-0 w-3.5 h-3.5"
-            />
-            <span>Show off-week classes</span>
-          </label>
-          <span className="text-slate-300 dark:text-slate-700">|</span>
-          <button
-            type="button"
-            onClick={() => setIsHoursModalOpen(true)}
-            className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer"
-            title="Edit schedule daily display hours (e.g. 7 AM – 11 PM)"
-          >
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span>Hours: <strong className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{format12HourTime(startDayMins, false)} – {format12HourTime(endDayMins, false)}</strong></span>
-            <Pencil className="w-2.5 h-2.5 text-slate-400 ml-0.5" />
-          </button>
-        </div>
-
-        {!isLiveClock && (
-          <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-200/90 dark:border-slate-700">
-            <span className="w-2 h-2 rounded-full bg-[#dc2626]" />
-            <label htmlFor="simTimeSlider" className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">
-              Time: <span className="text-[#dc2626] font-semibold">{sim12hStr}</span>
-            </label>
-            <input
-              id="simTimeSlider"
-              type="range"
-              min="420"
-              max="1380"
-              value={simulatedMinutes}
-              onChange={(e) => setSimulatedMinutes(parseInt(e.target.value, 10))}
-              className="w-24 cursor-pointer"
-              title="Drag to simulate time indicator"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* 12-Column Split Layout */}
+      {/* 12-Column Split Layout (Schedule moved directly to top) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left 7 Cols: Proportional Calendar Grid */}
         <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs">
-          {/* Canvas Card Header (No Add Buttons on Schedule view) */}
-          <div className="px-3.5 py-2.5 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
+          {/* Canvas Card Header with unified controls */}
+          <div className="px-3.5 py-2.5 border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 bg-slate-50/50 dark:bg-slate-800/40">
             <div className="flex items-center gap-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Daily Schedule Timeline
               </h2>
               <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                 {dayName} · W{currentAcademicWeek}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsHoursModalOpen(true)}
-              className="text-[10px] font-mono text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 px-2 py-0.5 rounded border border-slate-200/90 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs group cursor-pointer"
-              title="Click to edit schedule active hours (e.g. 7 AM – 11 PM)"
-            >
-              <Clock className="w-3 h-3 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-              <span>{format12HourTime(startDayMins, false)} – {format12HourTime(endDayMins, false)}</span>
-              <Pencil className="w-2.5 h-2.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-            </button>
+
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {/* Show off-week classes toggle */}
+              <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-[11px] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={showInactiveCourses}
+                  onChange={(e) => setShowInactiveCourses(e.target.checked)}
+                  className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-0 w-3.5 h-3.5"
+                />
+                <span>Off-week classes</span>
+              </label>
+
+              <span className="text-slate-200 dark:text-slate-700 hidden sm:inline">|</span>
+
+              {/* Single Non-Duplicate Hours Button */}
+              <button
+                type="button"
+                onClick={() => setIsHoursModalOpen(true)}
+                className="text-[10px] font-mono text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 px-2 py-0.5 rounded border border-slate-200/90 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs group cursor-pointer"
+                title="Click to edit schedule active display hours (e.g. 7 AM – 11 PM)"
+              >
+                <Clock className="w-3 h-3 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                <span>{format12HourTime(startDayMins, false)} – {format12HourTime(endDayMins, false)}</span>
+                <Pencil className="w-2.5 h-2.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+              </button>
+
+              {!isLiveClock && (
+                <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/90 dark:border-slate-700">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626]" />
+                  <label htmlFor="simTimeSlider" className="text-[10px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">
+                    <span className="text-[#dc2626] font-semibold">{sim12hStr}</span>
+                  </label>
+                  <input
+                    id="simTimeSlider"
+                    type="range"
+                    min="420"
+                    max="1380"
+                    value={simulatedMinutes}
+                    onChange={(e) => setSimulatedMinutes(parseInt(e.target.value, 10))}
+                    className="w-16 cursor-pointer"
+                    title="Drag to simulate time indicator"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Canvas */}
