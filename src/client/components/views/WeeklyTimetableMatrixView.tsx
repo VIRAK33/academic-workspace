@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useWorkspace, DAY_NAMES_SHORT, timeToMinutes, addDays, getTodayIsoDate } from '../../hooks/useWorkspace';
+import { useWorkspace, DAY_NAMES_SHORT, timeToMinutes, addDays, getTodayIsoDate, formatCourseDurationWeeks } from '../../hooks/useWorkspace';
 import { Plus, Trash2, Pencil, Sparkles, BellRing, Calendar, Clock, ChevronDown, SlidersHorizontal, BookOpen } from 'lucide-react';
 import { Course, ScheduleEvent } from '../../../types';
 import { Twemoji } from '../common/Twemoji';
@@ -471,17 +471,12 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                                     </div>
                                     <div className="mt-1.5 pt-1 border-t border-slate-200/70 dark:border-slate-700 text-[10px] font-mono text-slate-400 flex items-center justify-between">
                                       <span>S{matchedSched.sessions.join('+')}</span>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (!isArchived) onEditCourse(matchedCourse);
-                                        }}
-                                        className="p-1 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition"
-                                        title="Edit Course"
+                                      <span
+                                        className="font-mono text-[10px] font-medium text-slate-500 dark:text-slate-400"
+                                        title={`Course duration: ${formatCourseDurationWeeks(matchedCourse.activeWeeks, viewedSemester.totalWeeks)}`}
                                       >
-                                        <Pencil className="w-3 h-3" />
-                                      </button>
+                                        {formatCourseDurationWeeks(matchedCourse.activeWeeks, viewedSemester.totalWeeks)}
+                                      </span>
                                     </div>
                                   </div>
                                 );

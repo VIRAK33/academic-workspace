@@ -105,6 +105,33 @@ export function format24To12Range(startHHMM: string, endHHMM: string): string {
   return `${format12HourTime(timeToMinutes(startHHMM))} - ${format12HourTime(timeToMinutes(endHHMM))}`;
 }
 
+export function formatCourseDurationWeeks(weeks?: number[], totalWeeks?: number): string {
+  if (!weeks || !Array.isArray(weeks) || weeks.length === 0) {
+    return totalWeeks ? `W1-${totalWeeks}` : '';
+  }
+  const sorted = Array.from(new Set(weeks.map(Number).filter(n => !isNaN(n) && n > 0))).sort((a, b) => a - b);
+  if (sorted.length === 0) {
+    return totalWeeks ? `W1-${totalWeeks}` : '';
+  }
+
+  const ranges: string[] = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === prev + 1) {
+      prev = sorted[i];
+    } else {
+      ranges.push(start === prev ? `W${start}` : `W${start}-${prev}`);
+      start = sorted[i];
+      prev = sorted[i];
+    }
+  }
+  ranges.push(start === prev ? `W${start}` : `W${start}-${prev}`);
+  return ranges.join(', ');
+}
+
+
 export function useWorkspace() {
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);

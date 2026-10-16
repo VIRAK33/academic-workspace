@@ -13,6 +13,7 @@ import {
   format24To12Range,
   formatHumanDate,
   getIsoDayOfWeek,
+  formatCourseDurationWeeks,
 } from '../../hooks/useWorkspace';
 import { Course, CourseSchedule, Task, ScheduleEvent } from '../../../types';
 import { Plus, Check, Clock, Pencil, Calendar } from 'lucide-react';
@@ -768,19 +769,12 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                                 {Math.floor(item.durationMins / 60)}h {item.durationMins % 60 > 0 ? `${item.durationMins % 60}m` : ''}
                               </span>
                             )}
-                            {onEditCourse && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onEditCourse(item.course!);
-                                }}
-                                className="p-0.5 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white/90 dark:hover:bg-slate-800 transition"
-                                title="Edit Course"
-                              >
-                                <Pencil className="w-3 h-3" />
-                              </button>
-                            )}
+                            <span
+                              className="text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 bg-white/75 dark:bg-slate-800/80 px-1 py-0.2 rounded border border-slate-200/60 dark:border-slate-700"
+                              title={`Course duration: ${formatCourseDurationWeeks(item.course.activeWeeks, viewedSemester.totalWeeks)}`}
+                            >
+                              {formatCourseDurationWeeks(item.course.activeWeeks, viewedSemester.totalWeeks)}
+                            </span>
                           </div>
                         </div>
                         <div className="text-[10px] font-mono text-slate-600 dark:text-slate-400 mt-0.5 tabular-nums">
