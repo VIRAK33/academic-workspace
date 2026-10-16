@@ -105,7 +105,9 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
@@ -124,11 +126,11 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
 
     const payload: ScheduleEvent = {
       id: initialEvent?.id || `ev_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      semesterId: viewedSemester.id,
+      semesterId: initialEvent?.semesterId || viewedSemester.id,
       title: title.trim(),
       type,
       category,
-      daysOfWeek: finalDays,
+      daysOfWeek: finalDays.map(Number),
       specificDate: type === 'event' ? specificDate : undefined,
       sessions: useSessionSlot ? [selectedSession] : undefined,
       startTime,
@@ -139,8 +141,13 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
       activeWeeks: type === 'routine' ? weeks : undefined,
     };
 
-    saveEvent(payload);
-    onClose();
+    setIsSubmitting(true);
+    try {
+      await saveEvent(payload);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = () => {
@@ -477,9 +484,10 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm font-semibold"
+                disabled={isSubmitting}
+                className="px-4 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm font-semibold disabled:opacity-50"
               >
-                {initialEvent ? 'Save Changes' : 'Add to Schedule'}
+                {isSubmitting ? 'Saving...' : initialEvent ? 'Save Changes' : 'Add to Schedule'}
               </button>
             </div>
           </div>

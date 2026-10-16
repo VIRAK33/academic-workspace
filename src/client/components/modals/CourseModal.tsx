@@ -158,7 +158,9 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
     setSchedules(next);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
@@ -168,7 +170,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
       const bounds = computeMergedBounds(s.sessions);
       return {
         id: editingCourse?.schedules?.[idx]?.id || 'sch_' + Math.random().toString(36).substring(2, 9),
-        dayOfWeek: s.dayOfWeek,
+        dayOfWeek: Number(s.dayOfWeek),
         sessions: s.sessions,
         startTime: bounds.startTime,
         endTime: bounds.endTime,
@@ -177,7 +179,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
 
     const courseToSave: Course = {
       id: editingCourse ? editingCourse.id : 'c_' + Date.now().toString(36),
-      semesterId: viewedSemester.id,
+      semesterId: editingCourse?.semesterId || viewedSemester.id,
       code: code.trim(),
       name: name.trim(),
       location: location.trim(),
@@ -187,8 +189,13 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
       schedules: fullSchedules,
     };
 
-    saveCourse(courseToSave);
-    onClose();
+    setIsSubmitting(true);
+    try {
+      await saveCourse(courseToSave);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -434,9 +441,10 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
             </button>
             <button
               type="submit"
-              className="px-3.5 py-1.5 rounded text-xs font-medium bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900"
+              disabled={isSubmitting}
+              className="px-3.5 py-1.5 rounded text-xs font-medium bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900 disabled:opacity-50 transition"
             >
-              {editingCourse ? 'Save Changes' : 'Create Course'}
+              {isSubmitting ? 'Saving...' : editingCourse ? 'Save Changes' : 'Create Course'}
             </button>
           </div>
         </form>

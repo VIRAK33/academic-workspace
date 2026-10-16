@@ -78,8 +78,9 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
 
       // Day & Active week check
       if (ev.type === 'routine') {
-        if (!ev.daysOfWeek.includes(day)) return false;
-        if (ev.activeWeeks && !ev.activeWeeks.includes(currentAcademicWeek)) return false;
+        const days = (ev.daysOfWeek || []).map(Number);
+        if (!days.includes(day)) return false;
+        if (ev.activeWeeks && ev.activeWeeks.length > 0 && !ev.activeWeeks.map(Number).includes(currentAcademicWeek)) return false;
       } else if (ev.type === 'event') {
         if (ev.specificDate !== cellIso) return false;
       }
@@ -267,7 +268,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
 
                       for (const c of semCourses) {
                         for (const sch of c.schedules) {
-                          if (sch.dayOfWeek === day && sch.sessions[0] === slot.session) {
+                          if (Number(sch.dayOfWeek) === day && sch.sessions[0] === slot.session) {
                             matchedCourse = c;
                             matchedSched = sch;
                             let k = 1;

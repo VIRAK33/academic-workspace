@@ -1,5 +1,19 @@
 import React, { useMemo, useState } from 'react';
-import { useWorkspace, DAY_NAMES_FULL, format12HourTime, timeToMinutes, format24To12Range, formatHumanDate, getIsoDayOfWeek } from '../../hooks/useWorkspace';
+import {
+  useWorkspace,
+  DAY_NAMES_FULL,
+  DAY_NAMES_SHORT,
+  MONTH_NAMES_SHORT,
+  getTodayIsoDate,
+  addDays,
+  calculateAcademicWeek,
+  parseIsoDate,
+  format12HourTime,
+  timeToMinutes,
+  format24To12Range,
+  formatHumanDate,
+  getIsoDayOfWeek,
+} from '../../hooks/useWorkspace';
 import { Course, CourseSchedule, Task, ScheduleEvent } from '../../../types';
 import { Plus, Check, Clock, Pencil, Calendar } from 'lucide-react';
 import { Twemoji } from '../common/Twemoji';
@@ -106,27 +120,29 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
       if (c.semesterId !== viewedSemester.id) return;
       if (q && !c.name.toLowerCase().includes(q) && !c.code.toLowerCase().includes(q) && !c.location.toLowerCase().includes(q)) return;
 
-      const scheduleForDay = c.schedules.find(s => s.dayOfWeek === targetDow);
-      if (!scheduleForDay) return;
+      const schedulesForDay = (c.schedules || []).filter(s => Number(s.dayOfWeek) === targetDow);
+      if (schedulesForDay.length === 0) return;
 
-      const isWeekActive = c.activeWeeks.includes(currentAcademicWeek);
+      const isWeekActive = (c.activeWeeks || []).map(Number).includes(currentAcademicWeek);
 
-      let startTime = scheduleForDay.startTime;
-      let endTime = scheduleForDay.endTime;
+      schedulesForDay.forEach(scheduleForDay => {
+        let startTime = scheduleForDay.startTime;
+        let endTime = scheduleForDay.endTime;
 
-      if (!startTime || !endTime) {
-        const bounds = computeMergedSessionBounds(scheduleForDay.sessions.map(String));
-        startTime = bounds.startTime;
-        endTime = bounds.endTime;
-      }
+        if (!startTime || !endTime) {
+          const bounds = computeMergedSessionBounds((scheduleForDay.sessions || []).map(String));
+          startTime = bounds.startTime;
+          endTime = bounds.endTime;
+        }
 
-      list.push({
-        course: c,
-        schedule: scheduleForDay,
-        isWeekActive,
-        startTime,
-        endTime,
-        timeDisplay12h: format24To12Range(startTime, endTime),
+        list.push({
+          course: c,
+          schedule: scheduleForDay,
+          isWeekActive,
+          startTime,
+          endTime,
+          timeDisplay12h: format24To12Range(startTime, endTime),
+        });
       });
     });
 
@@ -145,8 +161,9 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
       if (q && !ev.title.toLowerCase().includes(q) && !(ev.location && ev.location.toLowerCase().includes(q))) return false;
 
       if (ev.type === 'routine') {
-        if (!ev.daysOfWeek.includes(targetDow)) return false;
-        if (ev.activeWeeks && !ev.activeWeeks.includes(currentAcademicWeek)) return false;
+        const days = (ev.daysOfWeek || []).map(Number);
+        if (!days.includes(targetDow)) return false;
+        if (ev.activeWeeks && ev.activeWeeks.length > 0 && !ev.activeWeeks.map(Number).includes(currentAcademicWeek)) return false;
         return true;
       } else if (ev.type === 'event') {
         return ev.specificDate === selectedDate;
@@ -380,6 +397,183 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
       return true;
     });
   }, [tasks, viewedSemester.id, selectedDate, searchQuery]);
+
+  // Dynamic Quick Scenarios computed relative to current real-time / engine date (getTodayIsoDate())
+  const quickScenarios = useMemo(() => {
+    const todayIso = getTodayIsoDate();
+    const todayDow = getIsoDayOfWeek(todayIso);
+
+    // Helper to evaluate commitments on any given ISO date
+    const evaluateDay = (isoDate: string) => {
+      const dow = getIsoDayOfWeek(isoDate);
+      const week = calculateAcademicWeek(isoDate, viewedSemester.startDate);
+      const dayShort = DAY_NAMES_SHORT[dow] || '';
+      const dt = parseIsoDate(isoDate);
+      const dayNum = dt.getUTCDate();
+      const monthShort = MONTH_NAMES_SHORT[dt.getUTCMonth()];
+      const headerStr = `${dayShort}, ${monthShort} ${dayNum} · W${week}`;
+
+      // Courses on this day
+      const dayCourses = courses.filter(c => {
+        if (c.semesterId !== viewedSemester.id) return false;
+        const isWeekActive = (c.activeWeeks || []).map(Number).includes(week);
+        if (!isWeekActive) return false;
+        return (c.schedules || []).some(s => Number(s.dayOfWeek) === dow);
+      });
+
+      // Events on this day
+      const dayEvents = (events || []).filter(ev => {
+        if (ev.semesterId !== viewedSemester.id) return false;
+        if (ev.type === 'routine') {
+          const days = (ev.daysOfWeek || []).map(Number);
+          if (!days.includes(dow)) return false;
+          if (ev.activeWeeks && ev.activeWeeks.length > 0 && !ev.activeWeeks.map(Number).includes(week)) return false;
+          return true;
+        } else if (ev.type === 'event') {
+          return ev.specificDate === isoDate;
+        }
+        return false;
+      });
+
+      // Tasks due on this day
+      const dayTasks = tasks.filter(t => t.status !== 'archived' && t.dueDate === isoDate);
+
+      return {
+        isoDate,
+        dow,
+        week,
+        headerStr,
+        courses: dayCourses,
+        events: dayEvents,
+        tasks: dayTasks,
+        totalCount: dayCourses.length + dayEvents.length + dayTasks.length,
+      };
+    };
+
+    // 1. Scenario: Today
+    const todayData = evaluateDay(todayIso);
+    let todaySubtitle = '';
+    if (todayData.courses.length > 0) {
+      const futureCourses = todayCourses.filter(item => timeToMinutes(item.startTime) >= simulatedMinutes);
+      if (futureCourses.length > 0) {
+        todaySubtitle = `Next: ${futureCourses[0].course.code} (${futureCourses[0].startTime})`;
+      } else {
+        todaySubtitle = todayData.courses.map(c => c.code).join(' + ');
+      }
+    } else if (todayData.events.length > 0) {
+      todaySubtitle = todayData.events[0].title;
+    } else if (todayData.tasks.length > 0) {
+      todaySubtitle = `${todayData.tasks.length} task${todayData.tasks.length > 1 ? 's' : ''} due`;
+    } else {
+      todaySubtitle = todayData.dow >= 6 ? 'Weekend break' : 'No classes today (Free)';
+    }
+
+    // 2. Scenario: Tomorrow
+    const tomorrowIso = addDays(todayIso, 1);
+    const tomorrowData = evaluateDay(tomorrowIso);
+    let tomorrowSubtitle = '';
+    if (tomorrowData.courses.length > 0) {
+      tomorrowSubtitle = tomorrowData.courses.map(c => c.code).join(' + ');
+    } else if (tomorrowData.events.length > 0) {
+      tomorrowSubtitle = tomorrowData.events[0].title;
+    } else if (tomorrowData.tasks.length > 0) {
+      tomorrowSubtitle = `${tomorrowData.tasks.length} task${tomorrowData.tasks.length > 1 ? 's' : ''} due`;
+    } else {
+      tomorrowSubtitle = tomorrowData.dow >= 6 ? 'Weekend' : 'No classes scheduled';
+    }
+
+    // 3. Scenario: Next Action Day (check days +1 through +7 for earliest commitment)
+    let nextActionIso = '';
+    let nextActionData: ReturnType<typeof evaluateDay> | null = null;
+    for (let offset = 1; offset <= 7; offset++) {
+      const candidateIso = addDays(todayIso, offset);
+      const evalCandidate = evaluateDay(candidateIso);
+      if (evalCandidate.totalCount > 0) {
+        nextActionIso = candidateIso;
+        nextActionData = evalCandidate;
+        break;
+      }
+    }
+    if (!nextActionData) {
+      nextActionIso = addDays(todayIso, 2);
+      nextActionData = evaluateDay(nextActionIso);
+    }
+    let nextActionSubtitle = '';
+    if (nextActionData.courses.length > 0) {
+      nextActionSubtitle = nextActionData.courses.map(c => c.code).join(' + ');
+    } else if (nextActionData.events.length > 0) {
+      nextActionSubtitle = nextActionData.events[0].title;
+    } else if (nextActionData.tasks.length > 0) {
+      nextActionSubtitle = `${nextActionData.tasks.length} task${nextActionData.tasks.length > 1 ? 's' : ''} due`;
+    } else {
+      nextActionSubtitle = 'Upcoming day';
+    }
+
+    // 4. Scenario: Next Week / Start of Next Academic Week
+    const daysUntilNextMonday = (8 - todayDow) % 7 || 7;
+    let nextWeekIso = addDays(todayIso, daysUntilNextMonday);
+
+    // If nextActionIso already points to nextWeekIso, pick the following commitment day
+    if (nextActionIso === nextWeekIso) {
+      let followingActionIso = '';
+      for (let offset = daysUntilNextMonday + 1; offset <= daysUntilNextMonday + 6; offset++) {
+        const candidate = addDays(todayIso, offset);
+        if (evaluateDay(candidate).totalCount > 0) {
+          followingActionIso = candidate;
+          break;
+        }
+      }
+      if (followingActionIso) {
+        nextWeekIso = followingActionIso;
+      } else {
+        nextWeekIso = addDays(nextActionIso, 2);
+      }
+    }
+    const nextWeekData = evaluateDay(nextWeekIso);
+    let nextWeekSubtitle = '';
+    if (nextWeekData.courses.length > 0) {
+      nextWeekSubtitle = nextWeekData.courses.map(c => c.code).join(' + ');
+    } else if (nextWeekData.events.length > 0) {
+      nextWeekSubtitle = nextWeekData.events[0].title;
+    } else {
+      nextWeekSubtitle = `Week ${nextWeekData.week} kickoff`;
+    }
+
+    return [
+      {
+        id: 'today',
+        label: 'Today',
+        isoDate: todayIso,
+        headerStr: todayData.headerStr,
+        subtitle: todaySubtitle,
+        badgeColor: 'text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800',
+      },
+      {
+        id: 'tomorrow',
+        label: 'Tomorrow',
+        isoDate: tomorrowIso,
+        headerStr: tomorrowData.headerStr,
+        subtitle: tomorrowSubtitle,
+        badgeColor: 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800',
+      },
+      {
+        id: 'next_action',
+        label: 'Next Action',
+        isoDate: nextActionIso,
+        headerStr: nextActionData.headerStr,
+        subtitle: nextActionSubtitle,
+        badgeColor: 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800',
+      },
+      {
+        id: 'next_week',
+        label: `Next Week · W${nextWeekData.week}`,
+        isoDate: nextWeekIso,
+        headerStr: nextWeekData.headerStr,
+        subtitle: nextWeekSubtitle,
+        badgeColor: 'text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border-purple-200 dark:border-purple-800',
+      },
+    ];
+  }, [courses, events, tasks, viewedSemester, simulatedMinutes, todayCourses]);
 
   return (
     <div className="space-y-4">
@@ -856,45 +1050,51 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
             </div>
           </div>
 
-          {/* Clean Quick Date Presets */}
+          {/* Dynamic Quick Scenarios */}
           <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 p-3 shadow-xs">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Quick Scenarios</span>
-              <span className="text-[10px] font-mono text-slate-400">W{currentAcademicWeek}</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Quick Scenarios</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  Live
+                </span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400">Week {currentAcademicWeek}</span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => setSelectedDate('2026-10-15')}
-                className="text-left p-1.5 rounded border border-slate-200/80 dark:border-slate-800 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-              >
-                <div className="text-[11px] font-medium text-slate-900 dark:text-slate-200 font-mono">Thu, Oct 15 · W5</div>
-                <div className="text-[10px] text-slate-500 truncate">MATH701 + CS820</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedDate('2026-10-19')}
-                className="text-left p-1.5 rounded border border-slate-200/80 dark:border-slate-800 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-              >
-                <div className="text-[11px] font-medium text-slate-900 dark:text-slate-200 font-mono">Mon, Oct 19 · W6</div>
-                <div className="text-[10px] text-slate-500 truncate">CS840 + CS801</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedDate('2026-10-21')}
-                className="text-left p-1.5 rounded border border-slate-200/80 dark:border-slate-800 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-              >
-                <div className="text-[11px] font-medium text-slate-900 dark:text-slate-200 font-mono">Wed, Oct 21 · W6</div>
-                <div className="text-[10px] text-slate-500 truncate">CS801 + Colloquium</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedDate('2026-10-23')}
-                className="text-left p-1.5 rounded border border-slate-200/80 dark:border-slate-800 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-              >
-                <div className="text-[11px] font-medium text-slate-900 dark:text-slate-200 font-mono">Fri, Oct 23 · W6</div>
-                <div className="text-[10px] text-slate-500 truncate">Lab Meeting Day</div>
-              </button>
+            <div className="grid grid-cols-2 gap-2">
+              {quickScenarios.map(sc => {
+                const isSelected = sc.isoDate === selectedDate;
+                return (
+                  <button
+                    key={sc.id}
+                    type="button"
+                    onClick={() => setSelectedDate(sc.isoDate)}
+                    className={`text-left p-2 rounded-lg border transition flex flex-col justify-between gap-1 group relative ${
+                      isSelected
+                        ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50/70 dark:bg-indigo-950/40 shadow-xs ring-1 ring-indigo-500/30'
+                        : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50/90 dark:hover:bg-slate-800/80'
+                    }`}
+                    title={`Jump to ${sc.headerStr} (${sc.subtitle})`}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${sc.badgeColor}`}>
+                        {sc.label}
+                      </span>
+                      {isSelected && (
+                        <span className="text-[9px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] font-semibold text-slate-900 dark:text-slate-100 font-mono tabular-nums mt-0.5">
+                      {sc.headerStr}
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate w-full" title={sc.subtitle}>
+                      {sc.subtitle}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

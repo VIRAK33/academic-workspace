@@ -3,21 +3,29 @@ import { WorkspaceDatabase } from '../server/db';
 
 const localDb = new WorkspaceDatabase();
 
+// Helper for safe JSON response parsing
+async function parseJsonResponse<T>(res: Response): Promise<T | null> {
+  if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+    try {
+      return (await res.json()) as T;
+    } catch (e) {}
+  }
+  return null;
+}
+
 // In local browser mode or when server is available, api calls are seamless
 export const api = {
   // Engine & Real-time Synchronization
   async getServerTime(): Promise<{ isoDate: string; timestamp: string; totalMinutes: number }> {
     try {
       const res = await fetch('/api/time');
-      if (res.ok) {
-        const data = (await res.json()) as any;
-        if (data?.isoDate) {
-          return {
-            isoDate: data.isoDate,
-            timestamp: data.timestamp || new Date().toISOString(),
-            totalMinutes: typeof data.totalMinutes === 'number' ? data.totalMinutes : (data.hours * 60 + data.minutes),
-          };
-        }
+      const data = await parseJsonResponse<any>(res);
+      if (data?.isoDate) {
+        return {
+          isoDate: data.isoDate,
+          timestamp: data.timestamp || new Date().toISOString(),
+          totalMinutes: typeof data.totalMinutes === 'number' ? data.totalMinutes : (data.hours * 60 + data.minutes),
+        };
       }
     } catch (e) {}
 
@@ -37,7 +45,8 @@ export const api = {
   async getSemesters(): Promise<Semester[]> {
     try {
       const res = await fetch('/api/semesters');
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Semester[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getSemesters();
   },
@@ -49,7 +58,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sem),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Semester>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.saveSemester(sem);
   },
@@ -66,7 +76,8 @@ export const api = {
   async getTimeSlots(): Promise<TimeSlot[]> {
     try {
       const res = await fetch('/api/timeslots');
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<TimeSlot[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getTimeSlots();
   },
@@ -78,7 +89,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(slots),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<TimeSlot[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.saveTimeSlots(slots);
   },
@@ -87,7 +99,8 @@ export const api = {
   async getCourses(semId?: string): Promise<Course[]> {
     try {
       const res = await fetch(`/api/courses${semId ? `?semesterId=${semId}` : ''}`);
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Course[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getCourses(semId);
   },
@@ -99,7 +112,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(course),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Course>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.saveCourse(course);
   },
@@ -116,7 +130,8 @@ export const api = {
   async getEvents(semId?: string): Promise<ScheduleEvent[]> {
     try {
       const res = await fetch(`/api/events${semId ? `?semesterId=${semId}` : ''}`);
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<ScheduleEvent[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getEvents(semId);
   },
@@ -128,7 +143,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(event),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<ScheduleEvent>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.saveEvent(event);
   },
@@ -146,7 +162,8 @@ export const api = {
   async getTasks(semId?: string): Promise<Task[]> {
     try {
       const res = await fetch(`/api/tasks${semId ? `?semesterId=${semId}` : ''}`);
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Task[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getTasks(semId);
   },
@@ -158,7 +175,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(task),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Task>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.saveTask(task);
   },
@@ -175,7 +193,8 @@ export const api = {
   async getKanban(): Promise<KanbanMilestone[]> {
     try {
       const res = await fetch('/api/kanban');
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<KanbanMilestone[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getKanban();
   },
@@ -187,7 +206,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<KanbanMilestone>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.saveKanban(item);
   },
@@ -204,7 +224,8 @@ export const api = {
   async getPapers(): Promise<Paper[]> {
     try {
       const res = await fetch('/api/papers');
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Paper[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getPapers();
   },
@@ -216,7 +237,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paper),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Paper>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.savePaper(paper);
   },
@@ -233,7 +255,8 @@ export const api = {
   async getConferences(): Promise<Conference[]> {
     try {
       const res = await fetch('/api/conferences');
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Conference[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getConferences();
   },
@@ -245,7 +268,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(conf),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<Conference>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.saveConference(conf);
   },
@@ -262,7 +286,8 @@ export const api = {
   async getExperiments(): Promise<ExperimentLog[]> {
     try {
       const res = await fetch('/api/experiments');
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<ExperimentLog[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getExperiments();
   },
@@ -274,7 +299,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(exp),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<ExperimentLog>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.saveExperiment(exp);
   },
@@ -283,7 +309,8 @@ export const api = {
   async getMeetings(): Promise<AdvisorMeeting[]> {
     try {
       const res = await fetch('/api/meetings');
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<AdvisorMeeting[]>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.getMeetings();
   },
@@ -295,7 +322,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(m),
       });
-      if (res.ok) return await res.json();
+      const data = await parseJsonResponse<AdvisorMeeting>(res);
+      if (data) return data;
     } catch (e) {}
     return localDb.saveMeeting(m);
   },

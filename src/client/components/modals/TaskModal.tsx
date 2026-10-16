@@ -22,6 +22,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
   // Sync available tags with preset tags plus any custom tags found across tasks
   useEffect(() => {
     if (isOpen) {
+      setDueDate(selectedDate);
       const tagSet = new Set<string>(PRESET_TAGS);
       tasks.forEach(t => (t.tags || []).forEach(tag => {
         if (tag && tag.trim()) {
@@ -31,11 +32,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
       setAvailableTags(Array.from(tagSet));
       setCustomTagInput('');
     }
-  }, [isOpen, tasks]);
+  }, [isOpen, selectedDate, tasks]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
@@ -50,7 +51,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
       priority: 'high',
     };
 
-    saveTask(newTask);
+    await saveTask(newTask);
     setTitle('');
     onClose();
   };

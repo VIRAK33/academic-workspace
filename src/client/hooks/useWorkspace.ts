@@ -349,22 +349,37 @@ export function useWorkspace() {
 
   // Course actions
   const saveCourse = useCallback(async (course: Course) => {
-    const saved = await api.saveCourse(course);
+    // 1. Optimistically update local React state immediately so UI updates with 0ms lag
     setCourses(prev => {
-      const idx = prev.findIndex(c => c.id === saved.id);
+      const idx = prev.findIndex(c => c.id === course.id);
       if (idx >= 0) {
         const next = [...prev];
-        next[idx] = saved;
+        next[idx] = { ...course };
         return next;
       }
-      return [...prev, saved];
+      return [...prev, { ...course }];
+    });
+
+    // 2. Persist to API / localDb
+    const saved = await api.saveCourse(course);
+
+    // 3. Ensure updated clone reference is set
+    setCourses(prev => {
+      const idx = prev.findIndex(c => c.id === saved.id || c.id === course.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...saved };
+        return next;
+      }
+      return [...prev, { ...saved }];
     });
     showToast(`Saved course: ${course.code}`);
+    return saved;
   }, [showToast]);
 
   const deleteCourse = useCallback(async (id: string) => {
-    await api.deleteCourse(id);
     setCourses(prev => prev.filter(c => c.id !== id));
+    await api.deleteCourse(id);
     showToast('Course deleted');
   }, [showToast]);
 
@@ -374,22 +389,34 @@ export function useWorkspace() {
     if (toSave.status === 'completed' && !toSave.completedAt) {
       toSave.completedAt = new Date().toISOString();
     }
-    const saved = await api.saveTask(toSave);
+    // Optimistic update
     setTasks(prev => {
-      const idx = prev.findIndex(t => t.id === saved.id);
+      const idx = prev.findIndex(t => t.id === toSave.id);
       if (idx >= 0) {
         const next = [...prev];
-        next[idx] = saved;
+        next[idx] = { ...toSave };
         return next;
       }
-      return [saved, ...prev];
+      return [{ ...toSave }, ...prev];
+    });
+
+    const saved = await api.saveTask(toSave);
+    setTasks(prev => {
+      const idx = prev.findIndex(t => t.id === saved.id || t.id === toSave.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...saved };
+        return next;
+      }
+      return [{ ...saved }, ...prev];
     });
     showToast('Task saved');
+    return saved;
   }, [showToast]);
 
   const deleteTask = useCallback(async (id: string) => {
-    await api.deleteTask(id);
     setTasks(prev => prev.filter(t => t.id !== id));
+    await api.deleteTask(id);
     showToast('Task deleted');
   }, [showToast]);
 
@@ -530,22 +557,34 @@ export function useWorkspace() {
 
   // Event & Routine actions
   const saveEvent = useCallback(async (event: ScheduleEvent) => {
-    const saved = await api.saveEvent(event);
+    // 1. Optimistic update
     setEvents(prev => {
-      const idx = prev.findIndex(e => e.id === saved.id);
+      const idx = prev.findIndex(e => e.id === event.id);
       if (idx >= 0) {
         const next = [...prev];
-        next[idx] = saved;
+        next[idx] = { ...event };
         return next;
       }
-      return [saved, ...prev];
+      return [...prev, { ...event }];
+    });
+
+    const saved = await api.saveEvent(event);
+    setEvents(prev => {
+      const idx = prev.findIndex(e => e.id === saved.id || e.id === event.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...saved };
+        return next;
+      }
+      return [...prev, { ...saved }];
     });
     showToast(`Saved ${event.type === 'routine' ? 'routine' : 'event'}: "${event.title}"`);
+    return saved;
   }, [showToast]);
 
   const deleteEvent = useCallback(async (id: string) => {
-    await api.deleteEvent(id);
     setEvents(prev => prev.filter(e => e.id !== id));
+    await api.deleteEvent(id);
     showToast('Removed commitment');
   }, [showToast]);
 
