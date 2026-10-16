@@ -526,7 +526,6 @@ export const Header: React.FC<HeaderProps> = ({
               title="Open Navigation Menu"
             >
               <Menu className="w-4 h-4" />
-              <span className="text-[11px] font-mono">Menu</span>
             </button>
           </div>
         </div>

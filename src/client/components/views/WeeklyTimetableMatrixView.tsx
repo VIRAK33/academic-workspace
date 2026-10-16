@@ -128,50 +128,69 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
     <div className="space-y-6">
       {/* Weekly Timetable Grid */}
       <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs">
-        <div className="px-4 py-3 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="px-2.5 sm:px-4 py-2 sm:py-3 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between gap-1.5 sm:gap-3">
           {/* Left: Title + Segmented 5D/7D toggle + Filter Chips */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-              Weekly Timetable
-            </h2>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hidden sm:inline-block">
-              W{currentAcademicWeek} · {viewedSemester.name}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+            {/* Weekly Timetable Title (Icon-only on mobile) */}
+            <div className="flex items-center gap-1.5 shrink-0" title="Weekly Timetable">
+              <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200 hidden sm:inline">
+                Weekly Timetable
+              </h2>
+            </div>
+
+            <span className="text-[11px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+              W{currentAcademicWeek}<span className="hidden sm:inline"> · {viewedSemester.name}</span>
             </span>
 
-            {/* Segmented 5-Day / 7-Day Pill Control */}
-            <div className="inline-flex items-center rounded-lg p-0.5 bg-slate-200/60 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+            {/* Segmented 5-Day / 7-Day Pill Control (Icon-only on mobile) */}
+            <div className="inline-flex items-center rounded-lg p-0.5 bg-slate-200/60 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowWeekend(false)}
-                className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium transition ${
+                className={`px-1.5 sm:px-2 py-0.5 rounded text-[11px] font-mono font-medium transition flex items-center gap-1 ${
                   !showWeekend
                     ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold'
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
                 title="5-day view (Monday to Friday)"
               >
-                5 Days
+                <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="18" y2="10"/>
+                  <text x="12" y="19" textAnchor="middle" fontSize="9" fontWeight="bold" fill="currentColor" stroke="none">5</text>
+                </svg>
+                <span className="hidden sm:inline">5 Days</span>
               </button>
               <button
                 type="button"
                 onClick={() => setShowWeekend(true)}
-                className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium transition ${
+                className={`px-1.5 sm:px-2 py-0.5 rounded text-[11px] font-mono font-medium transition flex items-center gap-1 ${
                   showWeekend
                     ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold'
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
                 title="7-day view (Monday to Sunday)"
               >
-                7 Days
+                <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="18" y2="10"/>
+                  <text x="12" y="19" textAnchor="middle" fontSize="9" fontWeight="bold" fill="currentColor" stroke="none">7</text>
+                </svg>
+                <span className="hidden sm:inline">7 Days</span>
               </button>
             </div>
 
-            {/* Filter Chips */}
-            <div className="flex items-center gap-1.5 pl-1 border-l border-slate-200 dark:border-slate-700">
+            {/* Filter Chips (Icon-only on mobile) */}
+            <div className="flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-slate-700 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowRoutines(!showRoutines)}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border transition cursor-pointer select-none ${
+                className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded text-[11px] font-medium border transition cursor-pointer select-none ${
                   showRoutines
                     ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 shadow-2xs'
                     : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 opacity-60'
@@ -179,12 +198,12 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                 title="Toggle routines visibility in grid"
               >
                 <Twemoji emoji="🔁" className="w-3 h-3" />
-                <span>Routines</span>
+                <span className="hidden sm:inline">Routines</span>
               </button>
               <button
                 type="button"
                 onClick={() => setShowEvents(!showEvents)}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border transition cursor-pointer select-none ${
+                className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded text-[11px] font-medium border transition cursor-pointer select-none ${
                   showEvents
                     ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800 shadow-2xs'
                     : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 opacity-60'
@@ -192,19 +211,19 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                 title="Toggle events visibility in grid"
               >
                 <Twemoji emoji="📅" className="w-3 h-3" />
-                <span>Events</span>
+                <span className="hidden sm:inline">Events</span>
               </button>
             </div>
           </div>
 
           {/* Right: Consolidated Action Suite (AI Import, Tools ▾, + Add ▾) */}
-          <div ref={actionMenuRef} className="flex items-center gap-2 shrink-0 relative">
-            {/* 1. AI Import Button */}
+          <div ref={actionMenuRef} className="flex items-center gap-1.5 sm:gap-2 shrink-0 relative">
+            {/* 1. AI Import Button (Icon-only on mobile) */}
             {onOpenAiImportModal && (
               <button
                 type="button"
                 onClick={onOpenAiImportModal}
-                className="px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
                 title="Extract and import timetable with AI"
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
@@ -212,7 +231,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
               </button>
             )}
 
-            {/* 2. Tools & Settings Dropdown */}
+            {/* 2. Tools & Settings Dropdown (Icon-only on mobile) */}
             <div className="relative">
               <button
                 type="button"
@@ -220,16 +239,16 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                   setIsToolsMenuOpen(!isToolsMenuOpen);
                   setIsAddMenuOpen(false);
                 }}
-                className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+                className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer ${
                   isToolsMenuOpen
                     ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white'
                     : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                 }`}
-                title="Timetable configuration & utilities"
+                title="Timetable configuration & utilities (Tools)"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-                <span>Tools</span>
-                <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isToolsMenuOpen ? 'rotate-180' : ''}`} />
+                <span className="hidden sm:inline">Tools</span>
+                <ChevronDown className={`w-3 h-3 text-slate-400 hidden sm:inline transition-transform ${isToolsMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isToolsMenuOpen && (
@@ -275,7 +294,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
               )}
             </div>
 
-            {/* 3. Primary Add Dropdown */}
+            {/* 3. Primary Add Dropdown (Icon-only on mobile) */}
             <div className="relative">
               <button
                 type="button"
@@ -283,12 +302,12 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                   setIsAddMenuOpen(!isAddMenuOpen);
                   setIsToolsMenuOpen(false);
                 }}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                className="p-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                 title="Add new course or event"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add</span>
-                <ChevronDown className={`w-3 h-3 text-white/80 transition-transform ${isAddMenuOpen ? 'rotate-180' : ''}`} />
+                <span className="hidden sm:inline">Add</span>
+                <ChevronDown className={`w-3 h-3 text-white/80 hidden sm:inline transition-transform ${isAddMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isAddMenuOpen && (
