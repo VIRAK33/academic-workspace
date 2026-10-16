@@ -1,10 +1,113 @@
 import React, { useState } from 'react';
 import { useWorkspace, DAY_NAMES_SHORT, timeToMinutes, addDays, getTodayIsoDate, formatCourseDurationWeeks } from '../../hooks/useWorkspace';
-import { Plus, Trash2, Pencil, Sparkles, BellRing, Calendar, Clock, ChevronDown, SlidersHorizontal, BookOpen } from 'lucide-react';
+import { Plus, Trash2, Pencil, Sparkles, BellRing, Calendar, Clock, ChevronDown, SlidersHorizontal, BookOpen, MoreVertical, Eye } from 'lucide-react';
 import { Course, ScheduleEvent } from '../../../types';
 import { Twemoji } from '../common/Twemoji';
 import { CourseDetailsModal } from '../modals/CourseDetailsModal';
 import { EventDetailsModal } from '../modals/EventDetailsModal';
+
+interface CardOptionMenuProps {
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onView?: () => void;
+  editLabel?: string;
+  deleteLabel?: string;
+  viewLabel?: string;
+}
+
+const CardOptionMenu: React.FC<CardOptionMenuProps> = ({
+  onEdit,
+  onDelete,
+  onView,
+  editLabel = 'Edit',
+  deleteLabel = 'Delete',
+  viewLabel = 'View Details',
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className="relative shrink-0" ref={menuRef}>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+        title="More options"
+        aria-label="More options"
+      >
+        <MoreVertical className="w-3.5 h-3.5" />
+      </button>
+
+      {isOpen && (
+        <div
+          className="absolute right-0 top-full mt-1 w-36 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {onView && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onView();
+              }}
+              className="w-full px-2.5 py-1.5 text-xs text-left text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition"
+            >
+              <Eye className="w-3.5 h-3.5 text-slate-400" />
+              <span>{viewLabel}</span>
+            </button>
+          )}
+
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onEdit();
+              }}
+              className="w-full px-2.5 py-1.5 text-xs text-left text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition"
+            >
+              <Pencil className="w-3.5 h-3.5 text-slate-400" />
+              <span>{editLabel}</span>
+            </button>
+          )}
+
+          {onDelete && (
+            <>
+              {(onView || onEdit) && (
+                <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onDelete();
+                }}
+                className="w-full px-2.5 py-1.5 text-xs text-left text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 transition font-medium"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                <span>{deleteLabel}</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface WeeklyTimetableMatrixViewProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -572,7 +675,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                 className="px-2.5 py-1 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" />
-                <span>Add Commitment</span>
+                <span>Add</span>
               </button>
             )}
           </div>
@@ -618,32 +721,18 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                           </h4>
                         </div>
 
-                        <div className="flex items-center gap-0.5">
-                          {onEditEvent && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditEvent(ev);
-                              }}
-                              className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-1 rounded transition"
-                              title="Edit"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
+                        <CardOptionMenu
+                          onView={() => setViewingEvent(ev)}
+                          onEdit={onEditEvent ? () => onEditEvent(ev) : undefined}
+                          onDelete={() => {
+                            if (window.confirm(`Delete "${ev.title}"?`)) {
                               deleteEvent(ev.id);
-                            }}
-                            className="text-slate-300 hover:text-rose-600 p-1 rounded transition"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                            }
+                          }}
+                          viewLabel="View Details"
+                          editLabel={isRoutine ? 'Edit Routine' : 'Edit Event'}
+                          deleteLabel={isRoutine ? 'Delete Routine' : 'Delete Event'}
+                        />
                       </div>
 
                       <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
@@ -727,7 +816,9 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
               return (
                 <div
                   key={course.id}
-                  className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 space-y-2.5 flex flex-col justify-between shadow-xs"
+                  onClick={() => setViewingCourse(course)}
+                  className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 space-y-2.5 flex flex-col justify-between shadow-xs cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition"
+                  title="Click to view course details"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
@@ -743,24 +834,18 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                       </div>
 
                       {!isArchived && (
-                        <div className="flex items-center gap-0.5">
-                          <button
-                            type="button"
-                            onClick={() => onEditCourse(course)}
-                            className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-1 rounded transition"
-                            title="Edit Course Details & Meeting Times"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteCourse(course.id)}
-                            className="text-slate-300 hover:text-rose-600 p-1 rounded transition"
-                            title="Delete Course"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        <CardOptionMenu
+                          onView={() => setViewingCourse(course)}
+                          onEdit={() => onEditCourse(course)}
+                          onDelete={() => {
+                            if (window.confirm(`Delete course "${course.code} - ${course.name}"?`)) {
+                              deleteCourse(course.id);
+                            }
+                          }}
+                          viewLabel="View Details"
+                          editLabel="Edit Course"
+                          deleteLabel="Delete Course"
+                        />
                       )}
                     </div>
 
@@ -797,7 +882,8 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                             key={w}
                             type="button"
                             disabled={isArchived}
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               const next = isActive
                                 ? course.activeWeeks.filter((num) => num !== w)
                                 : [...course.activeWeeks, w].sort((a, b) => a - b);
