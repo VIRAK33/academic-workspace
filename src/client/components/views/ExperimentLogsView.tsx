@@ -46,7 +46,7 @@ export const ExperimentLogsView: React.FC<ExperimentLogsViewProps> = ({ ws, onOp
           <button
             type="button"
             onClick={onOpenExperimentModal}
-            className="px-3 py-1.5 rounded-md bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900 text-xs font-medium transition flex items-center gap-1"
+            className="px-3 py-1.5 rounded-md bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium transition shadow-xs flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Log Run</span>
@@ -80,7 +80,7 @@ export const ExperimentLogsView: React.FC<ExperimentLogsViewProps> = ({ ws, onOp
                   <tr key={exp.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
                     <td className="py-3 px-4 font-medium text-slate-900 dark:text-white">
                       <div className="flex items-center gap-2">
-                        <FlaskConical className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                        <FlaskConical className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300 shrink-0" />
                         <span>{exp.name}</span>
                       </div>
                       {exp.hypothesis && (
@@ -102,7 +102,7 @@ export const ExperimentLogsView: React.FC<ExperimentLogsViewProps> = ({ ws, onOp
                         {Object.entries(exp.metrics || {}).map(([k, v]) => (
                           <span
                             key={k}
-                            className="px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800 text-[11px]"
+                            className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-[11px]"
                           >
                             <strong>{k}:</strong> {String(v)}
                           </span>

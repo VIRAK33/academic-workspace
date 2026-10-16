@@ -273,7 +273,7 @@ export const Header: React.FC<HeaderProps> = ({
               tooltip="Class Reminders & Notifications"
               className="p-1.5 rounded-md bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center shadow-2xs"
             >
-              <BellRing className="w-3.5 h-3.5 text-indigo-500" />
+              <BellRing className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
             </HeaderTooltipButton>
 
             {/* Consolidated Tools & Utilities Dropdown Menu */}
@@ -313,11 +313,11 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
                     >
-                      <SlidersHorizontal className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <SlidersHorizontal className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                       <div>
                         <div className="font-medium text-xs flex items-center gap-1.5">
                           <span>Customize Views</span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-semibold">{enabledTabs.length}/8</span>
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">{enabledTabs.length}/8</span>
                         </div>
                         <div className="text-[10px] text-slate-400">Toggle tabs, order & presets</div>
                       </div>
@@ -331,7 +331,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
                     >
-                      <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <Calendar className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                       <div>
                         <div className="font-medium text-xs">Manage Semesters & Terms</div>
                         <div className="text-[10px] text-slate-400">Create, switch, or edit terms & dates</div>
@@ -346,7 +346,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
                     >
-                      <Sparkles className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <Sparkles className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                       <div>
                         <div className="font-medium text-xs">AI Schedule Import</div>
                         <div className="text-[10px] text-slate-400">Import timetable from text or syllabus</div>
@@ -376,7 +376,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
                     >
-                      <Compass className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <Compass className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                       <div>
                         <div className="font-medium text-xs">Getting Started Guide</div>
                         <div className="text-[10px] text-slate-400">View features & quick tour</div>
@@ -389,7 +389,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <div className="px-3 py-1 text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between">
                       <span>Power Tools</span>
                       {workspaceMode === 'basic' && (
-                        <span className="text-[9px] text-indigo-500 font-semibold font-sans">Advanced</span>
+                        <span className="text-[9px] text-slate-500 dark:text-slate-400 font-semibold font-sans">Advanced</span>
                       )}
                     </div>
 
@@ -438,7 +438,7 @@ export const Header: React.FC<HeaderProps> = ({
                           setWorkspaceMode(next);
                           showToast(`Switched to ${next === 'basic' ? 'Student Essentials' : 'Advanced Research Suite'}`);
                         }}
-                        className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                        className="text-[11px] font-medium text-slate-900 dark:text-white hover:underline"
                       >
                         {workspaceMode === 'basic' ? 'Enable Advanced Mode' : 'Switch to Student Mode'}
                       </button>
@@ -466,7 +466,7 @@ export const Header: React.FC<HeaderProps> = ({
                 !auth.isOnline
                   ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800'
                   : auth.isLoggedIn
-                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-700'
                   : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
@@ -586,17 +586,17 @@ export const Header: React.FC<HeaderProps> = ({
                       isSelected
                         ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold shadow-xs'
                         : isToday
-                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-800'
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold border border-slate-300 dark:border-slate-700'
                         : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                     title={isToday ? `${formatHumanDate(dayIso)} (Today)` : formatHumanDate(dayIso)}
                   >
-                    <span className={`text-[9px] ${isSelected ? 'text-slate-300 dark:text-slate-600' : isToday ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400'}`}>
+                    <span className={`text-[9px] ${isSelected ? 'text-slate-300 dark:text-slate-600' : isToday ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-400'}`}>
                       {stripLabels[i]}
                     </span>
                     <span>{dayNum}</span>
                     {isToday && (
-                      <span className={`w-1 h-1 rounded-full absolute bottom-0.5 right-0.5 ${isSelected ? 'bg-emerald-400' : 'bg-indigo-500'}`} />
+                      <span className={`w-1 h-1 rounded-full absolute bottom-0.5 right-0.5 ${isSelected ? 'bg-emerald-400' : 'bg-slate-900 dark:bg-white'}`} />
                     )}
                   </button>
                 );
@@ -778,13 +778,13 @@ export const Header: React.FC<HeaderProps> = ({
                     setIsMobileDrawerOpen(false);
                     onOpenCustomizeViews();
                   }}
-                  className="w-full flex items-center justify-between p-2 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-900/40 text-xs text-indigo-700 dark:text-indigo-300 font-medium transition"
+                  className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-medium transition"
                 >
                   <div className="flex items-center gap-2.5">
-                    <SlidersHorizontal className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <SlidersHorizontal className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                     <span>Customize Views</span>
                   </div>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/70 text-indigo-700 dark:text-indigo-300 font-semibold">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold">
                     {enabledTabs.length}/8
                   </span>
                 </button>
@@ -797,7 +797,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
                 >
-                  <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
+                  <Calendar className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                   <span>Manage Semesters & Terms</span>
                 </button>
 
@@ -809,7 +809,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
                 >
-                  <Compass className="w-4 h-4 text-indigo-500 shrink-0" />
+                  <Compass className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                   <span>Getting Started Guide</span>
                 </button>
 
@@ -821,7 +821,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
                 >
-                  <Sparkles className="w-4 h-4 text-indigo-500" />
+                  <Sparkles className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                   <span>Import Schedule with AI</span>
                 </button>
 
@@ -833,7 +833,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
                 >
-                  <BellRing className="w-4 h-4 text-indigo-500" />
+                  <BellRing className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                   <span>Class Reminders & Calendar Alarms</span>
                 </button>
 

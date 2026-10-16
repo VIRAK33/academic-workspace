@@ -64,7 +64,7 @@ export const CliCheatSheetModal: React.FC<CliCheatSheetModalProps> = ({ isOpen, 
       <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-lg shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh]">
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
           <div className="flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-indigo-500" />
+            <Terminal className="w-4 h-4 text-slate-700 dark:text-slate-300" />
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               `aw` Terminal CLI Command Reference
             </h3>
@@ -75,8 +75,8 @@ export const CliCheatSheetModal: React.FC<CliCheatSheetModalProps> = ({ isOpen, 
         </div>
 
         <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-4">
-          <div className="p-3 rounded bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800 text-xs text-indigo-900 dark:text-indigo-200">
-            <strong>How to link locally:</strong> Run <code className="font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-700">npm link</code> in this workspace directory to enable the global <code className="font-mono font-bold">aw</code> command everywhere in your terminal.
+          <div className="p-3 rounded bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-200">
+            <strong>How to link locally:</strong> Run <code className="font-mono bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700">npm link</code> in this workspace directory to enable the global <code className="font-mono font-bold">aw</code> command everywhere in your terminal.
           </div>
 
           <div className="space-y-3">
@@ -105,7 +105,7 @@ export const CliCheatSheetModal: React.FC<CliCheatSheetModalProps> = ({ isOpen, 
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1 rounded bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium"
+            className="px-3 py-1.5 rounded-md bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium transition shadow-xs"
           >
             Close
           </button>

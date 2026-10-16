@@ -310,13 +310,13 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-xs shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-1.5 sm:gap-2">
                 <span>AI Schedule & Timetable Importer</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
                   Zero Entry
                 </span>
               </h2>
@@ -337,10 +337,10 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
         {/* Modal Scrollable Body */}
         <div className="p-3.5 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1">
           {/* Step 1: Copy AI Prompt */}
-          <div className="p-3.5 rounded-lg border border-indigo-100 dark:border-indigo-950/60 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-2.5">
+          <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[11px] font-bold">
+                <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center text-[11px] font-bold">
                   1
                 </span>
                 <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
@@ -350,7 +350,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
               <button
                 type="button"
                 onClick={() => setShowPromptDetails(!showPromptDetails)}
-                className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                className="text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:underline"
               >
                 {showPromptDetails ? 'Hide Template' : 'View Template'}
               </button>
@@ -364,7 +364,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
               <button
                 type="button"
                 onClick={handleCopyPrompt}
-                className="px-3.5 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium flex items-center gap-1.5 shadow-xs transition"
+                className="px-3.5 py-1.5 rounded-md bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium flex items-center gap-1.5 shadow-xs transition"
               >
                 {copiedPrompt ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedPrompt ? 'Copied Prompt to Clipboard!' : 'Copy AI Prompt Template'}</span>
@@ -373,7 +373,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
               <button
                 type="button"
                 onClick={() => setInputJson(SAMPLE_DEMO_JSON)}
-                className="px-2.5 py-1.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 text-xs font-medium transition"
+                className="px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-medium transition"
               >
                 Try Sample Data
               </button>
@@ -413,7 +413,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
               value={inputJson}
               onChange={(e) => setInputJson(e.target.value)}
               placeholder="Paste the extracted JSON block here (e.g. { &quot;semester&quot;: { ... }, &quot;courses&quot;: [ ... ] })..."
-              className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-[11px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-[11px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
             />
           </div>
 
@@ -442,7 +442,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
                   {/* Summary Pills */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div className="p-2 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <Calendar className="w-4 h-4 text-slate-700 dark:text-slate-300 shrink-0" />
                       <div className="truncate">
                         <div className="text-[10px] font-mono uppercase text-slate-400">Term</div>
                         <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
@@ -522,7 +522,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       <label className={`p-2.5 rounded-lg border cursor-pointer flex items-start gap-2 transition ${
                         importOption === 'new_semester'
-                          ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30'
+                          ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800/80 ring-1 ring-slate-900/20 dark:ring-white/20'
                           : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
                       }`}>
                         <input
@@ -530,7 +530,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
                           name="importOption"
                           checked={importOption === 'new_semester'}
                           onChange={() => setImportOption('new_semester')}
-                          className="mt-0.5 text-indigo-600"
+                          className="mt-0.5 accent-slate-900 dark:accent-white text-slate-900 focus:ring-slate-900"
                         />
                         <div>
                           <div className="font-semibold text-slate-800 dark:text-slate-200">
@@ -544,7 +544,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
 
                       <label className={`p-2.5 rounded-lg border cursor-pointer flex items-start gap-2 transition ${
                         importOption === 'replace_current'
-                          ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30'
+                          ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800/80 ring-1 ring-slate-900/20 dark:ring-white/20'
                           : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
                       }`}>
                         <input
@@ -552,7 +552,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
                           name="importOption"
                           checked={importOption === 'replace_current'}
                           onChange={() => setImportOption('replace_current')}
-                          className="mt-0.5 text-indigo-600"
+                          className="mt-0.5 accent-slate-900 dark:accent-white text-slate-900 focus:ring-slate-900"
                         />
                         <div>
                           <div className="font-semibold text-slate-800 dark:text-slate-200">
@@ -585,10 +585,10 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
             type="button"
             disabled={!parseResult.valid || isImporting}
             onClick={handleApplyImport}
-            className={`px-4 py-1.5 rounded-md text-xs font-medium text-white flex items-center gap-1.5 transition ${
+            className={`px-4 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition ${
               parseResult.valid && !isImporting
-                ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm cursor-pointer'
-                : 'bg-slate-400 dark:bg-slate-600 cursor-not-allowed opacity-60'
+                ? 'bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-xs cursor-pointer'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-60'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />

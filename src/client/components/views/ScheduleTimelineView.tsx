@@ -581,8 +581,8 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
         isoDate: nextLectureIso,
         headerStr: nextLectureDetails.headerStr,
         subtitle: nextLectureSubtitle,
-        badgeColor: 'text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800',
-        activeRing: 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 ring-indigo-500/30',
+        badgeColor: 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700',
+        activeRing: 'border-slate-900 dark:border-white bg-slate-100/80 dark:bg-slate-800 ring-slate-900/20 dark:ring-white/20',
       },
       {
         id: 'peak_day',
@@ -627,7 +627,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
           {/* Canvas Card Header with unified controls */}
           <div className="px-3.5 py-2.5 border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 bg-slate-50/50 dark:bg-slate-800/40">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 sm:hidden shrink-0" />
+              <Clock className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300 sm:hidden shrink-0" />
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200 hidden sm:inline">
                 Schedule Timeline
               </h2>
@@ -658,9 +658,9 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                 className="text-[10px] font-mono text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 px-2 py-0.5 rounded border border-slate-200/90 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs group cursor-pointer"
                 title="Click to edit schedule active display hours (e.g. 7 AM – 11 PM)"
               >
-                <Clock className="w-3 h-3 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                <Clock className="w-3 h-3 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
                 <span>{format12HourTime(startDayMins, false)} – {format12HourTime(endDayMins, false)}</span>
-                <Pencil className="w-2.5 h-2.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                <Pencil className="w-2.5 h-2.5 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
               </button>
 
               {!isLiveClock && (
@@ -884,7 +884,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                               e.stopPropagation();
                               onEditEvent(item.event!);
                             }}
-                            className="p-0.5 rounded text-slate-400 hover:text-indigo-600 transition"
+                            className="p-0.5 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
                             title="Edit Commitment"
                           >
                             <Pencil className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition shrink-0" />
@@ -1086,7 +1086,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                           e.stopPropagation();
                           onEditEvent(ev);
                         }}
-                        className="p-1 rounded text-slate-400 hover:text-indigo-600 transition"
+                        className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
                         title="Edit"
                       >
                         <Pencil className="w-3.5 h-3.5 shrink-0" />
@@ -1119,7 +1119,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                     onClick={() => setSelectedDate(sc.isoDate)}
                     className={`text-left p-2 rounded-lg border transition flex flex-col justify-between gap-1 group relative ${
                       isSelected
-                        ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50/70 dark:bg-indigo-950/40 shadow-xs ring-1 ring-indigo-500/30'
+                        ? 'border-slate-900 dark:border-white bg-slate-100/80 dark:bg-slate-800 shadow-xs ring-1 ring-slate-900/20 dark:ring-white/20'
                         : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50/90 dark:hover:bg-slate-800/80'
                     }`}
                     title={`Jump to ${sc.headerStr} (${sc.subtitle})`}
@@ -1135,7 +1135,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                           </span>
                         )}
                         {isSelected && (
-                          <span className="text-[9px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                          <span className="text-[9px] font-mono font-bold text-slate-900 dark:text-white">
                             Active
                           </span>
                         )}

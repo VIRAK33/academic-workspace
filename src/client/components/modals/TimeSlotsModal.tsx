@@ -69,7 +69,7 @@ export const TimeSlotsModal: React.FC<TimeSlotsModalProps> = ({ ws, isOpen, onCl
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
             <button
               type="submit"
-              className="px-3.5 py-1.5 rounded bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900 text-xs font-medium transition"
+              className="px-3.5 py-1.5 rounded-md bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold transition shadow-xs"
             >
               Save Slots
             </button>

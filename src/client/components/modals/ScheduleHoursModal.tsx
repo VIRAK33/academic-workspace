@@ -78,7 +78,7 @@ export const ScheduleHoursModal: React.FC<ScheduleHoursModalProps> = ({
         {/* Header */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
               <Clock className="w-4 h-4" />
             </div>
             <div>
@@ -119,13 +119,13 @@ export const ScheduleHoursModal: React.FC<ScheduleHoursModalProps> = ({
                     }}
                     className={`p-2 rounded-lg text-left border transition flex flex-col justify-between ${
                       isActive
-                        ? 'border-indigo-500 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 ring-1 ring-indigo-500/30'
+                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white ring-1 ring-slate-900/20 dark:ring-white/20'
                         : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold">{p.label}</span>
-                      {isActive && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                      {isActive && <Check className="w-3.5 h-3.5 text-slate-900 dark:text-white" />}
                     </div>
                     <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
                       {p.desc}
@@ -146,7 +146,7 @@ export const ScheduleHoursModal: React.FC<ScheduleHoursModalProps> = ({
                 id="scheduleStartHourSelect"
                 value={selectedStart}
                 onChange={(e) => setSelectedStart(Number(e.target.value))}
-                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500"
+                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
               >
                 {START_HOUR_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -164,7 +164,7 @@ export const ScheduleHoursModal: React.FC<ScheduleHoursModalProps> = ({
                 id="scheduleEndHourSelect"
                 value={selectedEnd}
                 onChange={(e) => setSelectedEnd(Number(e.target.value))}
-                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500"
+                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
               >
                 {END_HOUR_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -208,7 +208,7 @@ export const ScheduleHoursModal: React.FC<ScheduleHoursModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-xs transition"
               >
                 Save Hours
               </button>

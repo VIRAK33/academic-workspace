@@ -118,7 +118,7 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
           {/* Weekly Meeting Times */}
           <div>
             <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-indigo-500" />
+              <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
               <span>Weekly Class Schedule</span>
             </div>
             <div className="space-y-1.5">
@@ -154,7 +154,7 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
           <div>
             <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                 <span>Active Semester Weeks</span>
               </span>
               <span className="font-mono text-[10px] text-slate-400 font-normal">
@@ -171,7 +171,7 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
                     className={`py-1 text-center font-mono rounded text-[10px] transition ${
                       isActive
                         ? isCurrent
-                          ? 'bg-indigo-600 text-white font-bold ring-2 ring-indigo-400'
+                          ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold ring-1 ring-rose-500'
                           : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-semibold'
                         : 'text-slate-300 dark:text-slate-600 line-through'
                     }`}
@@ -188,7 +188,7 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
           {relatedTasks.length > 0 && (
             <div>
               <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <ListTodo className="w-3.5 h-3.5 text-indigo-500" />
+                <ListTodo className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                 <span>Related Tasks ({relatedTasks.length})</span>
               </div>
               <div className="space-y-1">
@@ -227,7 +227,7 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
               onClose();
               onEdit(course);
             }}
-            className="px-3.5 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1.5 shadow-2xs font-semibold"
+            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition flex items-center gap-1.5 shadow-xs"
           >
             <Pencil className="w-3.5 h-3.5" />
             <span>Edit Course</span>

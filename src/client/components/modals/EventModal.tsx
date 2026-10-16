@@ -163,7 +163,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
         <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40 shrink-0">
           <div>
             <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
-              {initialEvent ? 'Edit Commitment' : 'Add Commitment'}
+              {initialEvent ? 'Edit' : 'Add'}
             </h3>
             <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               Add a recurring routine habit or one-off academic event
@@ -229,7 +229,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={type === 'routine' ? 'e.g. Morning Workout / Gym' : 'e.g. CS820 Midterm Exam'}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
             />
           </div>
 
@@ -249,7 +249,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                   }}
                   className={`px-2.5 py-1 text-xs rounded-md transition border flex items-center gap-1.5 ${
                     category === cat.name
-                      ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-400 text-indigo-700 dark:text-indigo-300 font-semibold shadow-2xs'
+                      ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
                       : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
                   }`}
                 >
@@ -301,7 +301,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                     onClick={() => setActiveWeeksPreset('all')}
                     className={`py-1 px-2 rounded border text-center transition ${
                       activeWeeksPreset === 'all'
-                        ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-400 text-indigo-700 dark:text-indigo-300 font-semibold'
+                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
                         : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
@@ -312,7 +312,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                     onClick={() => setActiveWeeksPreset('odd')}
                     className={`py-1 px-2 rounded border text-center transition ${
                       activeWeeksPreset === 'odd'
-                        ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-400 text-indigo-700 dark:text-indigo-300 font-semibold'
+                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
                         : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
@@ -323,7 +323,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                     onClick={() => setActiveWeeksPreset('even')}
                     className={`py-1 px-2 rounded border text-center transition ${
                       activeWeeksPreset === 'even'
-                        ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-400 text-indigo-700 dark:text-indigo-300 font-semibold'
+                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
                         : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
@@ -342,7 +342,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                 required
                 value={specificDate}
                 onChange={(e) => setSpecificDate(e.target.value)}
-                className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
               />
               <p className="text-[11px] text-slate-400 mt-1 font-mono">
                 {DAY_NAMES_FULL[getIsoDayOfWeek(specificDate)]}
@@ -361,7 +361,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                   type="checkbox"
                   checked={useSessionSlot}
                   onChange={(e) => setUseSessionSlot(e.target.checked)}
-                  className="rounded text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                  className="rounded accent-slate-900 dark:accent-white text-slate-900 focus:ring-slate-900 h-3.5 w-3.5"
                 />
                 <span>Snap to session slot</span>
               </label>
@@ -372,7 +372,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                 <select
                   value={selectedSession}
                   onChange={(e) => handleSessionChange(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
                 >
                   {timeSlots.map((ts) => (
                     <option key={ts.session} value={ts.session}>
@@ -484,7 +484,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm font-semibold disabled:opacity-50"
+                className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? 'Saving...' : initialEvent ? 'Save Changes' : 'Add to Schedule'}
               </button>

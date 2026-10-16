@@ -75,7 +75,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
         {/* Header with Step Progress */}
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400">
+            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
               <Compass className="w-5 h-5" />
             </div>
             <div>
@@ -117,11 +117,15 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
             onClick={() => setCurrentStep(1)}
             className={`py-2 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
               currentStep === 1
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-semibold bg-white dark:bg-slate-900'
+                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold bg-white dark:bg-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold flex items-center justify-center">
+            <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
+              currentStep === 1
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+            }`}>
               1
             </span>
             <span>Workspace Mode</span>
@@ -132,11 +136,15 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
             onClick={() => setCurrentStep(2)}
             className={`py-2 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
               currentStep === 2
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-semibold bg-white dark:bg-slate-900'
+                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold bg-white dark:bg-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold flex items-center justify-center">
+            <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
+              currentStep === 2
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+            }`}>
               2
             </span>
             <span>Import Timetable</span>
@@ -147,11 +155,15 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
             onClick={() => setCurrentStep(3)}
             className={`py-2 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
               currentStep === 3
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-semibold bg-white dark:bg-slate-900'
+                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold bg-white dark:bg-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold flex items-center justify-center">
+            <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
+              currentStep === 3
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+            }`}>
               3
             </span>
             <span>Superpowers</span>
@@ -178,17 +190,17 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
                   onClick={() => handleSelectMode('basic')}
                   className={`p-4 rounded-xl border-2 cursor-pointer transition flex flex-col justify-between ${
                     selectedMode === 'basic'
-                      ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 shadow-xs'
+                      ? 'border-slate-900 dark:border-white bg-slate-50 dark:bg-slate-800/60 shadow-xs'
                       : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
                   }`}
                 >
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                      <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                         <GraduationCap className="w-5 h-5" />
                       </div>
                       {selectedMode === 'basic' && (
-                        <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                        <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center">
                           <Check className="w-3.5 h-3.5" />
                         </span>
                       )}
@@ -229,17 +241,17 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
                   onClick={() => handleSelectMode('research')}
                   className={`p-4 rounded-xl border-2 cursor-pointer transition flex flex-col justify-between ${
                     selectedMode === 'research'
-                      ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 shadow-xs'
+                      ? 'border-slate-900 dark:border-white bg-slate-50 dark:bg-slate-800/60 shadow-xs'
                       : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
                   }`}
                 >
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                      <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                         <Sparkles className="w-5 h-5" />
                       </div>
                       {selectedMode === 'research' && (
-                        <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                        <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center">
                           <Check className="w-3.5 h-3.5" />
                         </span>
                       )}
@@ -256,29 +268,29 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
 
                     <div className="space-y-1.5 pt-1 border-t border-slate-200/60 dark:border-slate-800">
                       <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
                         <span>All Student Essentials (Schedule, Matrix, Tasks)</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
                         <span>Pipeline (Milestones, Projects & Stages)</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
                         <span>Literature Matrix (Papers, BibTeX, Notes)</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
                         <span>Advisor Meetings, Digests & Action Items</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
                         <span>Conference Deadlines & Experiment Runs</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-3 mt-3 border-t border-slate-200/50 dark:border-slate-800 text-[10px] text-indigo-600 dark:text-indigo-400 font-mono font-medium">
+                  <div className="pt-3 mt-3 border-t border-slate-200/50 dark:border-slate-800 text-[10px] text-slate-600 dark:text-slate-400 font-mono font-medium">
                     Best for: Advanced coursework, thesis, projects & research
                   </div>
                 </div>
@@ -300,16 +312,16 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
 
               <div className="space-y-3 pt-1">
                 {/* Method 1: AI Importer (Hero) */}
-                <div className="p-4 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-gradient-to-r from-indigo-50/70 via-white to-purple-50/40 dark:from-indigo-950/30 dark:via-slate-900 dark:to-purple-950/20 space-y-3">
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-lg bg-indigo-600 text-white shrink-0">
+                      <div className="p-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 shrink-0">
                         <Sparkles className="w-4 h-4" />
                       </div>
                       <div>
                         <div className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
                           <span>AI Timetable Importer</span>
-                          <span className="px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-mono">
+                          <span className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-mono">
                             Recommended
                           </span>
                         </div>
@@ -322,18 +334,18 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
                     <button
                       type="button"
                       onClick={handleLaunchAiImport}
-                      className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs shadow-xs transition flex items-center gap-1.5 shrink-0"
+                      className="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs shadow-xs transition flex items-center gap-1.5 shrink-0"
                     >
                       <span>Open Importer</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-between text-[11px]">
+                  <div className="p-2.5 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px]">
                     <span className="text-slate-600 dark:text-slate-300">
                       Auto-detects course codes, meeting rooms, times, and odd/even weeks
                     </span>
-                    <span className="text-indigo-600 dark:text-indigo-400 font-mono font-semibold">
+                    <span className="text-slate-900 dark:text-white font-mono font-semibold">
                       Under 10 Seconds
                     </span>
                   </div>
@@ -394,7 +406,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 {/* Feature 1 */}
                 <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1.5">
-                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                     <Smartphone className="w-4 h-4" />
                     <span className="font-bold text-slate-900 dark:text-white">100% Offline PWA</span>
                   </div>
@@ -405,7 +417,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
 
                 {/* Feature 2 */}
                 <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1.5">
-                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                     <BellRing className="w-4 h-4" />
                     <span className="font-bold text-slate-900 dark:text-white">30m Class Reminders</span>
                   </div>
@@ -416,18 +428,18 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
 
                 {/* Feature 3 */}
                 <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1.5">
-                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                     <Terminal className="w-4 h-4" />
                     <span className="font-bold text-slate-900 dark:text-white">Terminal 'phd' CLI</span>
                   </div>
                   <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
-                    Type <code className="font-mono text-indigo-600 font-semibold">phd today</code> in your terminal to view today's schedule and tasks without opening a browser.
+                    Type <code className="font-mono text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-semibold">phd today</code> in your terminal to view today's schedule and tasks without opening a browser.
                   </p>
                 </div>
 
                 {/* Feature 4 */}
                 <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1.5">
-                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                     <Cloud className="w-4 h-4" />
                     <span className="font-bold text-slate-900 dark:text-white">Cloud Sync & Google Auth</span>
                   </div>
@@ -447,7 +459,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
               type="checkbox"
               checked={dontShowAgain}
               onChange={(e) => setDontShowAgain(e.target.checked)}
-              className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-0 w-3.5 h-3.5"
+              className="rounded border-slate-300 dark:border-slate-700 accent-slate-900 dark:accent-white text-slate-900 focus:ring-slate-900 w-3.5 h-3.5"
             />
             <span>Don't show this guide on startup</span>
           </label>
@@ -468,7 +480,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
               <button
                 type="button"
                 onClick={() => setCurrentStep((prev) => (prev + 1) as 1 | 2 | 3)}
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium shadow-xs transition flex items-center gap-1.5"
+                className="px-4 py-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold shadow-xs transition flex items-center gap-1.5"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -477,7 +489,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
               <button
                 type="button"
                 onClick={handleFinish}
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium shadow-xs transition flex items-center gap-1.5"
+                className="px-4 py-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold shadow-xs transition flex items-center gap-1.5"
               >
                 <span>Enter Workspace</span>
                 <Sparkles className="w-3.5 h-3.5" />

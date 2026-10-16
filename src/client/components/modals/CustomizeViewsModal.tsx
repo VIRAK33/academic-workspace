@@ -60,7 +60,7 @@ export const CustomizeViewsModal: React.FC<CustomizeViewsModalProps> = ({ ws, is
         <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 shrink-0">
           <div>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-indigo-500" />
+              <SlidersHorizontal className="w-4 h-4 text-slate-700 dark:text-slate-300" />
               <span>Customize Workspace Views</span>
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -92,11 +92,11 @@ export const CustomizeViewsModal: React.FC<CustomizeViewsModalProps> = ({ ws, is
                 }}
                 className={`p-2.5 rounded-lg border text-left flex items-center gap-2.5 transition ${
                   workspaceMode === 'basic'
-                    ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 text-indigo-900 dark:text-indigo-200 shadow-2xs'
+                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-white text-slate-900 dark:text-white shadow-2xs font-semibold'
                     : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300'
                 }`}
               >
-                <div className="p-1.5 rounded-md bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 shrink-0">
+                <div className="p-1.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white shrink-0">
                   <GraduationCap className="w-4 h-4" />
                 </div>
                 <div>
@@ -163,7 +163,7 @@ export const CustomizeViewsModal: React.FC<CustomizeViewsModalProps> = ({ ws, is
                     type="checkbox"
                     checked={isEnabled}
                     onChange={() => toggleTabVisibility(key)}
-                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 dark:bg-slate-800 cursor-pointer shrink-0"
+                    className="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300 dark:border-slate-600 dark:bg-slate-800 cursor-pointer shrink-0 accent-slate-900 dark:accent-white"
                   />
                 </label>
               );
@@ -205,7 +205,7 @@ export const CustomizeViewsModal: React.FC<CustomizeViewsModalProps> = ({ ws, is
                     type="checkbox"
                     checked={isEnabled}
                     onChange={() => toggleTabVisibility(key)}
-                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 dark:bg-slate-800 cursor-pointer shrink-0"
+                    className="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300 dark:border-slate-600 dark:bg-slate-800 cursor-pointer shrink-0 accent-slate-900 dark:accent-white"
                   />
                 </label>
               );
@@ -221,7 +221,7 @@ export const CustomizeViewsModal: React.FC<CustomizeViewsModalProps> = ({ ws, is
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-slate-800 transition shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-xs"
           >
             Done
           </button>

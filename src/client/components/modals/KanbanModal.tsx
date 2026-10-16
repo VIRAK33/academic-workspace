@@ -121,7 +121,7 @@ export const KanbanModal: React.FC<KanbanModalProps> = ({ ws, isOpen, onClose })
             </button>
             <button
               type="submit"
-              className="px-3 py-1.5 rounded text-xs font-medium bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900"
+              className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition shadow-xs"
             >
               Add Milestone
             </button>

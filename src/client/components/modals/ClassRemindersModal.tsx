@@ -139,7 +139,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 shrink-0">
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400">
+            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
               <BellRing className="w-4 h-4" />
             </div>
             <div>
@@ -167,7 +167,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
             onClick={() => setActiveTab('notifications')}
             className={`pb-2.5 px-2.5 sm:px-3 text-xs font-medium border-b-2 transition flex items-center gap-1.5 shrink-0 ${
               activeTab === 'notifications'
-                ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 font-semibold'
+                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold'
                 : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
@@ -179,7 +179,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
             onClick={() => setActiveTab('calendar')}
             className={`pb-2.5 px-2.5 sm:px-3 text-xs font-medium border-b-2 transition flex items-center gap-1.5 shrink-0 ${
               activeTab === 'calendar'
-                ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 font-semibold'
+                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold'
                 : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
@@ -226,7 +226,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleToggleEnable(true)}
-                    className="shrink-0 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium text-xs shadow-xs transition"
+                    className="shrink-0 px-3 py-1.5 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-md font-medium text-xs shadow-xs transition"
                   >
                     Grant Access
                   </button>
@@ -237,7 +237,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
               <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                    <Bell className="w-3.5 h-3.5 text-indigo-500" />
+                    <Bell className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
                     <span>Enable Local Class Reminders</span>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -252,7 +252,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                     disabled={!supported}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-hidden rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-hidden rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-slate-900 dark:peer-checked:bg-white dark:peer-checked:after:bg-slate-900"></div>
                 </label>
               </div>
 
@@ -279,7 +279,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       type="checkbox"
                       checked={settings.remind30Min}
                       onChange={(e) => handleUpdateOption('remind30Min', e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900 dark:accent-white w-4 h-4"
                     />
                   </label>
 
@@ -299,7 +299,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       type="checkbox"
                       checked={settings.remind10Min}
                       onChange={(e) => handleUpdateOption('remind10Min', e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900 dark:accent-white w-4 h-4"
                     />
                   </label>
 
@@ -319,7 +319,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       type="checkbox"
                       checked={settings.remindAtStart}
                       onChange={(e) => handleUpdateOption('remindAtStart', e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900 dark:accent-white w-4 h-4"
                     />
                   </label>
 
@@ -339,7 +339,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       type="checkbox"
                       checked={settings.playSound}
                       onChange={(e) => handleUpdateOption('playSound', e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900 dark:accent-white w-4 h-4"
                     />
                   </label>
                 </div>
@@ -353,29 +353,29 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                   disabled={isTesting}
                   className="w-full sm:w-auto px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium transition flex items-center justify-center gap-1.5"
                 >
-                  <BellRing className="w-3.5 h-3.5 text-indigo-500" />
+                  <BellRing className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
                   <span>{isTesting ? 'Sending Alert...' : 'Send Test Notification'}</span>
                 </button>
 
                 {testStatus && (
-                  <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
+                  <span className="text-[11px] text-slate-700 dark:text-slate-300 font-medium">
                     {testStatus}
                   </span>
                 )}
               </div>
 
               {/* Informational tip */}
-              <div className="p-3 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-900/40 flex items-start gap-2 text-blue-900 dark:text-blue-300 text-[11px]">
-                <HelpCircle className="w-4 h-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 rounded-lg bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-start gap-2 text-slate-700 dark:text-slate-300 text-[11px]">
+                <HelpCircle className="w-4 h-4 shrink-0 mt-0.5 text-slate-500 dark:text-slate-400" />
                 <div>
-                  <span className="font-semibold">Desktop PWA vs Closed Phone:</span> On Mac and Windows, keeping the PWA running or minimized in your Dock will trigger system popups reliably. For locked mobile phones when the app is completely closed, use the <strong>Mobile Phone Offline Alarms (.ics)</strong> tab next door!
+                  <span className="font-semibold text-slate-900 dark:text-white">Desktop PWA vs Closed Phone:</span> On Mac and Windows, keeping the PWA running or minimized in your Dock will trigger system popups reliably. For locked mobile phones when the app is completely closed, use the <strong>Mobile Phone Offline Alarms (.ics)</strong> tab next door!
                 </div>
               </div>
             </div>
           ) : (
             /* TAB 2: MOBILE PHONE CALENDAR (.ICS) SYNC */
             <div className="space-y-4">
-              <div className="p-3.5 rounded-lg bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 border border-emerald-500/20 dark:border-emerald-500/30">
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
                 <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>100% Reliable Offline Mobile Lock-Screen Alarms</span>
@@ -399,7 +399,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       onClick={() => setAlarmMinutes(mins)}
                       className={`p-2 rounded-lg border text-center transition ${
                         alarmMinutes === mins
-                          ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold'
+                          ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs'
                           : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                       }`}
                     >
@@ -415,7 +415,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       type="checkbox"
                       checked={includeSecondAlarm}
                       onChange={(e) => setIncludeSecondAlarm(e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900 dark:accent-white w-3.5 h-3.5"
                     />
                     <span className="text-slate-700 dark:text-slate-300">
                       Also include a 10-minute final reminder alarm
@@ -427,7 +427,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       type="checkbox"
                       checked={includeAtStartAlarm}
                       onChange={(e) => setIncludeAtStartAlarm(e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900 dark:accent-white w-3.5 h-3.5"
                     />
                     <span className="text-slate-700 dark:text-slate-300">
                       Include an alert right at class start time
@@ -450,7 +450,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                 <button
                   type="button"
                   onClick={handleExportIcs}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-xs shadow-xs transition flex items-center justify-center gap-2 shrink-0"
+                  className="px-4 py-2 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-medium text-xs shadow-xs transition flex items-center justify-center gap-2 shrink-0"
                 >
                   <Download className="w-4 h-4" />
                   <span>Download .ics Calendar</span>
@@ -470,7 +470,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       <span>iPhone & iPad (Apple Calendar)</span>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 mt-1 leading-normal">
-                      1. Download the <code className="text-indigo-600 font-mono">.ics</code> file in Safari.<br />
+                      1. Download the <code className="text-slate-900 dark:text-white font-mono font-bold">.ics</code> file in Safari.<br />
                       2. Tap to open it and choose <strong>"Add All"</strong>.<br />
                       3. iOS will automatically trigger lock-screen alarms 30m before each class.
                     </p>
@@ -482,7 +482,7 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       <span>Android (Google Calendar)</span>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 mt-1 leading-normal">
-                      1. Download the <code className="text-indigo-600 font-mono">.ics</code> file.<br />
+                      1. Download the <code className="text-slate-900 dark:text-white font-mono font-bold">.ics</code> file.<br />
                       2. Open with Google Calendar or import into calendar.google.com.<br />
                       3. Full semester schedule is mapped with automatic notifications.
                     </p>

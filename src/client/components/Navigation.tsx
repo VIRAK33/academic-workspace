@@ -150,7 +150,7 @@ export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal, on
                 <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
                   <div>
                     <h4 className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-500" />
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                       <span>Customize Workspace Views</span>
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -177,11 +177,11 @@ export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal, on
                       onClick={() => setWorkspaceMode('basic')}
                       className={`px-2.5 py-1.5 rounded-lg border text-left flex items-center gap-2 transition ${
                         workspaceMode === 'basic'
-                          ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 text-indigo-900 dark:text-indigo-200'
+                          ? 'bg-slate-100 dark:bg-slate-800 border-slate-900 dark:border-white text-slate-900 dark:text-white shadow-2xs font-semibold'
                           : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300'
                       }`}
                     >
-                      <GraduationCap className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                      <GraduationCap className="w-4 h-4 text-slate-700 dark:text-slate-300 shrink-0" />
                       <div>
                         <div className="text-xs font-medium">Basic Student</div>
                         <div className="text-[10px] text-slate-400">3 core views</div>
@@ -239,7 +239,7 @@ export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal, on
                             type="checkbox"
                             checked={isEnabled}
                             onChange={() => toggleTabVisibility(key)}
-                            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 dark:bg-slate-800 cursor-pointer"
+                            className="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300 dark:border-slate-600 dark:bg-slate-800 cursor-pointer accent-slate-900 dark:accent-white"
                           />
                         </label>
                       );
@@ -277,7 +277,7 @@ export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal, on
                             type="checkbox"
                             checked={isEnabled}
                             onChange={() => toggleTabVisibility(key)}
-                            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 dark:bg-slate-800 cursor-pointer"
+                            className="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300 dark:border-slate-600 dark:bg-slate-800 cursor-pointer accent-slate-900 dark:accent-white"
                           />
                         </label>
                       );
@@ -294,7 +294,7 @@ export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal, on
                         setIsCustomizeOpen(false);
                         onOpenGuideModal();
                       }}
-                      className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium flex items-center gap-1 cursor-pointer"
+                      className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1 cursor-pointer transition"
                     >
                       <span>Getting Started Guide</span>
                       <span>&rarr;</span>
@@ -302,7 +302,7 @@ export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal, on
                   ) : (
                     <span className="text-slate-400 font-mono">Saved automatically</span>
                   )}
-                  <span className="text-indigo-600 dark:text-indigo-400 font-sans font-medium">
+                  <span className="text-slate-500 dark:text-slate-400 font-mono font-medium">
                     {workspaceMode.toUpperCase()} MODE
                   </span>
                 </div>

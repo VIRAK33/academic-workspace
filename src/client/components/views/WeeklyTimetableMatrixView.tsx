@@ -236,7 +236,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
           <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
             {/* Weekly Timetable Title (Icon-only on mobile) */}
             <div className="flex items-center gap-1.5 shrink-0" title="Weekly Timetable">
-              <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <Calendar className="w-4 h-4 text-slate-700 dark:text-slate-300 shrink-0" />
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200 hidden sm:inline">
                 Weekly Timetable
               </h2>
@@ -326,10 +326,10 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
               <button
                 type="button"
                 onClick={onOpenAiImportModal}
-                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
                 title="Extract and import timetable with AI"
               >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                <Sparkles className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                 <span className="hidden sm:inline">AI Import</span>
               </button>
             )}
@@ -384,7 +384,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                       }}
                       className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
                     >
-                      <div className="p-1 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                      <div className="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                         <BellRing className="w-3.5 h-3.5" />
                       </div>
                       <div>
@@ -405,12 +405,12 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                   setIsAddMenuOpen(!isAddMenuOpen);
                   setIsToolsMenuOpen(false);
                 }}
-                className="p-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                className="p-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                 title="Add new course or event"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Add</span>
-                <ChevronDown className={`w-3 h-3 text-white/80 hidden sm:inline transition-transform ${isAddMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-white/80 dark:text-slate-600 hidden sm:inline transition-transform ${isAddMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isAddMenuOpen && (
@@ -443,7 +443,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                       }}
                       className="w-full px-3 py-2 text-left text-xs text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer"
                     >
-                      <div className="p-1 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                      <div className="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                         <Calendar className="w-3.5 h-3.5" />
                       </div>
                       <div>
@@ -460,10 +460,10 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
 
         {/* Timetable Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[700px]">
+          <table className={`w-full text-left border-collapse ${showWeekend ? 'min-w-[650px] sm:min-w-[700px]' : 'min-w-[500px] sm:min-w-[650px]'}`}>
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/40 text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400">
-                <th className="py-1.5 px-2.5 w-24 border-r border-slate-200 dark:border-slate-800 font-medium">Session</th>
+                <th className="py-1.5 px-1 sm:px-2.5 w-14 sm:w-24 border-r border-slate-200 dark:border-slate-800 font-medium text-center sm:text-left">Session</th>
                 {daysToDisplay.map((day, dIdx) => {
                   const cellIso = addDays(viewedSemester.startDate, (currentAcademicWeek - 1) * 7 + (day - 1));
                   const [, m, d] = cellIso.split('-');
@@ -474,13 +474,13 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                   return (
                     <th
                       key={day}
-                      className={`py-1.5 px-2.5 font-medium ${
+                      className={`py-1.5 px-1.5 sm:px-2.5 font-medium ${
                         dIdx < daysToDisplay.length - 1 ? 'border-r border-slate-200 dark:border-slate-800' : ''
                       } ${isWeekend ? 'bg-slate-100/40 dark:bg-slate-800/60' : ''} ${
-                        isToday ? 'text-indigo-600 dark:text-indigo-400 font-bold' : ''
+                        isToday ? 'text-slate-900 dark:text-white font-bold' : ''
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between text-center sm:text-left">
                         <span>{DAY_NAMES_SHORT[day]}</span>
                         <span className="font-normal text-[9px] text-slate-400 tabular-nums">
                           {Number(m)}/{Number(d)}
@@ -495,12 +495,13 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
               {timeSlots.map((slot, r) => {
                 return (
                   <tr key={slot.session}>
-                    <td className="py-2 px-2.5 bg-slate-50/50 dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-800 align-top">
-                      <div className="font-mono font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                    <td className="py-1.5 px-1 sm:py-2 sm:px-2.5 bg-slate-50/50 dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-800 align-top text-center sm:text-left">
+                      <div className="font-mono font-semibold text-slate-800 dark:text-slate-200 text-[11px] sm:text-xs">
                         S{slot.session}
                       </div>
-                      <div className="font-mono text-[10px] text-slate-400 mt-0.5 tabular-nums">
-                        {slot.startTime}–{slot.endTime}
+                      <div className="font-mono text-[9px] sm:text-[10px] text-slate-400 mt-0.5 tabular-nums">
+                        <span className="sm:hidden">{slot.startTime}</span>
+                        <span className="hidden sm:inline">{slot.startTime}–{slot.endTime}</span>
                       </div>
                     </td>
 
@@ -550,7 +551,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                                 return (
                                   <div
                                     onClick={() => setViewingCourse(matchedCourse)}
-                                    className={`p-2 rounded-md border transition border-l-[3px] cursor-pointer hover:shadow-xs ${
+                                    className={`p-1.5 sm:p-2 rounded-md border transition border-l-[3px] cursor-pointer hover:shadow-xs ${
                                       isWeekActive
                                         ? 'bg-slate-50/90 dark:bg-slate-800/90 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'
                                         : 'bg-slate-50/30 dark:bg-slate-800/30 text-slate-400 border-dashed border-slate-200 dark:border-slate-700 opacity-60'
@@ -559,20 +560,20 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                                     title="Click to view course details"
                                   >
                                     <div className="flex items-center justify-between gap-1">
-                                      <span className="font-mono text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                                      <span className="font-mono text-[9px] sm:text-[10px] font-semibold text-slate-700 dark:text-slate-300">
                                         {matchedCourse.code}
                                       </span>
-                                      <span className="font-mono text-[10px] text-slate-400 tabular-nums">
+                                      <span className="hidden sm:inline font-mono text-[10px] text-slate-400 tabular-nums">
                                         {bounds.startTime}–{bounds.endTime}
                                       </span>
                                     </div>
-                                    <div className="font-semibold text-xs mt-0.5 leading-tight">
+                                    <div className="font-semibold text-[11px] sm:text-xs mt-0.5 leading-tight line-clamp-2 sm:line-clamp-none">
                                       {matchedCourse.name}
                                     </div>
-                                    <div className="text-[10px] mt-0.5 text-slate-500 dark:text-slate-400">
+                                    <div className="hidden sm:block text-[10px] mt-0.5 text-slate-500 dark:text-slate-400">
                                       {matchedCourse.location} {matchedCourse.teacher ? `· ${matchedCourse.teacher}` : ''}
                                     </div>
-                                    <div className="mt-1.5 pt-1 border-t border-slate-200/70 dark:border-slate-700 text-[10px] font-mono text-slate-400 flex items-center justify-between">
+                                    <div className="hidden sm:flex mt-1.5 pt-1 border-t border-slate-200/70 dark:border-slate-700 text-[10px] font-mono text-slate-400 items-center justify-between">
                                       <span>S{matchedSched.sessions.join('+')}</span>
                                       <span
                                         className="font-mono text-[10px] font-medium text-slate-500 dark:text-slate-400"
@@ -592,7 +593,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                                   <div
                                     key={ev.id}
                                     onClick={() => setViewingEvent(ev)}
-                                    className="p-2 rounded-md border border-dashed transition cursor-pointer hover:shadow-xs bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700"
+                                    className="p-1.5 sm:p-2 rounded-md border border-dashed transition cursor-pointer hover:shadow-xs bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700"
                                     style={{
                                       borderLeftWidth: '3px',
                                       borderLeftStyle: 'solid',
@@ -601,38 +602,23 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                                     title={`Click to view ${isRoutine ? 'routine' : 'event'} details`}
                                   >
                                     <div className="flex items-center justify-between gap-1">
-                                      <span className={`inline-flex items-center gap-1 font-mono text-[9px] uppercase font-semibold px-1 py-0.2 rounded ${
+                                      <span className={`inline-flex items-center gap-1 font-mono text-[8px] sm:text-[9px] uppercase font-semibold px-1 py-0.2 rounded ${
                                         isRoutine
                                           ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
                                           : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300'
                                       }`}>
-                                        <Twemoji emoji={isRoutine ? '🔁' : '📅'} className="w-3 h-3" />
+                                        <Twemoji emoji={isRoutine ? '🔁' : '📅'} className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                         <span>{isRoutine ? 'Routine' : 'Event'}</span>
                                       </span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-mono text-[10px] text-slate-400 tabular-nums">
-                                          {ev.startTime}–{ev.endTime}
-                                        </span>
-                                        {onEditEvent && (
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              onEditEvent(ev);
-                                            }}
-                                            className="p-0.5 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
-                                            title="Edit Commitment"
-                                          >
-                                            <Pencil className="w-2.5 h-2.5" />
-                                          </button>
-                                        )}
-                                      </div>
+                                      <span className="hidden sm:inline font-mono text-[10px] text-slate-400 tabular-nums">
+                                        {ev.startTime}–{ev.endTime}
+                                      </span>
                                     </div>
-                                    <div className="font-semibold text-xs mt-1 leading-tight text-slate-900 dark:text-white">
+                                    <div className="font-semibold text-[11px] sm:text-xs mt-0.5 sm:mt-1 leading-tight text-slate-900 dark:text-white line-clamp-2 sm:line-clamp-none">
                                       {ev.title}
                                     </div>
                                     {ev.location && (
-                                      <div className="text-[10px] mt-0.5 text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+                                      <div className="hidden sm:flex text-[10px] mt-0.5 text-slate-500 dark:text-slate-400 truncate items-center gap-1">
                                         <Twemoji emoji="📍" className="w-2.5 h-2.5" />
                                         <span>{ev.location}</span>
                                       </div>
@@ -778,7 +764,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
 
           {semCourses.length === 0 && (
             <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800 text-center space-y-3 bg-slate-50/50 dark:bg-slate-900/40">
-              <div className="w-10 h-10 mx-auto rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+              <div className="w-10 h-10 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div className="space-y-1">
@@ -794,7 +780,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                   <button
                     type="button"
                     onClick={onOpenAiImportModal}
-                    className="px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium flex items-center gap-1.5 shadow-xs transition"
+                    className="px-3 py-1.5 rounded-md bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium flex items-center gap-1.5 shadow-xs transition"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Import Timetable with AI</span>
@@ -803,7 +789,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                 <button
                   type="button"
                   onClick={onOpenCourseModal}
-                  className="px-3 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-50 transition"
+                  className="px-3 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-750 transition"
                 >
                   + Add Course Manually
                 </button>

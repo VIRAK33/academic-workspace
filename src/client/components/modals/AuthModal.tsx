@@ -133,14 +133,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ auth, onClose }) => {
                         className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                      <div className="w-10 h-10 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-bold text-sm">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div>
                       <div className="font-medium text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                         <span>{user.name}</span>
-                        <span className="px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 text-[10px] font-mono">
+                        <span className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-[10px] font-mono">
                           {user.provider === 'google' ? 'Google' : 'Demo'}
                         </span>
                       </div>
@@ -234,7 +234,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ auth, onClose }) => {
                         </span>
                         <button
                           type="submit"
-                          className="px-3 py-1 rounded bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium"
+                          className="px-3 py-1 rounded bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium shadow-xs transition"
                         >
                           Save Client ID
                         </button>
@@ -249,7 +249,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ auth, onClose }) => {
           {/* PWA / Install Offline Guide */}
           <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-slate-50/60 dark:bg-slate-800/40 space-y-2 text-xs">
             <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-              <Smartphone className="w-3.5 h-3.5 text-indigo-500" />
+              <Smartphone className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
               <span>Install PWA for 100% Offline App Access</span>
             </div>
             <ul className="text-[11px] text-slate-500 dark:text-slate-400 space-y-1 list-disc list-inside">
@@ -268,7 +268,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ auth, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition"
+            className="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-xs"
           >
             Done
           </button>

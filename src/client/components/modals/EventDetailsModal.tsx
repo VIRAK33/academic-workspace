@@ -87,7 +87,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
             <div className="flex items-center justify-between">
               <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-indigo-500" />
+                <Clock className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                 <span>Scheduled Time</span>
               </div>
               {durationMins > 0 && (
@@ -105,7 +105,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           {/* Repeat / Date Information */}
           <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-1">
             <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1">
-              <Calendar className="w-3 h-3 text-indigo-500" />
+              <Calendar className="w-3 h-3 text-slate-500 dark:text-slate-400" />
               <span>{isRoutine ? 'Days of the Week' : 'Calendar Date'}</span>
             </div>
             <div className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
@@ -174,7 +174,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 onClose();
                 onEdit(event);
               }}
-              className="px-3.5 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1.5 shadow-2xs font-semibold"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition flex items-center gap-1.5 shadow-xs"
             >
               <Pencil className="w-3.5 h-3.5" />
               <span>Edit</span>

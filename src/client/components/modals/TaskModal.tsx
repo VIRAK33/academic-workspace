@@ -228,7 +228,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-3 py-1.5 rounded text-xs font-medium bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900 disabled:opacity-50 transition"
+              className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs"
             >
               {isSubmitting ? 'Saving...' : 'Save Task'}
             </button>
