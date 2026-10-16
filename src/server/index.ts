@@ -11,6 +11,21 @@ app.use('*', cors());
 // Health check
 app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
+// Real Engine Time
+app.get('/api/time', (c) => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return c.json({
+    isoDate: `${y}-${m}-${d}`,
+    timestamp: now.toISOString(),
+    hours: now.getHours(),
+    minutes: now.getMinutes(),
+    totalMinutes: now.getHours() * 60 + now.getMinutes(),
+  });
+});
+
 // --- SEMESTERS ---
 app.get('/api/semesters', async (c) => {
   const db = new WorkspaceDatabase(c.env);

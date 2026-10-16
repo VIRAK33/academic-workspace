@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useWorkspace, formatHumanDate, format12HourTime, addDays, parseIsoDate } from '../hooks/useWorkspace';
+import { useWorkspace, formatHumanDate, format12HourTime, addDays, parseIsoDate, getTodayIsoDate, calculateAcademicWeek } from '../hooks/useWorkspace';
 import { useAuth } from '../hooks/useAuth';
 import { Search, Moon, Sun, Terminal, Database, Clock, ChevronDown, CheckCircle2, Menu, X, Calendar, User, Wifi, WifiOff, Sparkles, BellRing, Compass, SlidersHorizontal } from 'lucide-react';
 
@@ -127,12 +127,14 @@ export const Header: React.FC<HeaderProps> = ({
   const humanDate = formatHumanDate(selectedDate);
   const isArchived = viewedSemester.isArchived || !viewedSemester.isActive;
 
-  // Jump to today
+  // Jump to today (real engine date)
   const handleJumpToday = () => {
-    setSelectedDate('2026-10-15');
+    const todayIso = getTodayIsoDate();
+    setSelectedDate(todayIso);
     const active = semesters.find(s => s.isActive);
     if (active) setViewedSemesterId(active.id);
-    showToast('Jumped to Today (Oct 15, W5)');
+    const todayWeek = active ? calculateAcademicWeek(todayIso, active.startDate) : currentAcademicWeek;
+    showToast(`Jumped to Today (${formatHumanDate(todayIso)}, W${todayWeek})`);
   };
 
   // Week strip calculation (Sun .. Sat)
@@ -228,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({
               tooltip="Jump to today's schedule"
               className="px-2.5 py-1.5 rounded-md text-xs font-medium bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-900 dark:bg-emerald-400" />
+              <span className={`w-1.5 h-1.5 rounded-full ${selectedDate === getTodayIsoDate() ? 'bg-emerald-500 shadow-xs shadow-emerald-400' : 'bg-slate-400 dark:bg-slate-500'}`} />
               <span>Today</span>
             </HeaderTooltipButton>
 
@@ -574,22 +576,29 @@ export const Header: React.FC<HeaderProps> = ({
                 const dt = parseIsoDate(dayIso);
                 const dayNum = dt.getUTCDate();
                 const isSelected = dayIso === selectedDate;
+                const isToday = dayIso === getTodayIsoDate();
 
                 return (
                   <button
                     key={dayIso}
                     type="button"
                     onClick={() => setSelectedDate(dayIso)}
-                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono transition tabular-nums ${
+                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono transition tabular-nums relative ${
                       isSelected
                         ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold shadow-xs'
+                        : isToday
+                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-800'
                         : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
+                    title={isToday ? `${formatHumanDate(dayIso)} (Today)` : formatHumanDate(dayIso)}
                   >
-                    <span className={`text-[9px] ${isSelected ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'}`}>
+                    <span className={`text-[9px] ${isSelected ? 'text-slate-300 dark:text-slate-600' : isToday ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400'}`}>
                       {stripLabels[i]}
                     </span>
                     <span>{dayNum}</span>
+                    {isToday && (
+                      <span className={`w-1 h-1 rounded-full absolute bottom-0.5 right-0.5 ${isSelected ? 'bg-emerald-400' : 'bg-indigo-500'}`} />
+                    )}
                   </button>
                 );
               })}
@@ -726,10 +735,12 @@ export const Header: React.FC<HeaderProps> = ({
                   className="w-full flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition"
                 >
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-emerald-400" />
+                    <span className={`w-2 h-2 rounded-full ${selectedDate === getTodayIsoDate() ? 'bg-emerald-500 shadow-xs shadow-emerald-400' : 'bg-slate-400 dark:bg-slate-500'}`} />
                     <span>Jump to Today</span>
                   </span>
-                  <span className="text-[10px] font-mono text-slate-400">Oct 15</span>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {formatHumanDate(getTodayIsoDate()).split(',')[1]?.trim() || 'Today'}
+                  </span>
                 </button>
 
                 <div className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1 bg-slate-50/40 dark:bg-slate-800/40">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useWorkspace, addDays } from '../../hooks/useWorkspace';
+import { useWorkspace, addDays, getTodayIsoDate } from '../../hooks/useWorkspace';
 import { X, Plus } from 'lucide-react';
 import { Task } from '../../../types';
 
@@ -112,9 +112,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
             <div className="flex flex-wrap items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => setDueDate('2026-10-15')}
+                onClick={() => setDueDate(getTodayIsoDate())}
                 className={`px-2.5 py-1 rounded text-xs font-medium transition ${
-                  dueDate === '2026-10-15'
+                  dueDate === getTodayIsoDate()
                     ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
@@ -123,9 +123,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
               </button>
               <button
                 type="button"
-                onClick={() => setDueDate('2026-10-16')}
+                onClick={() => setDueDate(addDays(getTodayIsoDate(), 1))}
                 className={`px-2.5 py-1 rounded text-xs font-medium transition ${
-                  dueDate === '2026-10-16'
+                  dueDate === addDays(getTodayIsoDate(), 1)
                     ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                 }`}

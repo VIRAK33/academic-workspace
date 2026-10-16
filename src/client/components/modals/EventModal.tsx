@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useWorkspace, DAY_NAMES_FULL, DAY_NAMES_SHORT, getIsoDayOfWeek, addDays, formatIsoDate } from '../../hooks/useWorkspace';
+import { useWorkspace, DAY_NAMES_FULL, DAY_NAMES_SHORT, getIsoDayOfWeek, addDays, formatIsoDate, getTodayIsoDate } from '../../hooks/useWorkspace';
 import { X, Trash2, Calendar, Clock, Palette, Sparkles, Dumbbell, BookOpen, Users, AlertCircle, Check } from 'lucide-react';
 import { ScheduleEvent, EventType } from '../../../types';
 import { Twemoji } from '../common/Twemoji';
@@ -37,7 +37,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Study');
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([1]);
-  const [specificDate, setSpecificDate] = useState(selectedDate || '2026-10-15');
+  const [specificDate, setSpecificDate] = useState(selectedDate || getTodayIsoDate());
   const [useSessionSlot, setUseSessionSlot] = useState(false);
   const [selectedSession, setSelectedSession] = useState('1-2');
   const [startTime, setStartTime] = useState('07:00');
@@ -54,7 +54,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
         setTitle(initialEvent.title);
         setCategory(initialEvent.category || 'Study');
         setDaysOfWeek(initialEvent.daysOfWeek || [1]);
-        setSpecificDate(initialEvent.specificDate || selectedDate || '2026-10-15');
+        setSpecificDate(initialEvent.specificDate || selectedDate || getTodayIsoDate());
         if (initialEvent.sessions && initialEvent.sessions.length > 0) {
           setUseSessionSlot(true);
           setSelectedSession(initialEvent.sessions[0]);
@@ -71,7 +71,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
         setTitle('');
         setCategory('Study');
         setDaysOfWeek([getIsoDayOfWeek(selectedDate)]);
-        setSpecificDate(selectedDate || '2026-10-15');
+        setSpecificDate(selectedDate || getTodayIsoDate());
         setUseSessionSlot(false);
         setSelectedSession(timeSlots[0]?.session || '1-2');
         setStartTime('07:00');

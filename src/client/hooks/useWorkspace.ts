@@ -31,8 +31,21 @@ export const TAB_METADATA: Record<TabKey, { label: string; group: 'essentials' |
   experiments: { label: 'Experiment Logs', group: 'research', description: 'Hypotheses, parameters & model findings' },
 };
 
-export function parseIsoDate(isoStr: string): Date {
-  const [y, m, d] = (isoStr || '2026-10-15').split('-').map(Number);
+export function getTodayIsoDate(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function getCurrentMinutes(): number {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+export function parseIsoDate(isoStr?: string): Date {
+  const [y, m, d] = (isoStr || getTodayIsoDate()).split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d));
 }
 
@@ -130,7 +143,7 @@ export function useWorkspace() {
   }, []);
 
   const [viewedSemesterId, setViewedSemesterId] = useState<string>('sem_2026_fall');
-  const [selectedDate, setSelectedDate] = useState<string>('2026-10-15');
+  const [selectedDate, setSelectedDate] = useState<string>(() => getTodayIsoDate());
   const [activeTab, setActiveTab] = useState<TabKey>('timeline');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showInactiveCourses, setShowInactiveCourses] = useState<boolean>(true);
@@ -213,9 +226,9 @@ export function useWorkspace() {
     });
   }, [showToast]);
 
-  // Real-time vs simulated time
-  const [isLiveClock, setIsLiveClock] = useState<boolean>(false);
-  const [simulatedMinutes, setSimulatedMinutes] = useState<number>(15 * 60 + 20); // 3:20 PM default
+  // Real-time vs simulated time (default to live real-time engine clock)
+  const [isLiveClock, setIsLiveClock] = useState<boolean>(true);
+  const [simulatedMinutes, setSimulatedMinutes] = useState<number>(() => getCurrentMinutes());
 
   // Dark mode
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -233,7 +246,7 @@ export function useWorkspace() {
     }
   }, [isDarkMode]);
 
-  // Live clock interval
+  // Live clock interval (updates every 10 seconds to track live minutes)
   useEffect(() => {
     if (!isLiveClock) return;
     const updateNow = () => {
@@ -241,13 +254,13 @@ export function useWorkspace() {
       setSimulatedMinutes(now.getHours() * 60 + now.getMinutes());
     };
     updateNow();
-    const interval = setInterval(updateNow, 30000);
+    const interval = setInterval(updateNow, 10000);
     return () => clearInterval(interval);
   }, [isLiveClock]);
 
   // Initial load
   const loadData = useCallback(async () => {
-    const [sems, slots, crs, tks, kb, pps, confs, exps, mtgs, evts] = await Promise.all([
+    const [sems, slots, crs, tks, kb, pps, confs, exps, mtgs, evts, engineTime] = await Promise.all([
       api.getSemesters(),
       api.getTimeSlots(),
       api.getCourses(),
@@ -258,6 +271,7 @@ export function useWorkspace() {
       api.getExperiments(),
       api.getMeetings(),
       api.getEvents(),
+      api.getServerTime(),
     ]);
     setSemesters(sems);
     setTimeSlots(slots);
@@ -269,6 +283,17 @@ export function useWorkspace() {
     setExperimentLogs(exps);
     setAdvisorMeetings(mtgs);
     setEvents(evts);
+
+    // Sync real engine time if available
+    if (engineTime?.isoDate) {
+      setSelectedDate(prev => {
+        if (prev === '2026-10-15') return engineTime.isoDate;
+        return prev;
+      });
+      if (typeof engineTime.totalMinutes === 'number') {
+        setSimulatedMinutes(engineTime.totalMinutes);
+      }
+    }
 
     const active = sems.find(s => s.isActive) || sems[0];
     if (active) setViewedSemesterId(active.id);
@@ -571,6 +596,7 @@ export function useWorkspace() {
     setViewedSemesterId,
     selectedDate,
     setSelectedDate,
+    todayIsoDate: getTodayIsoDate(),
     currentAcademicWeek,
     activeTab,
     setActiveTab,

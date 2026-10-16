@@ -5,6 +5,34 @@ const localDb = new WorkspaceDatabase();
 
 // In local browser mode or when server is available, api calls are seamless
 export const api = {
+  // Engine & Real-time Synchronization
+  async getServerTime(): Promise<{ isoDate: string; timestamp: string; totalMinutes: number }> {
+    try {
+      const res = await fetch('/api/time');
+      if (res.ok) {
+        const data = (await res.json()) as any;
+        if (data?.isoDate) {
+          return {
+            isoDate: data.isoDate,
+            timestamp: data.timestamp || new Date().toISOString(),
+            totalMinutes: typeof data.totalMinutes === 'number' ? data.totalMinutes : (data.hours * 60 + data.minutes),
+          };
+        }
+      }
+    } catch (e) {}
+
+    // Fallback to local runtime engine time
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return {
+      isoDate: `${y}-${m}-${d}`,
+      timestamp: now.toISOString(),
+      totalMinutes: now.getHours() * 60 + now.getMinutes(),
+    };
+  },
+
   // Semesters
   async getSemesters(): Promise<Semester[]> {
     try {

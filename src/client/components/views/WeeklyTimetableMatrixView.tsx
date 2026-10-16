@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useWorkspace, DAY_NAMES_SHORT, timeToMinutes, addDays } from '../../hooks/useWorkspace';
+import { useWorkspace, DAY_NAMES_SHORT, timeToMinutes, addDays, getTodayIsoDate } from '../../hooks/useWorkspace';
 import { Plus, Trash2, Pencil, Sparkles, BellRing, Calendar, Clock } from 'lucide-react';
 import { Course, ScheduleEvent } from '../../../types';
 import { Twemoji } from '../common/Twemoji';
@@ -221,7 +221,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                 {daysToDisplay.map((day, dIdx) => {
                   const cellIso = addDays(viewedSemester.startDate, (currentAcademicWeek - 1) * 7 + (day - 1));
                   const [, m, d] = cellIso.split('-');
-                  const todayIso = new Date().toISOString().slice(0, 10);
+                  const todayIso = getTodayIsoDate();
                   const isToday = cellIso === todayIso;
                   const isWeekend = day >= 6;
 

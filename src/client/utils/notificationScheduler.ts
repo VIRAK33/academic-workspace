@@ -188,7 +188,7 @@ export async function checkUpcomingClassAlerts(
   const now = new Date();
   const currentDayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // 1 = Mon .. 7 = Sun
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   const semesterCourses = courses.filter((c) => c.semesterId === viewedSemester.id);
   const sentKeys = getSentKeys();
