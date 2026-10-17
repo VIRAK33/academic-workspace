@@ -206,13 +206,31 @@ export const Header: React.FC<HeaderProps> = ({
                   {humanDate}
                 </h1>
                 <span className="text-slate-300 dark:text-slate-700 text-xs">/</span>
-                <span className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-medium border tabular-nums ${
-                  currentAcademicWeek >= 1 && currentAcademicWeek <= viewedSemester.totalWeeks
-                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700'
-                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
-                }`}>
-                  Week {currentAcademicWeek} / {viewedSemester.totalWeeks}
-                </span>
+                <div className="relative inline-flex items-center group">
+                  <select
+                    value={currentAcademicWeek}
+                    onChange={(e) => {
+                      const targetWeek = parseInt(e.target.value, 10);
+                      const dow = selUtc.getUTCDay() === 0 ? 7 : selUtc.getUTCDay();
+                      const offset = (targetWeek - 1) * 7 + (dow - 1);
+                      setSelectedDate(addDays(viewedSemester.startDate, offset));
+                    }}
+                    aria-label="Select Academic Week"
+                    title="Click to jump to another academic week"
+                    className={`appearance-none cursor-pointer pl-1.5 pr-4 py-0.5 rounded text-[10px] font-mono font-medium border tabular-nums transition focus:outline-none ${
+                      currentAcademicWeek >= 1 && currentAcademicWeek <= viewedSemester.totalWeeks
+                        ? 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700'
+                        : 'bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                    }`}
+                  >
+                    {Array.from({ length: viewedSemester.totalWeeks }, (_, i) => i + 1).map((w) => (
+                      <option key={w} value={w} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+                        Week {w} / {viewedSemester.totalWeeks}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-2.5 h-2.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 pointer-events-none absolute right-1 top-1/2 -translate-y-1/2" />
+                </div>
               </div>
 
               {/* Term Selector */}
@@ -250,28 +268,6 @@ export const Header: React.FC<HeaderProps> = ({
               <span className={`w-1.5 h-1.5 rounded-full ${selectedDate === getTodayIsoDate() ? 'bg-emerald-500 shadow-xs shadow-emerald-400' : 'bg-slate-400 dark:bg-slate-500'}`} />
               <span>Today</span>
             </HeaderTooltipButton>
-
-            {/* Quick Week Select */}
-            <div className="relative">
-              <select
-                value={currentAcademicWeek}
-                onChange={(e) => {
-                  const targetWeek = parseInt(e.target.value, 10);
-                  const dow = selUtc.getUTCDay() === 0 ? 7 : selUtc.getUTCDay();
-                  const offset = (targetWeek - 1) * 7 + (dow - 1);
-                  setSelectedDate(addDays(viewedSemester.startDate, offset));
-                }}
-                aria-label="Jump to Week"
-                className="appearance-none bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-mono font-medium rounded-md border border-slate-200 dark:border-slate-700 pl-2.5 pr-6 py-1.5 cursor-pointer transition focus:outline-none tabular-nums shadow-2xs"
-              >
-                {Array.from({ length: viewedSemester.totalWeeks }, (_, i) => i + 1).map((w) => (
-                  <option key={w} value={w} className="dark:bg-slate-800 dark:text-white">
-                    Week {w}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-3 h-3 text-slate-400 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />
-            </div>
 
             <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
 
