@@ -872,18 +872,6 @@ export const Header: React.FC<HeaderProps> = ({
                   <Database className="w-4 h-4 text-slate-500" />
                   <span>Database Backup / Cloudflare D1</span>
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileDrawerOpen(false);
-                    onOpenSemesterModal();
-                  }}
-                  className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
-                >
-                  <Calendar className="w-4 h-4 text-slate-500" />
-                  <span>Manage Semesters & Terms</span>
-                </button>
               </div>
 
               {/* Preferences & Appearance */}
