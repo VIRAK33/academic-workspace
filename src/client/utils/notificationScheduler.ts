@@ -8,6 +8,7 @@ export interface NotificationSettings {
   remind10Min: boolean;
   remindAtStart: boolean;
   playSound: boolean;
+  notifyInSimulation?: boolean;
 }
 
 const STORAGE_KEY = 'phd_workspace_notification_settings_v1';
@@ -20,6 +21,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   remind10Min: true,
   remindAtStart: true,
   playSound: true,
+  notifyInSimulation: true,
 };
 
 
@@ -174,8 +176,43 @@ function markKeySent(key: string): void {
   }
 }
 
+function clearSentKey(key: string): void {
+  try {
+    const sent = getSentKeys();
+    if (sent.delete(key)) {
+      sessionStorage.setItem(SENT_KEYS_SESSION, JSON.stringify(Array.from(sent)));
+    }
+  } catch {}
+}
+
+export interface CheckAlertsOptions {
+  simulatedMinutes?: number;
+  isSimulation?: boolean;
+  simulatedDate?: string;
+  forceTestNotice?: boolean;
+}
+
 /**
- * Evaluates today's courses against current time and triggers alerts
+ * Direct simulator to test a real system notification for any course or event
+ */
+export async function simulateClassAlert(
+  title: string,
+  body: string,
+  tag = 'sim-test-alert'
+): Promise<boolean> {
+  if (Notification.permission !== 'granted') {
+    const perm = await requestNotificationPermission();
+    if (perm !== 'granted') return false;
+  }
+  playChime();
+  return await showSystemNotification(title, {
+    body,
+    tag,
+  });
+}
+
+/**
+ * Evaluates courses and events against current or simulated time and triggers real notifications
  * (e.g. 30 minutes before, 10 minutes before, and when class starts)
  */
 export async function checkUpcomingClassAlerts(
@@ -183,19 +220,48 @@ export async function checkUpcomingClassAlerts(
   viewedSemester: Semester,
   currentAcademicWeek: number,
   settings: NotificationSettings,
-  events: ScheduleEvent[] = []
-): Promise<void> {
-  if (!settings.enabled || !isNotificationSupported() || Notification.permission !== 'granted') {
-    return;
+  events: ScheduleEvent[] = [],
+  options?: CheckAlertsOptions
+): Promise<boolean> {
+  const isSim = !!options?.isSimulation;
+
+  // Verify notification permissions and settings
+  if (!isNotificationSupported() || Notification.permission !== 'granted') {
+    return false;
+  }
+
+  // If in simulation mode, respect the notifyInSimulation setting (enabled by default)
+  if (isSim) {
+    if (settings.notifyInSimulation === false) {
+      return false;
+    }
+  } else if (!settings.enabled) {
+    return false;
   }
 
   const now = new Date();
-  const currentDayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // 1 = Mon .. 7 = Sun
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  let todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  let currentDayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // 1 = Mon .. 7 = Sun
+  let currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-  const semesterCourses = courses.filter((c) => c.semesterId === viewedSemester.id);
+  if (isSim && options?.simulatedMinutes !== undefined) {
+    currentMinutes = options.simulatedMinutes;
+  }
+
+  if (isSim && options?.simulatedDate) {
+    todayStr = options.simulatedDate;
+    const parts = options.simulatedDate.split('-').map(Number);
+    if (parts.length === 3) {
+      const d = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+      currentDayOfWeek = d.getDay() === 0 ? 7 : d.getDay();
+    }
+  }
+
+  const prefix = isSim ? 'sim-' : '';
+  const titlePrefix = isSim ? '🔔 [Simulated] ' : '🔔 ';
   const sentKeys = getSentKeys();
+  const semesterCourses = courses.filter((c) => c.semesterId === viewedSemester.id);
+  let triggeredAlert = false;
 
   // 1. Process Courses
   for (const course of semesterCourses) {
@@ -215,42 +281,53 @@ export async function checkUpcomingClassAlerts(
       const classStartMinutes = startH * 60 + startM;
       const diffMinutes = classStartMinutes - currentMinutes;
 
+      const key30m = `${prefix}${course.id}-${todayStr}-${schedule.startTime}-30m`;
+      const key10m = `${prefix}${course.id}-${todayStr}-${schedule.startTime}-10m`;
+      const keyStart = `${prefix}${course.id}-${todayStr}-${schedule.startTime}-start`;
+
+      // In simulation mode, clear keys if user scrubs away from the time window to allow re-testing
+      if (isSim) {
+        if (Math.abs(diffMinutes - 30) > 10) clearSentKey(key30m);
+        if (Math.abs(diffMinutes - 10) > 8) clearSentKey(key10m);
+        if (Math.abs(diffMinutes) > 8) clearSentKey(keyStart);
+      }
+
       // Alert at 30 minutes before
-      if (settings.remind30Min && diffMinutes >= 29 && diffMinutes <= 31) {
-        const key = `${course.id}-${todayStr}-${schedule.startTime}-30m`;
-        if (!sentKeys.has(key)) {
-          markKeySent(key);
+      if (settings.remind30Min && diffMinutes >= 28 && diffMinutes <= 32) {
+        if (!sentKeys.has(key30m)) {
+          markKeySent(key30m);
           if (settings.playSound) playChime();
-          await showSystemNotification(`🔔 Class in 30 minutes: ${course.code}`, {
+          await showSystemNotification(`${titlePrefix}Class in 30 minutes: ${course.code}`, {
             body: `${course.name}\n📍 ${course.location || 'Campus'} · ${schedule.startTime}–${schedule.endTime}`,
             tag: `class-${course.id}-30m`,
           });
+          triggeredAlert = true;
         }
       }
 
       // Alert at 10 minutes before
-      if (settings.remind10Min && diffMinutes >= 9 && diffMinutes <= 11) {
-        const key = `${course.id}-${todayStr}-${schedule.startTime}-10m`;
-        if (!sentKeys.has(key)) {
-          markKeySent(key);
+      if (settings.remind10Min && diffMinutes >= 8 && diffMinutes <= 12) {
+        if (!sentKeys.has(key10m)) {
+          markKeySent(key10m);
           if (settings.playSound) playChime();
-          await showSystemNotification(`⏳ Class in 10 minutes: ${course.code}`, {
+          await showSystemNotification(`${isSim ? '⏳ [Simulated] ' : '⏳ '}Class in 10 minutes: ${course.code}`, {
             body: `Starting soon at ${course.location || 'Campus'} (${schedule.startTime})`,
             tag: `class-${course.id}-10m`,
           });
+          triggeredAlert = true;
         }
       }
 
       // Alert at start time
-      if (settings.remindAtStart && diffMinutes >= -1 && diffMinutes <= 1) {
-        const key = `${course.id}-${todayStr}-${schedule.startTime}-start`;
-        if (!sentKeys.has(key)) {
-          markKeySent(key);
+      if (settings.remindAtStart && diffMinutes >= -2 && diffMinutes <= 2) {
+        if (!sentKeys.has(keyStart)) {
+          markKeySent(keyStart);
           if (settings.playSound) playChime();
-          await showSystemNotification(`📚 Class Starting Now: ${course.code}`, {
-            body: `${course.name} is now starting in ${course.location || 'Campus'}.`,
+          await showSystemNotification(`${isSim ? '📚 [Simulated] ' : '📚 '}Class Starting Now: ${course.code}`, {
+            body: `${course.name} is starting in ${course.location || 'Campus'}.`,
             tag: `class-${course.id}-start`,
           });
+          triggeredAlert = true;
         }
       }
     }
@@ -277,45 +354,82 @@ export async function checkUpcomingClassAlerts(
     const diffMinutes = evStartMinutes - currentMinutes;
     const typeLabel = ev.type === 'routine' ? 'Routine' : 'Event';
 
+    const key30m = `${prefix}ev-${ev.id}-${todayStr}-${ev.startTime}-30m`;
+    const key10m = `${prefix}ev-${ev.id}-${todayStr}-${ev.startTime}-10m`;
+    const keyStart = `${prefix}ev-${ev.id}-${todayStr}-${ev.startTime}-start`;
+
+    if (isSim) {
+      if (Math.abs(diffMinutes - 30) > 10) clearSentKey(key30m);
+      if (Math.abs(diffMinutes - 10) > 8) clearSentKey(key10m);
+      if (Math.abs(diffMinutes) > 8) clearSentKey(keyStart);
+    }
+
     // Alert at 30 minutes before
-    if (settings.remind30Min && diffMinutes >= 29 && diffMinutes <= 31) {
-      const key = `ev-${ev.id}-${todayStr}-${ev.startTime}-30m`;
-      if (!sentKeys.has(key)) {
-        markKeySent(key);
+    if (settings.remind30Min && diffMinutes >= 28 && diffMinutes <= 32) {
+      if (!sentKeys.has(key30m)) {
+        markKeySent(key30m);
         if (settings.playSound) playChime();
-        await showSystemNotification(`🔔 ${typeLabel} in 30 minutes: ${ev.title}`, {
+        await showSystemNotification(`${titlePrefix}${typeLabel} in 30 minutes: ${ev.title}`, {
           body: `${ev.category ? `[${ev.category}] ` : ''}${ev.startTime}–${ev.endTime}${ev.location ? ` · ${ev.location}` : ''}`,
           tag: `ev-${ev.id}-30m`,
         });
+        triggeredAlert = true;
       }
     }
 
     // Alert at 10 minutes before
-    if (settings.remind10Min && diffMinutes >= 9 && diffMinutes <= 11) {
-      const key = `ev-${ev.id}-${todayStr}-${ev.startTime}-10m`;
-      if (!sentKeys.has(key)) {
-        markKeySent(key);
+    if (settings.remind10Min && diffMinutes >= 8 && diffMinutes <= 12) {
+      if (!sentKeys.has(key10m)) {
+        markKeySent(key10m);
         if (settings.playSound) playChime();
-        await showSystemNotification(`⏳ ${typeLabel} in 10 minutes: ${ev.title}`, {
+        await showSystemNotification(`${isSim ? '⏳ [Simulated] ' : '⏳ '}${typeLabel} in 10 minutes: ${ev.title}`, {
           body: `Starting soon at ${ev.startTime}${ev.location ? ` (${ev.location})` : ''}`,
           tag: `ev-${ev.id}-10m`,
         });
+        triggeredAlert = true;
       }
     }
 
     // Alert at start time
-    if (settings.remindAtStart && diffMinutes >= -1 && diffMinutes <= 1) {
-      const key = `ev-${ev.id}-${todayStr}-${ev.startTime}-start`;
-      if (!sentKeys.has(key)) {
-        markKeySent(key);
+    if (settings.remindAtStart && diffMinutes >= -2 && diffMinutes <= 2) {
+      if (!sentKeys.has(keyStart)) {
+        markKeySent(keyStart);
         if (settings.playSound) playChime();
-        await showSystemNotification(`🎯 ${typeLabel} Starting Now: ${ev.title}`, {
+        await showSystemNotification(`${isSim ? '🎯 [Simulated] ' : '🎯 '}${typeLabel} Starting Now: ${ev.title}`, {
           body: `${ev.title} is starting now (${ev.startTime}–${ev.endTime}).`,
           tag: `ev-${ev.id}-start`,
         });
+        triggeredAlert = true;
       }
     }
   }
+
+  // 3. Fallback for forceTestNotice (e.g. user explicitly clicks simulation alert test button)
+  if (!triggeredAlert && options?.forceTestNotice) {
+    const todayCourses = semesterCourses.filter((c) =>
+      c.schedules?.some((s) => s.dayOfWeek === currentDayOfWeek)
+    );
+    if (todayCourses.length > 0) {
+      const firstCourse = todayCourses[0];
+      const sched = firstCourse.schedules?.find((s) => s.dayOfWeek === currentDayOfWeek);
+      if (settings.playSound) playChime();
+      await showSystemNotification(`🔔 [Simulated Test] Class Alert: ${firstCourse.code}`, {
+        body: `${firstCourse.name}\n📍 ${firstCourse.location || 'Campus'} · ${sched ? `${sched.startTime}–${sched.endTime}` : ''}`,
+        tag: `sim-force-${firstCourse.id}`,
+      });
+      return true;
+    } else {
+      // General alert test
+      if (settings.playSound) playChime();
+      await showSystemNotification(`🔔 [Simulated Test] Academic Workspace Alert`, {
+        body: `Simulation mode active at ${Math.floor(currentMinutes / 60)}:${String(currentMinutes % 60).padStart(2, '0')}. Notifications are working!`,
+        tag: 'sim-force-general',
+      });
+      return true;
+    }
+  }
+
+  return triggeredAlert;
 }
 
 /**

@@ -367,16 +367,20 @@ export function useWorkspace() {
   useEffect(() => {
     const runCheck = () => {
       const settings = getNotificationSettings();
-      if (settings.enabled) {
-        checkUpcomingClassAlerts(courses, viewedSemester, currentAcademicWeek, settings, events);
+      if (settings.enabled || (!isLiveClock && settings.notifyInSimulation !== false)) {
+        checkUpcomingClassAlerts(courses, viewedSemester, currentAcademicWeek, settings, events, {
+          simulatedMinutes: !isLiveClock ? simulatedMinutes : undefined,
+          isSimulation: !isLiveClock,
+          simulatedDate: selectedDate,
+        });
       }
     };
 
     // Check immediately on data/time change
     runCheck();
 
-    // Check every 30 seconds
-    const interval = setInterval(runCheck, 30000);
+    // Check every 30s in live mode, or every 3s in simulation mode
+    const interval = setInterval(runCheck, isLiveClock ? 30000 : 3000);
 
     // Also check whenever tab becomes active
     const handleVisibility = () => {
@@ -390,7 +394,7 @@ export function useWorkspace() {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [courses, viewedSemester, currentAcademicWeek]);
+  }, [courses, viewedSemester, currentAcademicWeek, events, isLiveClock, simulatedMinutes, selectedDate]);
 
   // Course actions
   const saveCourse = useCallback(async (course: Course) => {

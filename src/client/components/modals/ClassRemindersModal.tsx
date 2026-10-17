@@ -28,6 +28,7 @@ import {
   subscribeToPushNotifications,
   unsubscribeFromPushNotifications,
   sendTestPushNotification,
+  checkUpcomingClassAlerts,
 } from '../../utils/notificationScheduler';
 import { generateSemesterIcs, downloadIcsFile } from '../../utils/icsExport';
 
@@ -421,31 +422,92 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900 dark:accent-white w-4 h-4"
                     />
                   </label>
+
+                  <label className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200/70 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <div>
+                        <div className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                          <span>Send Real Alerts in Simulation Mode</span>
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
+                            Interactive
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500">
+                          Trigger real OS notifications and audio chimes when testing schedules using the time slider
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.notifyInSimulation !== false}
+                      onChange={(e) => handleUpdateOption('notifyInSimulation', e.target.checked)}
+                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900 dark:accent-white w-4 h-4"
+                    />
+                  </label>
                 </div>
               </div>
 
               {/* Test Alert Button */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center gap-2 justify-between">
-                <button
-                  type="button"
-                  onClick={handleTestAlert}
-                  disabled={isTesting}
-                  className="w-full sm:w-auto px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium transition flex items-center justify-center gap-1.5"
-                >
-                  <BellRing className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
-                  <span>{isTesting ? 'Sending Alert...' : 'Local Test Alert'}</span>
-                </button>
+              <div className="pt-2 flex flex-col sm:flex-row flex-wrap items-center gap-2 justify-between">
+                <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleTestAlert}
+                    disabled={isTesting}
+                    className="flex-1 sm:flex-initial px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium transition flex items-center justify-center gap-1.5"
+                  >
+                    <BellRing className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
+                    <span>{isTesting ? 'Sending...' : 'Local Test Alert'}</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={handleTestPush}
-                  disabled={isTesting}
-                  className="w-full sm:w-auto px-3 py-1.5 rounded-md border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-medium transition flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Test Cloud Web Push</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsTesting(true);
+                      if (permission !== 'granted') {
+                        const perm = await requestNotificationPermission();
+                        setPermission(perm);
+                        if (perm !== 'granted') {
+                          setTestStatus('Permission denied');
+                          setIsTesting(false);
+                          return;
+                        }
+                      }
+                      const sent = await checkUpcomingClassAlerts(
+                        courses,
+                        viewedSemester,
+                        ws.currentAcademicWeek,
+                        { ...settings, enabled: true, notifyInSimulation: true },
+                        ws.events,
+                        {
+                          simulatedMinutes: ws.simulatedMinutes,
+                          isSimulation: true,
+                          simulatedDate: ws.selectedDate,
+                          forceTestNotice: true,
+                        }
+                      );
+                      setTestStatus(sent ? 'Simulated alert fired! 🔔' : 'No alert scheduled');
+                      setTimeout(() => setTestStatus(null), 4000);
+                      setIsTesting(false);
+                    }}
+                    disabled={isTesting}
+                    className="flex-1 sm:flex-initial px-3 py-1.5 rounded-md border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-medium transition flex items-center justify-center gap-1.5"
+                  >
+                    <Bell className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Test Sim Alert</span>
+                  </button>
 
+                  <button
+                    type="button"
+                    onClick={handleTestPush}
+                    disabled={isTesting}
+                    className="flex-1 sm:flex-initial px-3 py-1.5 rounded-md border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-medium transition flex items-center justify-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Test Cloud Push</span>
+                  </button>
+                </div>
 
                 {testStatus && (
                   <span className="text-[11px] text-slate-700 dark:text-slate-300 font-medium">

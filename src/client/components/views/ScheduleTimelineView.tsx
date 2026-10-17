@@ -16,11 +16,16 @@ import {
   formatCourseDurationWeeks,
 } from '../../hooks/useWorkspace';
 import { Course, CourseSchedule, Task, ScheduleEvent } from '../../../types';
-import { Plus, Check, Clock, Pencil, Calendar } from 'lucide-react';
+import { Plus, Check, Clock, Pencil, Calendar, Bell } from 'lucide-react';
 import { Twemoji } from '../common/Twemoji';
 import { CourseDetailsModal } from '../modals/CourseDetailsModal';
 import { EventDetailsModal } from '../modals/EventDetailsModal';
 import { ScheduleHoursModal } from '../modals/ScheduleHoursModal';
+import {
+  requestNotificationPermission,
+  checkUpcomingClassAlerts,
+  getNotificationSettings,
+} from '../../utils/notificationScheduler';
 
 interface ScheduleTimelineViewProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -664,8 +669,8 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
               </button>
 
               {!isLiveClock && (
-                <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/90 dark:border-slate-700">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626]" />
+                <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/90 dark:border-slate-700 shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626] animate-pulse" />
                   <label htmlFor="simTimeSlider" className="text-[10px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">
                     <span className="text-[#dc2626] font-semibold">{sim12hStr}</span>
                   </label>
@@ -679,6 +684,39 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                     className="w-16 cursor-pointer"
                     title="Drag to simulate time indicator"
                   />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (Notification.permission !== 'granted') {
+                        const perm = await requestNotificationPermission();
+                        if (perm !== 'granted') {
+                          showToast('Notification permission needed for alerts');
+                          return;
+                        }
+                      }
+                      const settings = getNotificationSettings();
+                      const sent = await checkUpcomingClassAlerts(
+                        courses,
+                        viewedSemester,
+                        currentAcademicWeek,
+                        { ...settings, enabled: true, notifyInSimulation: true },
+                        events,
+                        {
+                          simulatedMinutes,
+                          isSimulation: true,
+                          simulatedDate: selectedDate,
+                          forceTestNotice: true,
+                        }
+                      );
+                      if (sent) {
+                        showToast(`Simulated alert sent for ${sim12hStr} 🔔`);
+                      }
+                    }}
+                    title="Send real notification at simulated time"
+                    className="p-0.5 rounded text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 transition"
+                  >
+                    <Bell className="w-3 h-3" />
+                  </button>
                 </div>
               )}
             </div>
