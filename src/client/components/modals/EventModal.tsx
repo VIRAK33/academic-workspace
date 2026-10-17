@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useWorkspace, DAY_NAMES_FULL, DAY_NAMES_SHORT, getIsoDayOfWeek, addDays, formatIsoDate, getTodayIsoDate } from '../../hooks/useWorkspace';
+import { useWorkspace, DAY_NAMES_FULL, DAY_NAMES_SHORT, getIsoDayOfWeek, addDays, formatIsoDate, getTodayIsoDate, format24To12Range } from '../../hooks/useWorkspace';
 import { Trash2, Calendar, Clock, Palette, Sparkles, Dumbbell, BookOpen, Users, AlertCircle, Check, ArrowRight } from 'lucide-react';
 import { ScheduleEvent, EventType } from '../../../types';
 import { Twemoji } from '../common/Twemoji';
 import { ModalSheet } from '../common/ModalSheet';
+import { TimeInput } from '../common/TimeInput';
 
 interface EventModalProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -557,24 +558,20 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                       <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
                         Start Time
                       </label>
-                      <input
-                        type="time"
+                      <TimeInput
                         required
                         value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                        onChange={setStartTime}
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
                         End Time
                       </label>
-                      <input
-                        type="time"
+                      <TimeInput
                         required
                         value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                        onChange={setEndTime}
                       />
                     </div>
                   </div>
@@ -683,7 +680,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                     <span>·</span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3 text-slate-400" />
-                      <span>{isAllDay ? 'All Day' : `${startTime}–${endTime}`}</span>
+                      <span>{isAllDay ? 'All Day' : format24To12Range(startTime, endTime)}</span>
                     </span>
                     {location.trim() && (
                       <>

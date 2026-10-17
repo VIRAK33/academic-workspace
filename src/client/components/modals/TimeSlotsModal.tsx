@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import { X } from 'lucide-react';
 import { TimeSlot } from '../../../types';
+import { TimeInput } from '../common/TimeInput';
 
 interface TimeSlotsModalProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -42,25 +43,21 @@ export const TimeSlotsModal: React.FC<TimeSlotsModalProps> = ({ ws, isOpen, onCl
                 <div className="text-xs font-mono font-semibold text-slate-700 dark:text-slate-300">
                   Session {s.session}
                 </div>
-                <input
-                  type="time"
+                <TimeInput
                   value={s.startTime}
-                  onChange={(e) => {
+                  onChange={(val) => {
                     const next = [...slots];
-                    next[idx] = { ...next[idx], startTime: e.target.value };
+                    next[idx] = { ...next[idx], startTime: val };
                     setSlots(next);
                   }}
-                  className="w-full px-2 py-1 text-xs font-mono rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
-                <input
-                  type="time"
+                <TimeInput
                   value={s.endTime}
-                  onChange={(e) => {
+                  onChange={(val) => {
                     const next = [...slots];
-                    next[idx] = { ...next[idx], endTime: e.target.value };
+                    next[idx] = { ...next[idx], endTime: val };
                     setSlots(next);
                   }}
-                  className="w-full px-2 py-1 text-xs font-mono rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
             ))}
