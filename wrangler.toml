@@ -12,7 +12,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "academic_workspace_db"
-database_id = "local-d1-db"
+database_id = "6e8bdd24-5b41-44b8-8dbd-3e8738446036"
 migrations_dir = "migrations"
 
 # Cloudflare R2 Object Storage (Papers, Experiment Plots, Thesis Drafts)
