@@ -147,3 +147,24 @@ export interface WorkspaceData {
   conferences: Conference[];
   experimentLogs: ExperimentLog[];
 }
+
+export interface User {
+  id: string;
+  googleSub: string;
+  email: string;
+  name: string;
+  picture?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PushSubscriptionRecord {
+  id: string;
+  userId: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  userAgent?: string;
+  createdAt?: string;
+}
+

@@ -29,7 +29,9 @@ dist-ssr
 .phd-local-state.json
 .wrangler
 
-# Environment variables
+# Environment variables & secrets
 .env
 .env.*
 !.env.example
+.dev.vars
+

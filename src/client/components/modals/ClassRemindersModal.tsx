@@ -23,6 +23,11 @@ import {
   requestNotificationPermission,
   sendTestNotification,
   isNotificationSupported,
+  isPushSupported,
+  isPushSubscribed,
+  subscribeToPushNotifications,
+  unsubscribeFromPushNotifications,
+  sendTestPushNotification,
 } from '../../utils/notificationScheduler';
 import { generateSemesterIcs, downloadIcsFile } from '../../utils/icsExport';
 
@@ -45,6 +50,10 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
   const [isTesting, setIsTesting] = useState(false);
   const [testStatus, setTestStatus] = useState<string | null>(null);
 
+  // Cloud Web Push State
+  const [isPushActive, setIsPushActive] = useState(false);
+  const [isPushLoading, setIsPushLoading] = useState(false);
+
   // Calendar (.ics) Export State
   const [alarmMinutes, setAlarmMinutes] = useState(30);
   const [includeSecondAlarm, setIncludeSecondAlarm] = useState(true);
@@ -57,8 +66,10 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
       setPermission(Notification.permission);
       setSettings(getNotificationSettings());
       setTestStatus(null);
+      isPushSubscribed().then(setIsPushActive);
     }
   }, [isOpen]);
+
 
   if (!isOpen) return null;
 
@@ -103,6 +114,45 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
       }
     } catch (e: any) {
       setTestStatus(`Error: ${e?.message || 'Failed to dispatch alert'}`);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleTogglePush = async (enable: boolean) => {
+    setIsPushLoading(true);
+    try {
+      if (enable) {
+        const res = await subscribeToPushNotifications();
+        if (res.success) {
+          setIsPushActive(true);
+          showToast('Cloud Web Push background alerts enabled');
+        } else {
+          showToast(res.error || 'Failed to enable Web Push');
+        }
+      } else {
+        await unsubscribeFromPushNotifications();
+        setIsPushActive(false);
+        showToast('Web Push notifications unsubscribed');
+      }
+    } finally {
+      setIsPushLoading(false);
+    }
+  };
+
+  const handleTestPush = async () => {
+    setIsTesting(true);
+    setTestStatus(null);
+    try {
+      const res = await sendTestPushNotification();
+      if (res.success) {
+        setTestStatus('Cloud Web Push delivered! Check your notification center.');
+        setIsPushActive(true);
+      } else {
+        setTestStatus(`Push test: ${res.error || 'Failed to dispatch cloud push'}`);
+      }
+    } catch (err: any) {
+      setTestStatus(`Error: ${err?.message || 'Failed to test push'}`);
     } finally {
       setIsTesting(false);
     }
@@ -256,6 +306,35 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                 </label>
               </div>
 
+              {/* Cloud Web Push Master Toggle */}
+              <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Cloud Web Push (Background Alerts)</span>
+                    {isPushActive && (
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Cloudflare Worker Cron sends alerts even when your browser or tab is completely closed
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isPushActive}
+                    onChange={(e) => handleTogglePush(e.target.checked)}
+                    disabled={isPushLoading || !isPushSupported()}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-hidden rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500 dark:peer-checked:after:bg-white"></div>
+                </label>
+              </div>
+
+
               {/* Trigger Options */}
               <div className="space-y-2 pt-1">
                 <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold px-1">
@@ -354,8 +433,19 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                   className="w-full sm:w-auto px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium transition flex items-center justify-center gap-1.5"
                 >
                   <BellRing className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
-                  <span>{isTesting ? 'Sending Alert...' : 'Send Test Notification'}</span>
+                  <span>{isTesting ? 'Sending Alert...' : 'Local Test Alert'}</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleTestPush}
+                  disabled={isTesting}
+                  className="w-full sm:w-auto px-3 py-1.5 rounded-md border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-medium transition flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Test Cloud Web Push</span>
+                </button>
+
 
                 {testStatus && (
                   <span className="text-[11px] text-slate-700 dark:text-slate-300 font-medium">

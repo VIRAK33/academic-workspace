@@ -1,7 +1,9 @@
 import { Course, Semester, ScheduleEvent } from '../../types';
+import { api } from '../api';
 
 export interface NotificationSettings {
   enabled: boolean;
+  webPushEnabled?: boolean;
   remind30Min: boolean;
   remind10Min: boolean;
   remindAtStart: boolean;
@@ -13,11 +15,13 @@ const SENT_KEYS_SESSION = 'phd_workspace_sent_alerts_v1';
 
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   enabled: false,
+  webPushEnabled: false,
   remind30Min: true,
   remind10Min: true,
   remindAtStart: true,
   playSound: true,
 };
+
 
 /**
  * Retrieve saved notification preferences from localStorage
@@ -313,3 +317,132 @@ export async function checkUpcomingClassAlerts(
     }
   }
 }
+
+/**
+ * Converts standard VAPID public key base64 string to Uint8Array for pushManager.subscribe
+ */
+export function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+/**
+ * Check if the browser supports background Web Push API
+ */
+export function isPushSupported(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window
+  );
+}
+
+/**
+ * Check if current device has an active push subscription
+ */
+export async function isPushSubscribed(): Promise<boolean> {
+  if (!isPushSupported()) return false;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    return sub !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Subscribes current device to Web Push notifications via VAPID
+ */
+export async function subscribeToPushNotifications(): Promise<{ success: boolean; error?: string }> {
+  if (!isPushSupported()) {
+    return { success: false, error: 'Web Push is not supported in this browser' };
+  }
+
+  try {
+    // 1. Request notification permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      return { success: false, error: 'Notification permission was denied' };
+    }
+
+    // 2. Fetch VAPID public key from backend
+    const vapidPublicKey = await api.getVapidPublicKey();
+    const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+
+    // 3. Register push subscription with browser push service
+    const reg = await navigator.serviceWorker.ready;
+    let subscription = await reg.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey as unknown as BufferSource,
+      });
+    }
+
+    // 4. Send subscription to Cloudflare Worker backend
+    const saved = await api.subscribePush(subscription.toJSON());
+    if (!saved) {
+      return { success: false, error: 'Failed to record push subscription on server' };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Failed to subscribe to Web Push' };
+  }
+}
+
+/**
+ * Unsubscribes current device from Web Push notifications
+ */
+export async function unsubscribeFromPushNotifications(): Promise<boolean> {
+  if (!isPushSupported()) return true;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const subscription = await reg.pushManager.getSubscription();
+    if (subscription) {
+      await api.unsubscribePush(subscription.endpoint);
+      await subscription.unsubscribe();
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Sends an immediate test Web Push notification from the server
+ */
+export async function sendTestPushNotification(): Promise<{ success: boolean; sentCount?: number; error?: string }> {
+  if (!isPushSupported()) {
+    return { success: false, error: 'Web Push is not supported in this browser' };
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let subscription = await reg.pushManager.getSubscription();
+
+    if (!subscription) {
+      const res = await subscribeToPushNotifications();
+      if (!res.success) {
+        return { success: false, error: res.error || 'Please enable notifications first' };
+      }
+      subscription = await reg.pushManager.getSubscription();
+    }
+
+    if (subscription) {
+      return await api.sendTestPush(subscription.toJSON());
+    }
+    return await api.sendTestPush();
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Failed to trigger test push' };
+  }
+}
+

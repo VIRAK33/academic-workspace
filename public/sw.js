@@ -1,4 +1,4 @@
-const CACHE_NAME = 'phd-workspace-v1';
+const CACHE_NAME = 'phd-workspace-v2';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,15 @@ const PRECACHE_ASSETS = [
   './icons/icon-512.png',
   './icons/icon-maskable.png'
 ];
+
+// Helper to safely cache only HTTP and HTTPS requests
+function safeCachePut(cache, req, res) {
+  try {
+    if (req && req.url && (req.url.startsWith('http://') || req.url.startsWith('https://'))) {
+      return cache.put(req, res).catch(() => {});
+    }
+  } catch (e) {}
+}
 
 // Install: Cache core application shell
 self.addEventListener('install', (event) => {
@@ -38,12 +47,19 @@ self.addEventListener('activate', (event) => {
 // Fetch: Strategy depending on request type
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
-  // Skip cross-origin or non-GET requests (e.g. Google Auth scripts or POST API requests)
+  // Only handle standard HTTP and HTTPS requests
+  // Ignore chrome-extension://, moz-extension://, blob:, data:, etc.
+  if (!request.url.startsWith('http://') && !request.url.startsWith('https://')) {
+    return;
+  }
+
+  // Skip non-GET requests (e.g. Google Auth scripts or POST API requests)
   if (request.method !== 'GET') {
     return;
   }
+
+  const url = new URL(request.url);
 
   // 1. Navigation requests (HTML pages): Network first, fallback to cached /index.html
   if (request.mode === 'navigate') {
@@ -52,7 +68,7 @@ self.addEventListener('fetch', (event) => {
         .then((response) => {
           if (response && response.status === 200) {
             const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+            caches.open(CACHE_NAME).then((cache) => safeCachePut(cache, request, responseClone));
           }
           return response;
         })
@@ -84,7 +100,7 @@ self.addEventListener('fetch', (event) => {
         if (url.origin === self.location.origin) {
           fetch(request).then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse));
+              caches.open(CACHE_NAME).then((cache) => safeCachePut(cache, request, networkResponse));
             }
           }).catch(() => {});
         }
@@ -97,7 +113,7 @@ self.addEventListener('fetch', (event) => {
         }
         const responseToCache = networkResponse.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, responseToCache);
+          safeCachePut(cache, request, responseToCache);
         });
         return networkResponse;
       });
@@ -105,9 +121,41 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// 4. Notification interaction: Focus or reopen PWA when user taps notification
+// 4. Background Push Notification Event Listener (W3C Web Push API)
+self.addEventListener('push', (event) => {
+  let data = {
+    title: 'Academic Workspace Alert',
+    body: 'You have an upcoming academic event or class.',
+    url: '/',
+    tag: 'academic-alert',
+  };
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    tag: data.tag || 'academic-alert',
+    renotify: true,
+    data: {
+      url: data.url || '/',
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title || 'Academic Workspace', options));
+});
+
+// 5. Notification interaction: Focus or reopen PWA when user taps notification
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
@@ -116,9 +164,10 @@ self.addEventListener('notificationclick', (event) => {
         }
       }
       if (clients.openWindow) {
-        return clients.openWindow('/');
+        return clients.openWindow(targetUrl);
       }
     })
   );
 });
+
 

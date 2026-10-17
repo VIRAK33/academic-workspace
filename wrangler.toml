@@ -1,4 +1,4 @@
-name = "academic-phd-workspace"
+name = "academic-workspace"
 main = "src/server/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
@@ -11,7 +11,7 @@ binding = "ASSETS"
 # Cloudflare D1 Relational SQLite Database
 [[d1_databases]]
 binding = "DB"
-database_name = "academic_workspace_db"
+database_name = "schedule"
 database_id = "6e8bdd24-5b41-44b8-8dbd-3e8738446036"
 migrations_dir = "migrations"
 
@@ -20,3 +20,14 @@ migrations_dir = "migrations"
 binding = "ACADEMIC_STORAGE"
 bucket_name = "academic-workspace-files"
 preview_bucket_name = "academic-workspace-files-preview"
+
+# Scheduled Cron Triggers (Background Class & Deadline Push Notifications)
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Public Environment Variables for Cloudflare Worker
+[vars]
+GOOGLE_CLIENT_ID = "81962160390-rsfa5vfg71h2rk87i896ugqvekfcm2cu.apps.googleusercontent.com"
+VAPID_PUBLIC_KEY = "BLJkRpNyveun6nsw3J-aQnHgkJ6zyoDoRJMB5wB01kUbRgGrcM5H4br47yIY2SMP0IauAGFPTvYhQMtp0517IMc"
+
+
