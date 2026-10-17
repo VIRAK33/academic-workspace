@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import { Twemoji } from '../common/Twemoji';
 import {
-  X,
   Bell,
   BellRing,
   Calendar,
@@ -16,6 +15,7 @@ import {
   HelpCircle,
   Sparkles,
 } from 'lucide-react';
+import { ModalSheet } from '../common/ModalSheet';
 import {
   NotificationSettings,
   getNotificationSettings,
@@ -179,68 +179,59 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[85dvh] sm:max-h-[88vh] overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 shrink-0">
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
-              <BellRing className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
-                Class Reminders & Calendar Alarms
-              </h2>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
-                PWA notifications 30 min before class & native phone calendar sync
-              </p>
+    <ModalSheet isOpen={isOpen} onClose={onClose} maxWidthClass="sm:max-w-xl">
+      {({ requestClose, dragHandleProps }) => (
+        <>
+          {/* Draggable Header */}
+          <div
+            {...dragHandleProps}
+            className="px-5 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+          >
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 shrink-0">
+                <BellRing className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
+                  Class Reminders & Calendar Alarms
+                </h2>
+                <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  PWA notifications 30 min before class & native phone calendar sync
+                </p>
+              </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
 
-        {/* Tab Switcher */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/20 px-3 sm:px-5 pt-2 gap-1 sm:gap-2 shrink-0 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab('notifications')}
-            className={`pb-2.5 px-2.5 sm:px-3 text-xs font-medium border-b-2 transition flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'notifications'
-                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold'
-                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            <Laptop className="w-3.5 h-3.5" />
-            <span>PWA & Desktop Local Alerts</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('calendar')}
-            className={`pb-2.5 px-2.5 sm:px-3 text-xs font-medium border-b-2 transition flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'calendar'
-                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold'
-                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span>Mobile Phone Alarms (.ics)</span>
-          </button>
-        </div>
+          {/* Tab Switcher */}
+          <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 sm:px-6 pt-2 gap-2 shrink-0 overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setActiveTab('notifications')}
+              className={`pb-2.5 px-3 text-xs font-medium border-b-2 transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                activeTab === 'notifications'
+                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold'
+                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Laptop className="w-3.5 h-3.5" />
+              <span>PWA & Desktop Local Alerts</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('calendar')}
+              className={`pb-2.5 px-3 text-xs font-medium border-b-2 transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                activeTab === 'calendar'
+                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold'
+                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Mobile Phone Alarms (.ics)</span>
+            </button>
+          </div>
 
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3.5 sm:space-y-4 text-xs">
+          {/* Modal Body */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-6 space-y-4 text-xs min-h-0">
           {activeTab === 'notifications' ? (
             /* TAB 1: PWA LOCAL NOTIFICATIONS */
             <div className="space-y-4">
@@ -646,19 +637,20 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 sm:px-5 sm:py-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between shrink-0">
+        <div className="px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-3.5 sm:px-6 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
           <span className="text-[11px] text-slate-500 font-mono">
             {courses.filter((c) => c.semesterId === viewedSemester.id).length} Courses in {viewedSemester.name}
           </span>
           <button
             type="button"
-            onClick={onClose}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium text-xs transition"
+            onClick={requestClose}
+            className="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold text-xs transition hover:bg-slate-800 dark:hover:bg-slate-100 shadow-xs cursor-pointer"
           >
-            Close
+            Done
           </button>
         </div>
-      </div>
-    </div>
-  );
+      </>
+    )}
+  </ModalSheet>
+);
 };

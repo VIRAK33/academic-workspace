@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
-import { X, Check, Sparkles, Pencil, Trash2, AlertTriangle, Plus, RotateCcw } from 'lucide-react';
+import { Check, Sparkles, Pencil, Trash2, AlertTriangle, Plus, RotateCcw } from 'lucide-react';
 import { Semester } from '../../../types';
+import { ModalSheet } from '../common/ModalSheet';
 
 interface SemesterModalProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -94,32 +95,26 @@ export const SemesterModal: React.FC<SemesterModalProps> = ({ ws, isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[88vh]">
-        {/* Modal Header */}
-        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-              Manage Academic Terms
-            </h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
-              Configure semesters, start dates, active status, and term archives.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              resetForm();
-              onClose();
-            }}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+    <ModalSheet isOpen={isOpen} onClose={() => { resetForm(); onClose(); }} maxWidthClass="sm:max-w-xl">
+      {({ requestClose, dragHandleProps }) => (
+        <>
+          {/* Modal Header */}
+          <div
+            {...dragHandleProps}
+            className="px-5 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                Manage Academic Terms
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Configure semesters, start dates, active status, and term archives
+              </p>
+            </div>
+          </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="p-3.5 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1">
+          {/* Modal Scrollable Body */}
+          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
           {/* AI Import Shortcut */}
           {onOpenAiImportModal && (
             <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
@@ -406,22 +401,23 @@ export const SemesterModal: React.FC<SemesterModalProps> = ({ ws, isOpen, onClos
         </div>
 
         {/* Modal Footer */}
-        <div className="px-4 py-3 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between shrink-0">
+        <div className="px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-3.5 sm:px-6 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
           <span className="text-[10px] font-mono text-slate-400">
-            Current Active Term: {semesters.find(s => s.isActive)?.name || 'None'}
+            Active: {semesters.find(s => s.isActive)?.name || 'None'}
           </span>
           <button
             type="button"
             onClick={() => {
               resetForm();
-              onClose();
+              requestClose();
             }}
-            className="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-xs cursor-pointer"
           >
             Done
           </button>
         </div>
-      </div>
-    </div>
-  );
+      </>
+    )}
+  </ModalSheet>
+);
 };

@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
-import { X, Sparkles, Copy, Check, AlertCircle, Calendar, Clock, BookOpen, Layers, ArrowRight, FileText } from 'lucide-react';
+import { Sparkles, Copy, Check, AlertCircle, Calendar, Clock, BookOpen, Layers, ArrowRight, FileText } from 'lucide-react';
 import { Semester, TimeSlot, Course, CourseSchedule } from '../../../types';
 import { api } from '../../api';
+import { ModalSheet } from '../common/ModalSheet';
 
 interface AiScheduleImportModalProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -305,37 +306,34 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
   const dayLabels = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[88vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-xs shrink-0">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-1.5 sm:gap-2">
-                <span>AI Schedule & Timetable Importer</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-                  Zero Entry
-                </span>
-              </h2>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
-                Extract university timetables & session timeslots via AI.
-              </p>
+    <ModalSheet isOpen={isOpen} onClose={onClose} maxWidthClass="sm:max-w-2xl">
+      {({ requestClose, dragHandleProps }) => (
+        <>
+          {/* Draggable Header */}
+          <div
+            {...dragHandleProps}
+            className="px-5 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+          >
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-xs shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-1.5 sm:gap-2">
+                  <span>AI Schedule & Timetable Importer</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                    Zero Entry
+                  </span>
+                </h2>
+                <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Extract university timetables & session timeslots via AI.
+                </p>
+              </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="p-3.5 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1">
+          {/* Modal Scrollable Body */}
+          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
           {/* Step 1: Copy AI Prompt */}
           <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2.5">
             <div className="flex items-center justify-between">
@@ -572,11 +570,11 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
         </div>
 
         {/* Modal Footer */}
-        <div className="px-4 py-3 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between shrink-0">
+        <div className="px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-3.5 sm:px-6 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
           <button
             type="button"
-            onClick={onClose}
-            className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            onClick={requestClose}
+            className="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
           >
             Cancel
           </button>
@@ -585,7 +583,7 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
             type="button"
             disabled={!parseResult.valid || isImporting}
             onClick={handleApplyImport}
-            className={`px-4 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
               parseResult.valid && !isImporting
                 ? 'bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-xs cursor-pointer'
                 : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-60'
@@ -599,7 +597,8 @@ export const AiScheduleImportModal: React.FC<AiScheduleImportModalProps> = ({ ws
             </span>
           </button>
         </div>
-      </div>
-    </div>
-  );
+      </>
+    )}
+  </ModalSheet>
+);
 };

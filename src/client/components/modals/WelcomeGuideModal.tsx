@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  X,
   Compass,
   GraduationCap,
   Sparkles,
@@ -18,6 +17,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useWorkspace, UserWorkspaceMode } from '../../hooks/useWorkspace';
+import { ModalSheet } from '../common/ModalSheet';
 
 interface WelcomeGuideModalProps {
   isOpen: boolean;
@@ -64,114 +64,102 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
-      onClick={handleFinish}
-    >
-      <div
-        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header with Step Progress */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
-              <Compass className="w-5 h-5" />
+    <ModalSheet isOpen={isOpen} onClose={handleFinish} maxWidthClass="sm:max-w-2xl">
+      {({ requestClose, dragHandleProps }) => (
+        <>
+          {/* Header with Step Progress */}
+          <div
+            {...dragHandleProps}
+            className="px-5 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 shrink-0">
+                <Compass className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>Welcome to Academic Workspace</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    Step {currentStep} of 3
+                  </span>
+                </h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Your minimalist, offline-first operating system for coursework and research
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>Welcome to Academic Workspace</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                  Step {currentStep} of 3
-                </span>
-              </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Your minimalist, offline-first operating system for coursework and research
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleFinish}
-              className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 py-1 rounded transition"
+              className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 py-1 rounded transition cursor-pointer"
             >
               Skip
             </button>
+          </div>
+
+          {/* Stepper Dots Bar */}
+          <div className="grid grid-cols-3 border-b border-slate-200 dark:border-slate-800 text-[11px] font-medium bg-slate-50/50 dark:bg-slate-800/30 shrink-0">
             <button
               type="button"
-              onClick={handleFinish}
-              className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-              aria-label="Close Guide"
+              onClick={() => setCurrentStep(1)}
+              className={`py-2 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
+                currentStep === 1
+                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold bg-white dark:bg-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
             >
-              <X className="w-4 h-4" />
+              <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                currentStep === 1
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                1
+              </span>
+              <span>Workspace Mode</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentStep(2)}
+              className={`py-2 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
+                currentStep === 2
+                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold bg-white dark:bg-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                currentStep === 2
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                2
+              </span>
+              <span>Import Timetable</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentStep(3)}
+              className={`py-2 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
+                currentStep === 3
+                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold bg-white dark:bg-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                currentStep === 3
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                3
+              </span>
+              <span>Superpowers</span>
             </button>
           </div>
-        </div>
 
-        {/* Stepper Dots Bar */}
-        <div className="grid grid-cols-3 border-b border-slate-100 dark:border-slate-800 text-[11px] font-medium bg-slate-50/30 dark:bg-slate-800/20">
-          <button
-            type="button"
-            onClick={() => setCurrentStep(1)}
-            className={`py-2 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
-              currentStep === 1
-                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold bg-white dark:bg-slate-900'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
-          >
-            <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
-              currentStep === 1
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-            }`}>
-              1
-            </span>
-            <span>Workspace Mode</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCurrentStep(2)}
-            className={`py-2 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
-              currentStep === 2
-                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold bg-white dark:bg-slate-900'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
-          >
-            <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
-              currentStep === 2
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-            }`}>
-              2
-            </span>
-            <span>Import Timetable</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCurrentStep(3)}
-            className={`py-2 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
-              currentStep === 3
-                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white font-semibold bg-white dark:bg-slate-900'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
-          >
-            <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
-              currentStep === 3
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-            }`}>
-              3
-            </span>
-            <span>Superpowers</span>
-          </button>
-        </div>
-
-        {/* Modal Body / Step Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
+          {/* Modal Body / Step Content */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-6 space-y-4 text-xs min-h-0">
           {/* STEP 1: CHOOSE WORKSPACE MODE */}
           {currentStep === 1 && (
             <div className="space-y-4">
@@ -453,7 +441,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
         </div>
 
         {/* Footer Navigation */}
-        <div className="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between shrink-0">
+        <div className="px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-3.5 sm:px-6 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
           <label className="flex items-center gap-2 cursor-pointer select-none text-[11px] text-slate-500">
             <input
               type="checkbox"
@@ -461,7 +449,8 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
               onChange={(e) => setDontShowAgain(e.target.checked)}
               className="rounded border-slate-300 dark:border-slate-700 accent-slate-900 dark:accent-white text-slate-900 focus:ring-slate-900 w-3.5 h-3.5"
             />
-            <span>Don't show this guide on startup</span>
+            <span className="hidden sm:inline">Don't show this guide on startup</span>
+            <span className="sm:hidden">Don't show again</span>
           </label>
 
           <div className="flex items-center gap-2">
@@ -469,7 +458,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
               <button
                 type="button"
                 onClick={() => setCurrentStep((prev) => (prev - 1) as 1 | 2 | 3)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-medium transition flex items-center gap-1"
+                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-medium transition flex items-center gap-1 cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
@@ -480,7 +469,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
               <button
                 type="button"
                 onClick={() => setCurrentStep((prev) => (prev + 1) as 1 | 2 | 3)}
-                className="px-4 py-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold shadow-xs transition flex items-center gap-1.5"
+                className="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -489,7 +478,7 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
               <button
                 type="button"
                 onClick={handleFinish}
-                className="px-4 py-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold shadow-xs transition flex items-center gap-1.5"
+                className="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
               >
                 <span>Enter Workspace</span>
                 <Sparkles className="w-3.5 h-3.5" />
@@ -497,7 +486,8 @@ export const WelcomeGuideModal: React.FC<WelcomeGuideModalProps> = ({
             )}
           </div>
         </div>
-      </div>
-    </div>
-  );
+      </>
+    )}
+  </ModalSheet>
+);
 };

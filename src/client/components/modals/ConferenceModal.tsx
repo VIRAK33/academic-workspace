@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
-import { X } from 'lucide-react';
 import { Conference } from '../../../types';
+import { ModalSheet } from '../common/ModalSheet';
 
 interface ConferenceModalProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -44,102 +44,126 @@ export const ConferenceModal: React.FC<ConferenceModalProps> = ({ ws, isOpen, on
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-xl sm:rounded-lg shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">Track Conference Deadline</h3>
-          <button type="button" onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-700">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-4 space-y-3.5">
-          <div className="grid grid-cols-2 gap-2.5">
+    <ModalSheet isOpen={isOpen} onClose={onClose} maxWidthClass="sm:max-w-md">
+      {({ requestClose, dragHandleProps }) => (
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          {/* Draggable Header */}
+          <div
+            {...dragHandleProps}
+            className="px-5 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+          >
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Acronym</label>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                Track Conference Deadline
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Track submission dates, abstract cutoffs, and D-day countdowns
+              </p>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="p-5 sm:p-6 space-y-3.5 overflow-y-auto custom-scrollbar flex-1 min-h-0 text-xs">
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Acronym
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={acronym}
+                  onChange={(e) => setAcronym(e.target.value)}
+                  placeholder="ICLR 2027"
+                  className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Tier / Ranking
+                </label>
+                <input
+                  type="text"
+                  value={tier}
+                  onChange={(e) => setTier(e.target.value)}
+                  placeholder="CCF-A / Core A*"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Full Conference Name
+              </label>
               <input
                 type="text"
-                required
-                value={acronym}
-                onChange={(e) => setAcronym(e.target.value)}
-                placeholder="ICLR 2027"
-                className="w-full px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="International Conference on Learning Representations"
+                className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Full Paper Deadline
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={submissionDeadline}
+                  onChange={(e) => setSubmissionDeadline(e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Abstract Deadline
+                </label>
+                <input
+                  type="date"
+                  value={abstractDeadline}
+                  onChange={(e) => setAbstractDeadline(e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Tier / Ranking</label>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Target Paper in Drafting
+              </label>
               <input
                 type="text"
-                value={tier}
-                onChange={(e) => setTier(e.target.value)}
-                placeholder="CCF-A / Core A*"
-                className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                value={paperTitle}
+                onChange={(e) => setPaperTitle(e.target.value)}
+                placeholder="e.g. Hierarchical Graph-RAG"
+                className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Full Conference Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="International Conference on Learning Representations"
-              className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Full Paper Deadline</label>
-              <input
-                type="date"
-                required
-                value={submissionDeadline}
-                onChange={(e) => setSubmissionDeadline(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Abstract Deadline</label>
-              <input
-                type="date"
-                value={abstractDeadline}
-                onChange={(e) => setAbstractDeadline(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Target Paper in Drafting</label>
-            <input
-              type="text"
-              value={paperTitle}
-              onChange={(e) => setPaperTitle(e.target.value)}
-              placeholder="e.g. Hierarchical Graph-RAG"
-              className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-            />
-          </div>
-
-          <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+          {/* Footer */}
+          <div className="px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-3.5 sm:px-6 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-end gap-2 shrink-0 z-10">
             <button
               type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 rounded text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              onClick={requestClose}
+              className="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-300 text-xs font-medium transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition shadow-xs"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition shadow-xs cursor-pointer"
             >
               Save Conference
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      )}
+    </ModalSheet>
   );
 };

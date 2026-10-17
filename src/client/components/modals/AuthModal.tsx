@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { X, CheckCircle2, ShieldCheck, Wifi, WifiOff, LogOut, Laptop, Smartphone } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Wifi, WifiOff, LogOut, Laptop, Smartphone } from 'lucide-react';
+import { ModalSheet } from '../common/ModalSheet';
 
 interface AuthModalProps {
   auth: ReturnType<typeof useAuth>;
@@ -143,34 +144,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({ auth, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-bold text-xs tracking-tight">
-              AW
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Workspace Account & Cloud Sync
-              </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Offline-First Local Mode · Cloudflare D1 Synchronization
-              </p>
+    <ModalSheet isOpen={true} onClose={onClose} maxWidthClass="sm:max-w-lg">
+      {({ requestClose, dragHandleProps }) => (
+        <>
+          {/* Modal Header */}
+          <div
+            {...dragHandleProps}
+            className="px-5 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-bold text-xs tracking-tight shadow-xs shrink-0">
+                AW
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Workspace Account & Cloud Sync
+                </h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Offline-First Local Mode · Cloudflare D1 Synchronization
+                </p>
+              </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
 
-        {/* Modal Body */}
-        <div className="p-5 space-y-4 overflow-y-auto">
+          {/* Modal Body */}
+          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
           {/* Status Banner */}
           <div className="rounded-lg p-3 border bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 flex items-start gap-3">
             <div
@@ -360,7 +358,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ auth, onClose }) => {
             </ul>
           </div>
         </div>
-      </div>
-    </div>
-  );
+
+        {/* Footer */}
+        <div className="px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-3.5 sm:px-6 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
+          <span className="text-[11px] font-mono text-slate-400">
+            {isLoggedIn ? (user?.email || 'Cloud Synced') : 'Local Mode'}
+          </span>
+          <button
+            type="button"
+            onClick={requestClose}
+            className="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-xs cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+      </>
+    )}
+  </ModalSheet>
+);
 };
