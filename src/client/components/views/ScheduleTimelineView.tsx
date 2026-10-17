@@ -107,10 +107,6 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
     getRoutineAttendanceStats,
   } = ws;
 
-  const isPastOrToday = useMemo(() => {
-    return parseIsoDate(selectedDate).getTime() <= parseIsoDate(getTodayIsoDate()).getTime();
-  }, [selectedDate]);
-
   const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
   const [viewingEvent, setViewingEvent] = useState<ScheduleEvent | null>(null);
   const [isHoursModalOpen, setIsHoursModalOpen] = useState(false);
@@ -844,6 +840,11 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                 if (item.isWeekActive) {
                   const courseAttRecord = getAttendanceRecord(item.course.id, selectedDate);
                   const courseAttStatus = courseAttRecord?.status;
+                  const todayIso = getTodayIsoDate();
+                  const isEligibleForCheckin =
+                    Boolean(courseAttStatus) ||
+                    selectedDate < todayIso ||
+                    (selectedDate === todayIso && simulatedMinutes >= item.startMins - 30);
 
                   return (
                     <div
@@ -880,7 +881,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                             )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            {isPastOrToday && (
+                            {isEligibleForCheckin && (
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -987,6 +988,11 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                 const isRoutine = item.kind === 'routine';
                 const eventAttRecord = getAttendanceRecord(item.event.id, selectedDate);
                 const eventAttStatus = eventAttRecord?.status;
+                const todayIso = getTodayIsoDate();
+                const isEligibleForEventCheckin =
+                  Boolean(eventAttStatus) ||
+                  selectedDate < todayIso ||
+                  (selectedDate === todayIso && (item.event.isAllDay || simulatedMinutes >= item.startMins - 30));
 
                 return (
                   <div
@@ -1033,7 +1039,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                           )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          {isPastOrToday && (
+                          {isEligibleForEventCheckin && (
                             <button
                               type="button"
                               onClick={(e) => {
