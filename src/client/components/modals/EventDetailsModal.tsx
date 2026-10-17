@@ -38,12 +38,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   const durationMins = isAllDay ? 1440 : Math.max(0, endMins - startMins);
 
   const isMultiDay = Boolean(!isRoutine && activeEvent.endDate && activeEvent.specificDate && activeEvent.endDate !== activeEvent.specificDate);
-  const daysSpan = React.useMemo(() => {
-    if (!isMultiDay || !activeEvent.endDate || !activeEvent.specificDate) return 1;
+  let daysSpan = 1;
+  if (isMultiDay && activeEvent.endDate && activeEvent.specificDate) {
     const d1 = new Date(activeEvent.specificDate + 'T00:00:00').getTime();
     const d2 = new Date(activeEvent.endDate + 'T00:00:00').getTime();
-    return Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1);
-  }, [isMultiDay, activeEvent.specificDate, activeEvent.endDate]);
+    daysSpan = Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1);
+  }
 
   const handleDelete = (requestClose: () => void) => {
     if (window.confirm(`Are you sure you want to delete "${activeEvent.title}"?`)) {
