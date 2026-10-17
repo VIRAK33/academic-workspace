@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useWorkspace, formatHumanDate, format12HourTime, addDays, parseIsoDate, getTodayIsoDate, calculateAcademicWeek } from '../hooks/useWorkspace';
 import { useAuth } from '../hooks/useAuth';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { Search, Moon, Sun, Terminal, Database, Clock, ChevronDown, CheckCircle2, Menu, X, Calendar, User, Wifi, WifiOff, Sparkles, BellRing, Compass, SlidersHorizontal } from 'lucide-react';
 
 interface HeaderProps {
@@ -119,6 +120,10 @@ export const Header: React.FC<HeaderProps> = ({
       setInternalMobileDrawerOpen(open);
     }
   };
+
+  // Lock background body scroll when mobile drawer is open
+  useBodyScrollLock(isMobileDrawerOpen);
+
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
 
@@ -650,15 +655,16 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Mobile Slide-Over Drawer Portal */}
       {isMobileDrawerOpen && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[999] md:hidden flex justify-end">
+        <div className="fixed inset-0 z-[999] md:hidden flex justify-end overscroll-contain">
           {/* Backdrop overlay */}
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity touch-none"
             onClick={() => setIsMobileDrawerOpen(false)}
+            onTouchMove={(e) => e.preventDefault()}
           />
 
           {/* Drawer content */}
-          <div className="relative w-72 max-w-[85vw] bg-white dark:bg-slate-900 h-[100dvh] shadow-2xl z-10 flex flex-col justify-between border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-200 overflow-hidden">
+          <div className="relative w-72 max-w-[85vw] bg-white dark:bg-slate-900 h-[100dvh] shadow-2xl z-10 flex flex-col justify-between border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-200 overflow-hidden overscroll-contain">
             {/* Drawer Header */}
             <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
               <div className="flex items-center gap-2">

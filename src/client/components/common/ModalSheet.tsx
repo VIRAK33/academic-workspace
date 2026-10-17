@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface ModalSheetContextType {
   requestClose: () => void;
@@ -43,6 +44,9 @@ export const ModalSheet: React.FC<ModalSheetProps> = ({
   const touchStartY = useRef<number | null>(null);
   const touchCurrentY = useRef<number | null>(null);
   const isClosingRef = useRef(false);
+
+  // Lock background body scroll whenever the modal sheet is active
+  useBodyScrollLock(rendered);
 
   const requestClose = useCallback(() => {
     if (isClosingRef.current) return;
@@ -151,7 +155,12 @@ export const ModalSheet: React.FC<ModalSheetProps> = ({
             requestClose();
           }
         }}
-        className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all duration-200 ease-out ${
+        onTouchMove={(e) => {
+          if (e.target === e.currentTarget) {
+            e.preventDefault();
+          }
+        }}
+        className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overscroll-contain transition-all duration-200 ease-out ${
           visible && dragY < 150
             ? 'bg-slate-900/50 backdrop-blur-xs opacity-100'
             : 'bg-slate-900/0 backdrop-blur-none opacity-0 pointer-events-none'
@@ -167,7 +176,7 @@ export const ModalSheet: React.FC<ModalSheetProps> = ({
                 }
               : undefined
           }
-          className={`bg-white dark:bg-slate-900 w-full ${maxWidthClass} rounded-t-[26px] sm:rounded-2xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] transform-gpu ${
+          className={`bg-white dark:bg-slate-900 w-full ${maxWidthClass} rounded-t-[26px] sm:rounded-2xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] overscroll-contain transform-gpu ${
             !isDragging ? 'transition-all duration-250 ease-out' : ''
           } ${
             !visible
