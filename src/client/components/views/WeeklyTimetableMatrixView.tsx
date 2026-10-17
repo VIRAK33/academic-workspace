@@ -266,9 +266,22 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
 
   const daysToDisplay = showWeekend ? [1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5];
 
+  // Deduplicate session slots to prevent duplicate rows
+  const uniqueTimeSlots = useMemo(() => {
+    const seen = new Set<string>();
+    const res: typeof timeSlots = [];
+    for (const ts of timeSlots) {
+      if (!seen.has(ts.session)) {
+        seen.add(ts.session);
+        res.push(ts);
+      }
+    }
+    return res;
+  }, [timeSlots]);
+
   // Compute merged session start/end
   const computeMergedSessionBounds = (sessionLabels: string[]) => {
-    const matchedSlots = timeSlots.filter((ts) => sessionLabels.includes(ts.session));
+    const matchedSlots = uniqueTimeSlots.filter((ts) => sessionLabels.includes(ts.session));
     if (matchedSlots.length === 0) return { startTime: '14:30', endTime: '16:05' };
     const sorted = [...matchedSlots].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
     return {
@@ -302,17 +315,22 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
       }
 
       const evStartM = timeToMinutes(ev.startTime);
-      if (sessionLabel === timeSlots[0]?.session && evStartM < slotStartM) {
+      const evEndM = timeToMinutes(ev.endTime);
+
+      // If early morning before first session, show in the first session row
+      if (sessionLabel === uniqueTimeSlots[0]?.session && evStartM < slotStartM) {
         return true;
       }
-      if (sessionLabel === timeSlots[timeSlots.length - 1]?.session && evStartM >= slotStartM) {
+      // If late evening after last session, show in the last session row
+      if (sessionLabel === uniqueTimeSlots[uniqueTimeSlots.length - 1]?.session && evStartM >= slotEndM) {
         return true;
       }
-      return evStartM >= slotStartM && evStartM < slotEndM;
+      // Overlaps with this session: starts before slot ends AND ends after slot starts
+      return (evStartM < slotEndM && evEndM > slotStartM) || (evStartM >= slotStartM && evStartM < slotEndM);
     });
   };
 
-  const slotCount = timeSlots.length;
+  const slotCount = uniqueTimeSlots.length;
   const skipMatrix: Record<string, boolean> = {};
 
   const renderTitle = (
@@ -623,7 +641,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
-                {timeSlots.map((slot, r) => {
+                {uniqueTimeSlots.map((slot, r) => {
                   return (
                     <tr key={slot.session}>
                       <td className="py-1.5 px-1 sm:py-2 sm:px-2 w-14 sm:w-20 bg-slate-50/50 dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-800 align-top text-center sm:text-left shrink-0">
@@ -650,7 +668,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                               matchedSched = sch;
                               let k = 1;
                               while (r + k < slotCount) {
-                                const nextSlot = timeSlots[r + k];
+                                const nextSlot = uniqueTimeSlots[r + k];
                                 if (sch.sessions.includes(nextSlot.session)) {
                                   spanCount++;
                                   skipMatrix[`${r + k}_${day}`] = true;
@@ -676,80 +694,87 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                               dIdx < daysToDisplay.length - 1 ? 'border-r border-slate-200 dark:border-slate-800' : ''
                             } ${isWeekend ? 'bg-slate-50/30 dark:bg-slate-800/20' : ''}`}
                           >
-                            {matchedCourse && matchedSched ? (
-                              <div
-                                onClick={() => setViewingCourse(matchedCourse)}
-                                className={`p-1.5 sm:p-2 rounded-md transition cursor-pointer flex flex-col justify-between shadow-2xs hover:shadow-xs group ${
-                                  !matchedCourse.activeWeeks.includes(activeWeekNum)
-                                    ? 'opacity-40 border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30'
-                                    : 'border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800'
-                                }`}
-                                style={{
-                                  borderLeftWidth: '3px',
-                                  borderLeftColor: matchedCourse.color,
-                                }}
-                                title="Click to view course details"
-                              >
-                                <div className="space-y-0.5">
-                                  <div className="flex items-center justify-between gap-1 leading-none">
-                                    <span
-                                      className="font-mono text-[9px] sm:text-[10px] font-bold truncate"
-                                      style={{ color: matchedCourse.color }}
-                                    >
-                                      {matchedCourse.code}
-                                    </span>
-                                    {!isArchived && (
-                                      <CardOptionMenu
-                                        onView={() => setViewingCourse(matchedCourse)}
-                                        onEdit={() => onEditCourse(matchedCourse!)}
-                                        onDelete={() => {
-                                          if (window.confirm(`Delete course "${matchedCourse?.code} - ${matchedCourse?.name}"?`)) {
-                                            deleteCourse(matchedCourse!.id);
-                                          }
-                                        }}
-                                        viewLabel="View Course"
-                                        editLabel="Edit Course"
-                                        deleteLabel="Delete Course"
-                                      />
-                                    )}
-                                  </div>
-                                  <div className="font-semibold text-[10px] sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight">
-                                    {matchedCourse.name}
-                                  </div>
-                                  <div className="text-[9px] sm:text-[10px] text-slate-400 truncate">
-                                    {matchedCourse.location}
-                                    {matchedCourse.teacher ? ` · ${matchedCourse.teacher}` : ''}
+                            <div className="space-y-1.5">
+                              {matchedCourse && matchedSched && (
+                                <div
+                                  onClick={() => setViewingCourse(matchedCourse)}
+                                  className={`p-1.5 sm:p-2 rounded-md transition cursor-pointer flex flex-col justify-between shadow-2xs hover:shadow-xs group ${
+                                    !matchedCourse.activeWeeks.includes(activeWeekNum)
+                                      ? 'opacity-40 border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30'
+                                      : 'border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800'
+                                  }`}
+                                  style={{
+                                    borderLeftWidth: '3px',
+                                    borderLeftColor: matchedCourse.color,
+                                  }}
+                                  title="Click to view course details"
+                                >
+                                  <div className="space-y-0.5">
+                                    <div className="flex items-center justify-between gap-1 leading-none">
+                                      <span
+                                        className="font-mono text-[9px] sm:text-[10px] font-bold truncate"
+                                        style={{ color: matchedCourse.color }}
+                                      >
+                                        {matchedCourse.code}
+                                      </span>
+                                      {!isArchived && (
+                                        <CardOptionMenu
+                                          onView={() => setViewingCourse(matchedCourse)}
+                                          onEdit={() => onEditCourse(matchedCourse!)}
+                                          onDelete={() => {
+                                            if (window.confirm(`Delete course "${matchedCourse?.code} - ${matchedCourse?.name}"?`)) {
+                                              deleteCourse(matchedCourse!.id);
+                                            }
+                                          }}
+                                          viewLabel="View Course"
+                                          editLabel="Edit Course"
+                                          deleteLabel="Delete Course"
+                                        />
+                                      )}
+                                    </div>
+                                    <div className="font-semibold text-[10px] sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight">
+                                      {matchedCourse.name}
+                                    </div>
+                                    <div className="text-[9px] sm:text-[10px] text-slate-400 truncate">
+                                      {matchedCourse.location}
+                                      {matchedCourse.teacher ? ` · ${matchedCourse.teacher}` : ''}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ) : cellEvents.length > 0 ? (
-                              <div className="space-y-1">
-                                {cellEvents.map((ev) => {
-                                  const isRoutine = ev.type === 'routine';
-                                  return (
-                                    <div
-                                      key={ev.id}
-                                      onClick={() => setViewingEvent(ev)}
-                                      className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer shadow-2xs hover:shadow-xs transition"
-                                      style={{ borderLeftWidth: '3px', borderLeftColor: ev.color }}
-                                      title="Click to view details"
-                                    >
-                                      <div className="flex items-center justify-between gap-1">
-                                        <div className="flex items-center gap-1 font-mono text-[9px] font-bold" style={{ color: ev.color }}>
-                                          <Twemoji emoji={isRoutine ? '🔁' : '📅'} className="w-2.5 h-2.5" />
-                                          <span className="truncate">{ev.category || (isRoutine ? 'Routine' : 'Event')}</span>
+                              )}
+
+                              {cellEvents.length > 0 && (
+                                <div className="space-y-1">
+                                  {cellEvents.map((ev) => {
+                                    const isRoutine = ev.type === 'routine';
+                                    return (
+                                      <div
+                                        key={ev.id}
+                                        onClick={() => setViewingEvent(ev)}
+                                        className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer shadow-2xs hover:shadow-xs transition"
+                                        style={{ borderLeftWidth: '3px', borderLeftColor: ev.color }}
+                                        title={`Click to view details (${ev.startTime}–${ev.endTime})`}
+                                      >
+                                        <div className="flex items-center justify-between gap-1">
+                                          <div className="flex items-center gap-1 font-mono text-[9px] font-bold" style={{ color: ev.color }}>
+                                            <Twemoji emoji={isRoutine ? '🔁' : '📅'} className="w-2.5 h-2.5" />
+                                            <span className="truncate">{ev.category || (isRoutine ? 'Routine' : 'Event')}</span>
+                                          </div>
+                                          <span className="font-mono text-[9px] text-slate-400 tabular-nums">
+                                            {ev.startTime}–{ev.endTime}
+                                          </span>
+                                        </div>
+                                        <div className="text-[10px] font-semibold text-slate-800 dark:text-slate-100 truncate mt-0.5">
+                                          {ev.title}
                                         </div>
                                       </div>
-                                      <div className="text-[10px] font-semibold text-slate-800 dark:text-slate-100 truncate mt-0.5">
-                                        {ev.title}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <div className="h-8" />
-                            )}
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {!matchedCourse && cellEvents.length === 0 && <div className="h-8" />}
+                            </div>
                           </td>
                         );
                       })}
@@ -1045,7 +1070,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
           setViewingCourse(null);
           onEditCourse(c);
         }}
-        timeSlots={timeSlots}
+        timeSlots={uniqueTimeSlots}
         currentAcademicWeek={activeWeekNum}
         totalWeeks={viewedSemester.totalWeeks}
         tasks={tasks}

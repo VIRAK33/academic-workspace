@@ -347,23 +347,42 @@ export class WorkspaceDatabase {
   // --- TIME SLOTS ---
   async getTimeSlots(): Promise<TimeSlot[]> {
     if (this.d1) {
-      let query = 'SELECT * FROM time_slots';
-      const params: any[] = [];
+      let results: any[] = [];
       if (this.userId) {
-        query += ' WHERE user_id = ? OR user_id IS NULL';
-        params.push(this.userId);
+        const userRes = await this.d1
+          .prepare('SELECT * FROM time_slots WHERE user_id = ? ORDER BY display_order ASC')
+          .bind(this.userId)
+          .all();
+        if (userRes.results && userRes.results.length > 0) {
+          results = userRes.results;
+        }
       }
-      query += ' ORDER BY display_order ASC';
 
-      const { results } = await this.d1.prepare(query).bind(...params).all();
-      if (results && results.length > 0) {
-        return results.map((r: any) => ({
-          id: r.id,
-          session: r.session_code,
-          startTime: r.start_time,
-          endTime: r.end_time,
-          displayOrder: r.display_order,
-        }));
+      if (results.length === 0) {
+        const defaultRes = await this.d1
+          .prepare('SELECT * FROM time_slots WHERE user_id IS NULL ORDER BY display_order ASC')
+          .all();
+        if (defaultRes.results && defaultRes.results.length > 0) {
+          results = defaultRes.results;
+        }
+      }
+
+      if (results.length > 0) {
+        const seen = new Set<string>();
+        const mapped: TimeSlot[] = [];
+        for (const r of results) {
+          if (!seen.has(r.session_code)) {
+            seen.add(r.session_code);
+            mapped.push({
+              id: r.id,
+              session: r.session_code,
+              startTime: r.start_time,
+              endTime: r.end_time,
+              displayOrder: r.display_order,
+            });
+          }
+        }
+        return mapped;
       }
     }
     return memoryStore.timeSlots;

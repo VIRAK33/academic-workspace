@@ -57,6 +57,18 @@ export function getCurrentMinutes(): number {
   return now.getHours() * 60 + now.getMinutes();
 }
 
+export function deduplicateTimeSlots(slots: TimeSlot[]): TimeSlot[] {
+  const seen = new Set<string>();
+  const res: TimeSlot[] = [];
+  for (const s of slots) {
+    if (!seen.has(s.session)) {
+      seen.add(s.session);
+      res.push(s);
+    }
+  }
+  return res;
+}
+
 export function parseIsoDate(isoStr?: string): Date {
   const [y, m, d] = (isoStr || getTodayIsoDate()).split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d));
@@ -334,7 +346,7 @@ export function useWorkspace() {
       api.getAttendanceRecords(),
     ]);
     setSemesters(sems);
-    setTimeSlots(slots);
+    setTimeSlots(deduplicateTimeSlots(slots));
     setCourses(crs);
     setTasks(tks);
     setKanban(kb);
@@ -680,7 +692,7 @@ export function useWorkspace() {
   // Time slot actions
   const saveTimeSlots = useCallback(async (slots: TimeSlot[]) => {
     const saved = await api.saveTimeSlots(slots);
-    setTimeSlots(saved);
+    setTimeSlots(deduplicateTimeSlots(saved));
     showToast('Session slots updated');
   }, [showToast]);
 
