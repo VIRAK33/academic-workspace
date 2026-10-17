@@ -1,5 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Semester, TimeSlot, Course, Task, KanbanMilestone, Paper, Conference, ExperimentLog, AdvisorMeeting, ScheduleEvent } from '../../types';
+import {
+  Semester,
+  TimeSlot,
+  Course,
+  Task,
+  KanbanMilestone,
+  Paper,
+  Conference,
+  ExperimentLog,
+  AdvisorMeeting,
+  ScheduleEvent,
+  AttendanceRecord,
+  CommitmentStatus,
+} from '../../types';
 import { api } from '../api';
 import { getNotificationSettings, checkUpcomingClassAlerts } from '../utils/notificationScheduler';
 
@@ -143,6 +156,7 @@ export function useWorkspace() {
   const [experimentLogs, setExperimentLogs] = useState<ExperimentLog[]>([]);
   const [advisorMeetings, setAdvisorMeetings] = useState<AdvisorMeeting[]>([]);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
 
   // Timetable Matrix & Schedule filter preferences
   const [showRoutines, setShowRoutinesState] = useState<boolean>(() => {
@@ -305,7 +319,7 @@ export function useWorkspace() {
 
   // Initial load
   const loadData = useCallback(async () => {
-    const [sems, slots, crs, tks, kb, pps, confs, exps, mtgs, evts, engineTime] = await Promise.all([
+    const [sems, slots, crs, tks, kb, pps, confs, exps, mtgs, evts, engineTime, atts] = await Promise.all([
       api.getSemesters(),
       api.getTimeSlots(),
       api.getCourses(),
@@ -317,6 +331,7 @@ export function useWorkspace() {
       api.getMeetings(),
       api.getEvents(),
       api.getServerTime(),
+      api.getAttendanceRecords(),
     ]);
     setSemesters(sems);
     setTimeSlots(slots);
@@ -328,6 +343,7 @@ export function useWorkspace() {
     setExperimentLogs(exps);
     setAdvisorMeetings(mtgs);
     setEvents(evts);
+    setAttendanceRecords(atts || []);
 
     // Sync real engine time if available
     if (engineTime?.isoDate) {
@@ -668,6 +684,141 @@ export function useWorkspace() {
     showToast('Session slots updated');
   }, [showToast]);
 
+  // --- Attendance & Routine Records Actions ---
+  const saveAttendanceRecord = useCallback(async (record: AttendanceRecord) => {
+    setAttendanceRecords((prev) => {
+      const idx = prev.findIndex((r) => r.id === record.id || (r.targetId === record.targetId && r.date === record.date));
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...record };
+        return next;
+      }
+      return [record, ...prev];
+    });
+    const saved = await api.saveAttendanceRecord(record);
+    return saved;
+  }, []);
+
+  const deleteAttendanceRecord = useCallback(async (id: string) => {
+    setAttendanceRecords((prev) => prev.filter((r) => r.id !== id));
+    await api.deleteAttendanceRecord(id);
+  }, []);
+
+  const getAttendanceRecord = useCallback(
+    (targetId: string, date: string): AttendanceRecord | undefined => {
+      return attendanceRecords.find((r) => r.targetId === targetId && r.date === date);
+    },
+    [attendanceRecords]
+  );
+
+  const setAttendanceStatus = useCallback(
+    async (
+      targetId: string,
+      targetType: 'course' | 'routine' | 'event',
+      date: string,
+      status: CommitmentStatus | null,
+      note?: string,
+      academicWeek?: number
+    ) => {
+      const existing = attendanceRecords.find((r) => r.targetId === targetId && r.date === date);
+      if (!status) {
+        if (existing) {
+          await deleteAttendanceRecord(existing.id);
+          showToast('Attendance status cleared');
+        }
+        return;
+      }
+
+      const record: AttendanceRecord = {
+        id: existing ? existing.id : `att_${targetType}_${targetId}_${date}`,
+        targetId,
+        targetType,
+        date,
+        status,
+        academicWeek: academicWeek !== undefined ? academicWeek : existing?.academicWeek,
+        note: note !== undefined ? note : existing?.note,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await saveAttendanceRecord(record);
+      const label = status === 'attended' ? 'Attended ✓' : status === 'missed' ? 'Missed ✕' : 'Excused —';
+      showToast(`Marked as ${label}`);
+    },
+    [attendanceRecords, deleteAttendanceRecord, saveAttendanceRecord, showToast]
+  );
+
+  const toggleAttendance = useCallback(
+    async (
+      targetId: string,
+      targetType: 'course' | 'routine' | 'event',
+      date: string,
+      academicWeek?: number
+    ) => {
+      const existing = attendanceRecords.find((r) => r.targetId === targetId && r.date === date);
+      let nextStatus: CommitmentStatus | null = 'attended';
+      if (!existing) {
+        nextStatus = 'attended';
+      } else if (existing.status === 'attended') {
+        nextStatus = 'missed';
+      } else if (existing.status === 'missed') {
+        nextStatus = 'excused';
+      } else if (existing.status === 'excused') {
+        nextStatus = null;
+      }
+      await setAttendanceStatus(targetId, targetType, date, nextStatus, undefined, academicWeek);
+    },
+    [attendanceRecords, setAttendanceStatus]
+  );
+
+  // Statistics calculation for Course Attendance
+  const getCourseAttendanceStats = useCallback(
+    (courseId: string) => {
+      const targetCourse = courses.find((c) => c.id === courseId);
+      if (!targetCourse) {
+        return { totalEvaluated: 0, attended: 0, missed: 0, excused: 0, ratePercent: 100, records: [] };
+      }
+
+      const records = attendanceRecords.filter((r) => r.targetId === courseId);
+      const attended = records.filter((r) => r.status === 'attended').length;
+      const missed = records.filter((r) => r.status === 'missed').length;
+      const excused = records.filter((r) => r.status === 'excused').length;
+      const evaluated = attended + missed;
+      const ratePercent = evaluated > 0 ? Math.round((attended / evaluated) * 100) : 100;
+
+      return {
+        totalEvaluated: evaluated,
+        attended,
+        missed,
+        excused,
+        ratePercent,
+        records,
+      };
+    },
+    [courses, attendanceRecords]
+  );
+
+  // Statistics calculation for Routine Completion
+  const getRoutineAttendanceStats = useCallback(
+    (routineId: string) => {
+      const records = attendanceRecords.filter((r) => r.targetId === routineId);
+      const attended = records.filter((r) => r.status === 'attended').length;
+      const missed = records.filter((r) => r.status === 'missed').length;
+      const excused = records.filter((r) => r.status === 'excused').length;
+      const evaluated = attended + missed;
+      const ratePercent = evaluated > 0 ? Math.round((attended / evaluated) * 100) : 100;
+
+      return {
+        totalEvaluated: evaluated,
+        attended,
+        missed,
+        excused,
+        ratePercent,
+        records,
+      };
+    },
+    [attendanceRecords]
+  );
+
   return {
     semesters,
     timeSlots,
@@ -734,6 +885,14 @@ export function useWorkspace() {
     saveSemester,
     deleteSemester,
     saveTimeSlots,
+    attendanceRecords,
+    saveAttendanceRecord,
+    deleteAttendanceRecord,
+    getAttendanceRecord,
+    setAttendanceStatus,
+    toggleAttendance,
+    getCourseAttendanceStats,
+    getRoutineAttendanceStats,
     refreshData: loadData,
   };
 }

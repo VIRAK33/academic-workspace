@@ -33,6 +33,7 @@ import { ClassRemindersModal } from './components/modals/ClassRemindersModal';
 import { WelcomeGuideModal } from './components/modals/WelcomeGuideModal';
 import { EventModal } from './components/modals/EventModal';
 import { CustomizeViewsModal } from './components/modals/CustomizeViewsModal';
+import { AttendanceLogModal } from './components/modals/AttendanceLogModal';
 import { useAuth } from './hooks/useAuth';
 
 import { Plus } from 'lucide-react';
@@ -61,6 +62,7 @@ export function App() {
   const [isAiImportModalOpen, setIsAiImportModalOpen] = useState(false);
   const [isRemindersModalOpen, setIsRemindersModalOpen] = useState(false);
   const [isCustomizeViewsOpen, setIsCustomizeViewsOpen] = useState(false);
+  const [isAttendanceLogOpen, setIsAttendanceLogOpen] = useState(false);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -84,6 +86,7 @@ export function App() {
     isAiImportModalOpen ||
     isRemindersModalOpen ||
     isCustomizeViewsOpen ||
+    isAttendanceLogOpen ||
     isEventModalOpen ||
     isWelcomeGuideOpen ||
     auth.isAuthModalOpen;
@@ -186,6 +189,7 @@ export function App() {
         onOpenRemindersModal={() => setIsRemindersModalOpen(true)}
         onOpenGuideModal={() => setIsWelcomeGuideOpen(true)}
         onOpenCustomizeViews={() => setIsCustomizeViewsOpen(true)}
+        onOpenAttendanceLog={() => setIsAttendanceLogOpen(true)}
         isMobileDrawerOpen={isMobileDrawerOpen}
         onToggleMobileDrawer={setIsMobileDrawerOpen}
       />
@@ -341,6 +345,11 @@ export function App() {
         ws={ws}
         isOpen={isCustomizeViewsOpen}
         onClose={() => setIsCustomizeViewsOpen(false)}
+      />
+      <AttendanceLogModal
+        ws={ws}
+        isOpen={isAttendanceLogOpen}
+        onClose={() => setIsAttendanceLogOpen(false)}
       />
     </div>
   );

@@ -99,7 +99,17 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
     saveTask,
     searchQuery,
     advisorMeetings,
+    attendanceRecords,
+    getAttendanceRecord,
+    toggleAttendance,
+    setAttendanceStatus,
+    getCourseAttendanceStats,
+    getRoutineAttendanceStats,
   } = ws;
+
+  const isPastOrToday = useMemo(() => {
+    return parseIsoDate(selectedDate).getTime() <= parseIsoDate(getTodayIsoDate()).getTime();
+  }, [selectedDate]);
 
   const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
   const [viewingEvent, setViewingEvent] = useState<ScheduleEvent | null>(null);
@@ -832,6 +842,9 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
               // Course item
               if (item.kind === 'course' && item.course) {
                 if (item.isWeekActive) {
+                  const courseAttRecord = getAttendanceRecord(item.course.id, selectedDate);
+                  const courseAttStatus = courseAttRecord?.status;
+
                   return (
                     <div
                       key={item.id}
@@ -867,6 +880,30 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                             )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
+                            {isPastOrToday && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleAttendance(item.course!.id, 'course', selectedDate, currentAcademicWeek);
+                                }}
+                                title={`Attendance: ${courseAttStatus ? courseAttStatus.toUpperCase() : 'Unmarked'}. Tap to toggle: Attended → Missed → Excused → Clear`}
+                                className={`px-1.5 py-0.2 rounded text-[10px] font-medium transition flex items-center gap-1 border shrink-0 cursor-pointer ${
+                                  courseAttStatus === 'attended'
+                                    ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700 shadow-2xs font-semibold'
+                                    : courseAttStatus === 'missed'
+                                    ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-200 border-rose-300 dark:border-rose-700 font-semibold'
+                                    : courseAttStatus === 'excused'
+                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600'
+                                    : 'bg-white/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-400 border-dashed border-slate-300 dark:border-slate-600 hover:border-slate-400'
+                                }`}
+                              >
+                                {courseAttStatus === 'attended' && <span>✓ Attended</span>}
+                                {courseAttStatus === 'missed' && <span>✕ Missed</span>}
+                                {courseAttStatus === 'excused' && <span>— Excused</span>}
+                                {!courseAttStatus && <span>○ Check-in</span>}
+                              </button>
+                            )}
                             {item.totalCols <= 2 && (
                               <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 bg-white/75 dark:bg-slate-800/80 px-1 py-0.2 rounded border border-slate-200/60 dark:border-slate-700 tabular-nums">
                                 {Math.floor(item.durationMins / 60)}h {item.durationMins % 60 > 0 ? `${item.durationMins % 60}m` : ''}
@@ -948,6 +985,9 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
               // Routine or Event item
               if (item.event) {
                 const isRoutine = item.kind === 'routine';
+                const eventAttRecord = getAttendanceRecord(item.event.id, selectedDate);
+                const eventAttStatus = eventAttRecord?.status;
+
                 return (
                   <div
                     key={item.id}
@@ -992,19 +1032,45 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                             </span>
                           )}
                         </div>
-                        {onEditEvent && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditEvent(item.event!);
-                            }}
-                            className="p-0.5 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
-                            title="Edit Commitment"
-                          >
-                            <Pencil className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition shrink-0" />
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {isPastOrToday && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleAttendance(item.event!.id, isRoutine ? 'routine' : 'event', selectedDate, currentAcademicWeek);
+                              }}
+                              title={`Status: ${eventAttStatus ? eventAttStatus.toUpperCase() : 'Unmarked'}. Tap to toggle (Done → Missed → Skipped → Clear)`}
+                              className={`px-1.5 py-0.2 rounded text-[10px] font-medium transition flex items-center gap-1 border shrink-0 cursor-pointer ${
+                                eventAttStatus === 'attended'
+                                  ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700 shadow-2xs font-semibold'
+                                  : eventAttStatus === 'missed'
+                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-200 border-rose-300 dark:border-rose-700 font-semibold'
+                                  : eventAttStatus === 'excused'
+                                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600'
+                                  : 'bg-white/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-400 border-dashed border-slate-300 dark:border-slate-600 hover:border-slate-400'
+                              }`}
+                            >
+                              {eventAttStatus === 'attended' && <span>✓ Done</span>}
+                              {eventAttStatus === 'missed' && <span>✕ Missed</span>}
+                              {eventAttStatus === 'excused' && <span>— Skipped</span>}
+                              {!eventAttStatus && <span>○ Mark</span>}
+                            </button>
+                          )}
+                          {onEditEvent && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditEvent(item.event!);
+                              }}
+                              className="p-0.5 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+                              title="Edit Commitment"
+                            >
+                              <Pencil className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition shrink-0" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 tabular-nums truncate">
                         {item.timeDisplay12h}
@@ -1329,6 +1395,11 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
         currentAcademicWeek={currentAcademicWeek}
         totalWeeks={viewedSemester.totalWeeks}
         tasks={tasks}
+        selectedDate={selectedDate}
+        attendanceRecords={attendanceRecords}
+        getCourseAttendanceStats={getCourseAttendanceStats}
+        setAttendanceStatus={setAttendanceStatus}
+        getAttendanceRecord={getAttendanceRecord}
       />
 
       {/* Routine & Event Details Modal */}
@@ -1341,6 +1412,11 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
           if (onEditEvent) onEditEvent(ev);
         }}
         currentAcademicWeek={currentAcademicWeek}
+        selectedDate={selectedDate}
+        attendanceRecords={attendanceRecords}
+        getRoutineAttendanceStats={getRoutineAttendanceStats}
+        setAttendanceStatus={setAttendanceStatus}
+        getAttendanceRecord={getAttendanceRecord}
       />
 
       {/* Schedule Hours Configuration Modal */}

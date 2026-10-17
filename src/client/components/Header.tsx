@@ -16,6 +16,7 @@ interface HeaderProps {
   onOpenRemindersModal: () => void;
   onOpenGuideModal: () => void;
   onOpenCustomizeViews: () => void;
+  onOpenAttendanceLog?: () => void;
   isMobileDrawerOpen?: boolean;
   onToggleMobileDrawer?: (open: boolean) => void;
 }
@@ -85,6 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenRemindersModal,
   onOpenGuideModal,
   onOpenCustomizeViews,
+  onOpenAttendanceLog,
   isMobileDrawerOpen: externalIsMobileDrawerOpen,
   onToggleMobileDrawer,
 }) => {
@@ -338,6 +340,28 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="text-[10px] text-slate-400">Toggle tabs, order & presets</div>
                       </div>
                     </button>
+
+                    {onOpenAttendanceLog && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsToolsMenuOpen(false);
+                          onOpenAttendanceLog();
+                        }}
+                        className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <div>
+                          <div className="font-medium text-xs flex items-center gap-1.5">
+                            <span>Attendance & Routine Log</span>
+                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800">
+                              Look Back
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-400">Class presence, habits & missed catch-up</div>
+                        </div>
+                      </button>
+                    )}
 
                     <button
                       type="button"
@@ -805,6 +829,25 @@ export const Header: React.FC<HeaderProps> = ({
                     {enabledTabs.length}/8
                   </span>
                 </button>
+
+                {onOpenAttendanceLog && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileDrawerOpen(false);
+                      onOpenAttendanceLog();
+                    }}
+                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>Attendance & Routine Log</span>
+                    </div>
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800">
+                      Look Back
+                    </span>
+                  </button>
+                )}
 
                 <button
                   type="button"

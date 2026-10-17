@@ -12,6 +12,8 @@ import {
   ScheduleEvent,
   User,
   PushSubscriptionRecord,
+  AttendanceRecord,
+  CommitmentStatus,
 } from '../types';
 import { defaultWorkspaceData } from './defaultData';
 
@@ -31,6 +33,7 @@ function initMemoryStore(): WorkspaceData {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.semesters) && Array.isArray(parsed.courses) && Array.isArray(parsed.tasks)) {
           if (!parsed.events) parsed.events = defaultWorkspaceData.events || [];
+          if (!parsed.attendanceRecords) parsed.attendanceRecords = defaultWorkspaceData.attendanceRecords || [];
           return parsed;
         }
       }
@@ -1077,6 +1080,103 @@ export class WorkspaceDatabase {
     return meeting;
   }
 
+  // --- ATTENDANCE & ROUTINE COMPLETION RECORDS ---
+  async getAttendanceRecords(date?: string, targetId?: string): Promise<AttendanceRecord[]> {
+    if (this.d1) {
+      try {
+        let query = 'SELECT * FROM attendance_records WHERE 1=1';
+        const params: any[] = [];
+        if (this.userId) {
+          query += ' AND (user_id = ? OR user_id IS NULL)';
+          params.push(this.userId);
+        }
+        if (date) {
+          query += ' AND date = ?';
+          params.push(date);
+        }
+        if (targetId) {
+          query += ' AND target_id = ?';
+          params.push(targetId);
+        }
+        query += ' ORDER BY date DESC, updated_at DESC';
+
+        const { results } = await this.d1.prepare(query).bind(...params).all();
+        return (results || []).map((r: any) => ({
+          id: r.id,
+          targetId: r.target_id,
+          targetType: r.target_type,
+          date: r.date,
+          status: r.status,
+          academicWeek: r.academic_week,
+          note: r.note,
+          updatedAt: r.updated_at,
+        }));
+      } catch (e) {
+        console.warn('Could not read attendance_records from D1 (table may not exist yet):', e);
+      }
+    }
+    let list = memoryStore.attendanceRecords || [];
+    if (date) list = list.filter((r) => r.date === date);
+    if (targetId) list = list.filter((r) => r.targetId === targetId);
+    return list;
+  }
+
+  async saveAttendanceRecord(record: AttendanceRecord): Promise<AttendanceRecord> {
+    if (this.d1) {
+      try {
+        await this.d1
+          .prepare(`
+            INSERT INTO attendance_records (id, user_id, target_id, target_type, date, status, academic_week, note, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              user_id = COALESCE(excluded.user_id, attendance_records.user_id),
+              target_id = excluded.target_id,
+              target_type = excluded.target_type,
+              date = excluded.date,
+              status = excluded.status,
+              academic_week = excluded.academic_week,
+              note = excluded.note,
+              updated_at = excluded.updated_at
+          `)
+          .bind(
+            record.id,
+            this.userId || null,
+            record.targetId,
+            record.targetType,
+            record.date,
+            record.status,
+            record.academicWeek || null,
+            record.note || null,
+            record.updatedAt || new Date().toISOString()
+          )
+          .run();
+        return record;
+      } catch (e) {
+        console.warn('Could not save attendance_record to D1:', e);
+      }
+    }
+    if (!memoryStore.attendanceRecords) memoryStore.attendanceRecords = [];
+    const idx = memoryStore.attendanceRecords.findIndex((r) => r.id === record.id);
+    if (idx >= 0) memoryStore.attendanceRecords[idx] = record;
+    else memoryStore.attendanceRecords.unshift(record);
+    syncMemoryStore();
+    return record;
+  }
+
+  async deleteAttendanceRecord(id: string): Promise<boolean> {
+    if (this.d1) {
+      try {
+        await this.d1.prepare('DELETE FROM attendance_records WHERE id = ?').bind(id).run();
+        return true;
+      } catch (e) {}
+    }
+    if (memoryStore.attendanceRecords) {
+      memoryStore.attendanceRecords = memoryStore.attendanceRecords.filter((r) => r.id !== id);
+      syncMemoryStore();
+    }
+    return true;
+  }
+
   // --- FULL DUMP / RESTORE ---
   async exportAll(): Promise<WorkspaceData> {
     return {
@@ -1090,6 +1190,7 @@ export class WorkspaceDatabase {
       conferences: await this.getConferences(),
       experimentLogs: await this.getExperiments(),
       advisorMeetings: await this.getMeetings(),
+      attendanceRecords: await this.getAttendanceRecords(),
     };
   }
 
@@ -1106,6 +1207,9 @@ export class WorkspaceDatabase {
     if (data.conferences) for (const c of data.conferences) await this.saveConference(c);
     if (data.experimentLogs) for (const e of data.experimentLogs) await this.saveExperiment(e);
     if (data.advisorMeetings) for (const m of data.advisorMeetings) await this.saveMeeting(m);
+    if (data.attendanceRecords) {
+      for (const a of data.attendanceRecords) await this.saveAttendanceRecord(a);
+    }
     syncMemoryStore();
   }
 }

@@ -432,6 +432,29 @@ app.post('/api/meetings', async (c) => {
   return c.json(saved);
 });
 
+// --- ATTENDANCE & ROUTINE COMPLETION RECORDS ---
+app.get('/api/attendance', async (c) => {
+  const db = getDb(c);
+  const date = c.req.query('date');
+  const targetId = c.req.query('targetId');
+  const data = await db.getAttendanceRecords(date, targetId);
+  return c.json(data);
+});
+
+app.post('/api/attendance', async (c) => {
+  const db = getDb(c);
+  const body = await c.req.json();
+  const saved = await db.saveAttendanceRecord(body);
+  return c.json(saved);
+});
+
+app.delete('/api/attendance/:id', async (c) => {
+  const db = getDb(c);
+  const id = c.req.param('id');
+  await db.deleteAttendanceRecord(id);
+  return c.json({ success: true, id });
+});
+
 // --- 1-CLICK WEEKLY DIGEST GENERATOR ---
 app.get('/api/digest', async (c) => {
   const db = getDb(c);

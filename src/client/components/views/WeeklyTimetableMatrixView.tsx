@@ -172,6 +172,12 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
     showWeekend,
     setShowWeekend,
     tasks,
+    selectedDate,
+    attendanceRecords,
+    getCourseAttendanceStats,
+    getRoutineAttendanceStats,
+    setAttendanceStatus,
+    getAttendanceRecord,
     saveCourse,
     deleteCourse,
     deleteEvent,
@@ -1043,6 +1049,11 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
         currentAcademicWeek={activeWeekNum}
         totalWeeks={viewedSemester.totalWeeks}
         tasks={tasks}
+        selectedDate={selectedDate}
+        attendanceRecords={attendanceRecords}
+        getCourseAttendanceStats={getCourseAttendanceStats}
+        setAttendanceStatus={setAttendanceStatus}
+        getAttendanceRecord={getAttendanceRecord}
       />
 
       {/* Routine & Event Details Modal */}
@@ -1056,6 +1067,11 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
         }}
         onDelete={deleteEvent}
         currentAcademicWeek={activeWeekNum}
+        selectedDate={selectedDate}
+        attendanceRecords={attendanceRecords}
+        getRoutineAttendanceStats={getRoutineAttendanceStats}
+        setAttendanceStatus={setAttendanceStatus}
+        getAttendanceRecord={getAttendanceRecord}
       />
     </div>
   );

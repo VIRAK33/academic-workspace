@@ -375,5 +375,54 @@ export const defaultWorkspaceData: WorkspaceData = {
 - Run edge-threshold ablation on MuSiQue
 - Submit revised proposal outline to supervisor`
     }
+  ],
+
+  attendanceRecords: [
+    {
+      id: 'att_course_c_cs801_deep_learning_2026-10-12',
+      targetId: 'c_cs801_deep_learning',
+      targetType: 'course',
+      date: '2026-10-12',
+      status: 'attended',
+      academicWeek: 5,
+      updatedAt: '2026-10-12T18:10:00Z',
+    },
+    {
+      id: 'att_course_c_cs801_deep_learning_2026-10-14',
+      targetId: 'c_cs801_deep_learning',
+      targetType: 'course',
+      date: '2026-10-14',
+      status: 'attended',
+      academicWeek: 5,
+      updatedAt: '2026-10-14T16:10:00Z',
+    },
+    {
+      id: 'att_course_c_cs820_research_methods_2026-10-13',
+      targetId: 'c_cs820_research_methods',
+      targetType: 'course',
+      date: '2026-10-13',
+      status: 'attended',
+      academicWeek: 5,
+      updatedAt: '2026-10-13T12:05:00Z',
+    },
+    {
+      id: 'att_course_c_cs820_research_methods_2026-10-06',
+      targetId: 'c_cs820_research_methods',
+      targetType: 'course',
+      date: '2026-10-06',
+      status: 'missed',
+      academicWeek: 4,
+      note: 'Flu - borrowed slides from classmate',
+      updatedAt: '2026-10-06T12:05:00Z',
+    },
+    {
+      id: 'att_routine_evt_morning_read_2026-10-16',
+      targetId: 'evt_morning_read',
+      targetType: 'routine',
+      date: '2026-10-16',
+      status: 'attended',
+      academicWeek: 5,
+      updatedAt: '2026-10-16T08:15:00Z',
+    },
   ]
 };

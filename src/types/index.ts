@@ -57,6 +57,19 @@ export interface ScheduleEvent {
   activeWeeks?: number[]; // [1..19] for routines
 }
 
+export type CommitmentStatus = 'attended' | 'missed' | 'excused';
+
+export interface AttendanceRecord {
+  id: string; // `att_${targetType}_${targetId}_${date}`
+  targetId: string;
+  targetType: 'course' | 'routine' | 'event';
+  date: string; // YYYY-MM-DD
+  status: CommitmentStatus;
+  academicWeek?: number;
+  note?: string;
+  updatedAt: string;
+}
+
 export interface Task {
   id: string;
   semesterId?: string;
@@ -148,6 +161,7 @@ export interface WorkspaceData {
   advisorMeetings: AdvisorMeeting[];
   conferences: Conference[];
   experimentLogs: ExperimentLog[];
+  attendanceRecords?: AttendanceRecord[];
 }
 
 export interface User {

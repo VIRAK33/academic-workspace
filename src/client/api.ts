@@ -11,6 +11,8 @@ import {
   AdvisorMeeting,
   ScheduleEvent,
   User,
+  AttendanceRecord,
+  CommitmentStatus,
 } from '../types';
 import { WorkspaceDatabase } from '../server/db';
 
@@ -497,6 +499,44 @@ export const api = {
       if (data) return data;
     } catch (e) {}
     return localDb.saveMeeting(m);
+  },
+
+  // Attendance & Routine Completion Records
+  async getAttendanceRecords(date?: string, targetId?: string): Promise<AttendanceRecord[]> {
+    try {
+      const params = new URLSearchParams();
+      if (date) params.append('date', date);
+      if (targetId) params.append('targetId', targetId);
+      const url = `/api/attendance${params.toString() ? '?' + params.toString() : ''}`;
+      const res = await fetch(url, { headers: getAuthHeaders() });
+      const data = await parseJsonResponse<AttendanceRecord[]>(res);
+      if (data) return data;
+    } catch (e) {}
+    return localDb.getAttendanceRecords(date, targetId);
+  },
+
+  async saveAttendanceRecord(record: AttendanceRecord): Promise<AttendanceRecord> {
+    try {
+      const res = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(record),
+      });
+      const data = await parseJsonResponse<AttendanceRecord>(res);
+      if (data) return data;
+    } catch (e) {}
+    return localDb.saveAttendanceRecord(record);
+  },
+
+  async deleteAttendanceRecord(id: string): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/attendance/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) return true;
+    } catch (e) {}
+    return localDb.deleteAttendanceRecord(id);
   },
 
   // Weekly Digest
