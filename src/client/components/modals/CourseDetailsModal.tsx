@@ -1,7 +1,7 @@
 import React from 'react';
 import { Course, TimeSlot, Task } from '../../../types';
 import { DAY_NAMES_FULL, format24To12Range, timeToMinutes } from '../../hooks/useWorkspace';
-import { X, Pencil, MapPin, User, Calendar, Clock, CheckCircle2, ListTodo } from 'lucide-react';
+import { Pencil, MapPin, User, Calendar, Clock, CheckCircle2, ListTodo } from 'lucide-react';
 import { Twemoji } from '../common/Twemoji';
 import { ModalSheet } from '../common/ModalSheet';
 
@@ -66,7 +66,7 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
             {...dragHandleProps}
             className="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between bg-white dark:bg-slate-900 relative shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
-            <div className="space-y-1 pr-6">
+            <div className="space-y-1 flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs">
                   {activeCourse.code}
@@ -89,15 +89,6 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
                 <span>{activeCourse.name}</span>
               </h3>
             </div>
-
-            <button
-              type="button"
-              onClick={requestClose}
-              className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-              title="Close"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
 
           {/* Modal Body */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWorkspace, timeToMinutes, DAY_NAMES_FULL, DAY_NAMES_SHORT } from '../../hooks/useWorkspace';
-import { X, Plus, Trash2, Calendar, Clock, Palette, Check, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, Palette, Check, Sparkles } from 'lucide-react';
 import { Course, CourseSchedule } from '../../../types';
 import { ModalSheet } from '../common/ModalSheet';
 
@@ -238,13 +238,6 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                 Configure course schedule, location, instructor, and active weeks
               </p>
             </div>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
 
           {/* Form Body */}

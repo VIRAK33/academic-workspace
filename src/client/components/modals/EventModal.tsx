@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWorkspace, DAY_NAMES_FULL, DAY_NAMES_SHORT, getIsoDayOfWeek, addDays, formatIsoDate, getTodayIsoDate } from '../../hooks/useWorkspace';
-import { X, Trash2, Calendar, Clock, Palette, Sparkles, Dumbbell, BookOpen, Users, AlertCircle, Check, ArrowRight } from 'lucide-react';
+import { Trash2, Calendar, Clock, Palette, Sparkles, Dumbbell, BookOpen, Users, AlertCircle, Check, ArrowRight } from 'lucide-react';
 import { ScheduleEvent, EventType } from '../../../types';
 import { Twemoji } from '../common/Twemoji';
 import { ModalSheet } from '../common/ModalSheet';
@@ -221,13 +221,6 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                 Add a recurring routine habit or one-off academic event
               </p>
             </div>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
 
           {/* Modal Body Form */}

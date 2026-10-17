@@ -98,13 +98,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
             className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">New Task</h3>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="p-2 sm:p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
