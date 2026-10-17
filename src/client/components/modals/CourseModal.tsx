@@ -221,7 +221,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
           {/* Modal Header */}
           <div
             {...dragHandleProps}
-            className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+            className="px-5 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
             <div>
               <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
 
           {/* Form Body */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          <div className="p-3.5 sm:p-4 space-y-3 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
             {/* Row 1: Code & Title */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
@@ -530,7 +530,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
           </div>
 
           {/* Action Bar */}
-          <div className="px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
+          <div className="px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-3.5 sm:px-6 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
             {editingCourse ? (
               <button
                 type="button"

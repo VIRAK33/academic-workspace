@@ -212,7 +212,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
           {/* Modal Header */}
           <div
             {...dragHandleProps}
-            className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+            className="px-5 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -226,7 +226,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
 
           {/* Modal Body Form */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          <div className="p-3.5 sm:p-4 space-y-3 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
             {/* Type Switcher */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
@@ -695,7 +695,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
           </div>
 
           {/* Action Bar */}
-          <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
+          <div className="px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-3.5 sm:px-6 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
             {initialEvent ? (
               <button
                 type="button"

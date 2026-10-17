@@ -167,7 +167,7 @@ export const ModalSheet: React.FC<ModalSheetProps> = ({
                 }
               : undefined
           }
-          className={`bg-white dark:bg-slate-900 w-full ${maxWidthClass} rounded-t-2xl sm:rounded-xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] transform-gpu ${
+          className={`bg-white dark:bg-slate-900 w-full ${maxWidthClass} rounded-t-[26px] sm:rounded-2xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] transform-gpu ${
             !isDragging ? 'transition-all duration-250 ease-out' : ''
           } ${
             !visible
@@ -178,7 +178,7 @@ export const ModalSheet: React.FC<ModalSheetProps> = ({
           {/* Mobile Sheet Drag Indicator Handle */}
           <div
             {...dragHandleProps}
-            className="pt-2.5 pb-1 flex justify-center sm:hidden shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+            className="pt-3 pb-1.5 flex justify-center sm:hidden shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
             <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
           </div>
