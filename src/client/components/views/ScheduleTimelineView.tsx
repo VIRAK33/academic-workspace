@@ -180,7 +180,9 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
         if (ev.activeWeeks && ev.activeWeeks.length > 0 && !ev.activeWeeks.map(Number).includes(currentAcademicWeek)) return false;
         return true;
       } else if (ev.type === 'event') {
-        return ev.specificDate === selectedDate;
+        const evStart = ev.specificDate || '';
+        const evEnd = ev.endDate || evStart;
+        return evStart ? (selectedDate >= evStart && selectedDate <= evEnd) : false;
       }
       return false;
     }).map(ev => {
@@ -193,11 +195,12 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
       }
       if (!startTime) startTime = '08:00';
       if (!endTime) endTime = '09:00';
+      const timeDisplay12h = ev.isAllDay ? 'All Day' : format24To12Range(startTime, endTime);
       return {
         event: ev,
         startTime,
         endTime,
-        timeDisplay12h: format24To12Range(startTime, endTime),
+        timeDisplay12h,
       };
     }).sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
   }, [events, viewedSemester.id, targetDow, currentAcademicWeek, selectedDate, searchQuery, timeSlots]);
@@ -458,7 +461,9 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
           if (ev.activeWeeks && ev.activeWeeks.length > 0 && !ev.activeWeeks.map(Number).includes(week)) return false;
           return true;
         } else if (ev.type === 'event') {
-          return ev.specificDate === isoDate;
+          const evStart = ev.specificDate || '';
+          const evEnd = ev.endDate || evStart;
+          return evStart ? (isoDate >= evStart && isoDate <= evEnd) : false;
         }
         return false;
       });
@@ -1091,6 +1096,8 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                         <span className="shrink-0 flex items-center">
                           {ev.type === 'routine' ? (
                             <Twemoji emoji="🔁" className="w-3.5 h-3.5" />
+                          ) : ev.endDate && ev.endDate !== ev.specificDate ? (
+                            <Twemoji emoji="🗓️" className="w-3.5 h-3.5" />
                           ) : (
                             <Twemoji emoji="📅" className="w-3.5 h-3.5" />
                           )}
@@ -1101,9 +1108,11 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                         <span className={`text-[9px] font-mono uppercase px-1 rounded ${
                           ev.type === 'routine'
                             ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
+                            : ev.endDate && ev.endDate !== ev.specificDate
+                            ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300'
                             : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300'
                         }`}>
-                          {ev.type}
+                          {ev.type === 'routine' ? 'routine' : ev.endDate && ev.endDate !== ev.specificDate ? 'multi-day' : 'event'}
                         </span>
                       </div>
                       <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1">

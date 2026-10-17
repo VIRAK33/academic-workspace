@@ -59,6 +59,18 @@ export function resetOfflineWorkspace(): WorkspaceData {
   return memoryStore;
 }
 
+let checkedScheduleEventsColumns = false;
+async function ensureScheduleEventsColumns(d1?: D1Database) {
+  if (!d1 || checkedScheduleEventsColumns) return;
+  try {
+    await d1.prepare('ALTER TABLE schedule_events ADD COLUMN end_date TEXT').run();
+  } catch {}
+  try {
+    await d1.prepare('ALTER TABLE schedule_events ADD COLUMN is_all_day INTEGER DEFAULT 0').run();
+  } catch {}
+  checkedScheduleEventsColumns = true;
+}
+
 export class WorkspaceDatabase {
   private d1?: D1Database;
   private userId?: string;
@@ -493,6 +505,7 @@ export class WorkspaceDatabase {
   // --- EVENTS & ROUTINES ---
   async getEvents(semesterId?: string): Promise<ScheduleEvent[]> {
     if (this.d1) {
+      await ensureScheduleEventsColumns(this.d1);
       let query = 'SELECT * FROM schedule_events WHERE 1=1';
       const params: any[] = [];
       if (this.userId) {
@@ -515,6 +528,8 @@ export class WorkspaceDatabase {
           category: r.category || 'Study',
           daysOfWeek: JSON.parse(r.days_of_week_json || '[]'),
           specificDate: r.specific_date || undefined,
+          endDate: r.end_date || undefined,
+          isAllDay: Boolean(r.is_all_day),
           sessions: JSON.parse(r.sessions_json || '[]'),
           startTime: r.start_time,
           endTime: r.end_time,
@@ -535,14 +550,15 @@ export class WorkspaceDatabase {
 
   async saveEvent(event: ScheduleEvent): Promise<ScheduleEvent> {
     if (this.d1) {
+      await ensureScheduleEventsColumns(this.d1);
       await this.d1
         .prepare(`
           INSERT INTO schedule_events (
             id, user_id, semester_id, title, type, category,
-            days_of_week_json, specific_date, sessions_json,
+            days_of_week_json, specific_date, end_date, is_all_day, sessions_json,
             start_time, end_time, location, notes, color, active_weeks_json
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             user_id = COALESCE(excluded.user_id, schedule_events.user_id),
             semester_id = excluded.semester_id,
@@ -551,6 +567,8 @@ export class WorkspaceDatabase {
             category = excluded.category,
             days_of_week_json = excluded.days_of_week_json,
             specific_date = excluded.specific_date,
+            end_date = excluded.end_date,
+            is_all_day = excluded.is_all_day,
             sessions_json = excluded.sessions_json,
             start_time = excluded.start_time,
             end_time = excluded.end_time,
@@ -568,6 +586,8 @@ export class WorkspaceDatabase {
           event.category || 'Study',
           JSON.stringify(event.daysOfWeek || []),
           event.specificDate || null,
+          event.endDate || null,
+          event.isAllDay ? 1 : 0,
           JSON.stringify(event.sessions || []),
           event.startTime,
           event.endTime,

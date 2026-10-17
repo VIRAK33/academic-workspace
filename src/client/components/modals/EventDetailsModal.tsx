@@ -24,10 +24,19 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   if (!isOpen || !event) return null;
 
   const isRoutine = event.type === 'routine';
+  const isAllDay = Boolean(event.isAllDay);
   const time12h = format24To12Range(event.startTime, event.endTime);
   const startMins = timeToMinutes(event.startTime);
   const endMins = timeToMinutes(event.endTime);
-  const durationMins = Math.max(0, endMins - startMins);
+  const durationMins = isAllDay ? 1440 : Math.max(0, endMins - startMins);
+
+  const isMultiDay = Boolean(!isRoutine && event.endDate && event.specificDate && event.endDate !== event.specificDate);
+  const daysSpan = React.useMemo(() => {
+    if (!isMultiDay || !event.endDate || !event.specificDate) return 1;
+    const d1 = new Date(event.specificDate + 'T00:00:00').getTime();
+    const d2 = new Date(event.endDate + 'T00:00:00').getTime();
+    return Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1);
+  }, [isMultiDay, event.specificDate, event.endDate]);
 
   const handleDelete = () => {
     if (window.confirm(`Are you sure you want to delete "${event.title}"?`)) {
@@ -51,12 +60,20 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 className={`inline-flex items-center gap-1 font-mono text-[10px] uppercase font-semibold px-2 py-0.5 rounded ${
                   isRoutine
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                    : isMultiDay
+                    ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'
                     : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
                 }`}
               >
-                <Twemoji emoji={isRoutine ? '🔁' : '📅'} className="w-3 h-3" />
-                <span>{isRoutine ? 'Recurring Routine' : 'One-Off Event'}</span>
+                <Twemoji emoji={isRoutine ? '🔁' : isMultiDay ? '🗓️' : '📅'} className="w-3 h-3" />
+                <span>{isRoutine ? 'Recurring Routine' : isMultiDay ? `Multi-Day (${daysSpan} Days)` : 'One-Off Event'}</span>
               </span>
+
+              {isAllDay && (
+                <span className="font-mono text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                  All-Day
+                </span>
+              )}
 
               {event.category && (
                 <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -90,29 +107,55 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 <Clock className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                 <span>Scheduled Time</span>
               </div>
-              {durationMins > 0 && (
-                <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 tabular-nums">
-                  {Math.floor(durationMins / 60) > 0 ? `${Math.floor(durationMins / 60)}h ` : ''}
-                  {durationMins % 60 > 0 ? `${durationMins % 60}m` : ''}
-                </span>
-              )}
+              <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 tabular-nums">
+                {isAllDay ? 'All Day (Full 24h)' : (
+                  <>
+                    {Math.floor(durationMins / 60) > 0 ? `${Math.floor(durationMins / 60)}h ` : ''}
+                    {durationMins % 60 > 0 ? `${durationMins % 60}m` : ''}
+                  </>
+                )}
+              </span>
             </div>
             <div className="font-mono text-sm font-bold text-slate-800 dark:text-slate-100 tabular-nums">
-              {time12h} <span className="text-xs font-normal text-slate-400">({event.startTime}–{event.endTime})</span>
+              {isAllDay ? (
+                <span className="text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                  <span>All-Day Event</span>
+                  <span className="text-xs font-normal text-slate-400 font-sans">· Full day commitment</span>
+                </span>
+              ) : (
+                <>
+                  {time12h} <span className="text-xs font-normal text-slate-400">({event.startTime}–{event.endTime})</span>
+                </>
+              )}
             </div>
           </div>
 
           {/* Repeat / Date Information */}
-          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-1">
+          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-1.5">
             <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1">
               <Calendar className="w-3 h-3 text-slate-500 dark:text-slate-400" />
-              <span>{isRoutine ? 'Days of the Week' : 'Calendar Date'}</span>
+              <span>{isRoutine ? 'Days of the Week' : isMultiDay ? 'Multi-Day Date Span' : 'Calendar Date'}</span>
             </div>
-            <div className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
-              {isRoutine
-                ? event.daysOfWeek.map((d) => DAY_NAMES_FULL[d]).join(', ')
-                : event.specificDate}
-            </div>
+            {isRoutine ? (
+              <div className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                {event.daysOfWeek.map((d) => DAY_NAMES_FULL[d]).join(', ')}
+              </div>
+            ) : isMultiDay ? (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-slate-900 dark:text-white text-xs">
+                    {event.specificDate} → {event.endDate}
+                  </span>
+                  <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-800/60">
+                    {daysSpan} Days
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                {event.specificDate}
+              </div>
+            )}
           </div>
 
           {/* Location */}

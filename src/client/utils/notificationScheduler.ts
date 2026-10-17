@@ -342,10 +342,12 @@ export async function checkUpcomingClassAlerts(
       const dayOk = ev.daysOfWeek.includes(currentDayOfWeek);
       isActiveToday = activeWeeksOk && dayOk;
     } else if (ev.type === 'event') {
-      isActiveToday = ev.specificDate === todayStr;
+      const evStart = ev.specificDate || '';
+      const evEnd = ev.endDate || evStart;
+      isActiveToday = evStart ? (todayStr >= evStart && todayStr <= evEnd) : false;
     }
 
-    if (!isActiveToday) continue;
+    if (!isActiveToday || ev.isAllDay) continue;
 
     const [startH, startM] = ev.startTime.split(':').map(Number);
     if (isNaN(startH) || isNaN(startM)) continue;

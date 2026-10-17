@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWorkspace, DAY_NAMES_FULL, DAY_NAMES_SHORT, getIsoDayOfWeek, addDays, formatIsoDate, getTodayIsoDate } from '../../hooks/useWorkspace';
-import { X, Trash2, Calendar, Clock, Palette, Sparkles, Dumbbell, BookOpen, Users, AlertCircle, Check } from 'lucide-react';
+import { X, Trash2, Calendar, Clock, Palette, Sparkles, Dumbbell, BookOpen, Users, AlertCircle, Check, ArrowRight } from 'lucide-react';
 import { ScheduleEvent, EventType } from '../../../types';
 import { Twemoji } from '../common/Twemoji';
 
@@ -38,6 +38,9 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
   const [category, setCategory] = useState('Study');
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([1]);
   const [specificDate, setSpecificDate] = useState(selectedDate || getTodayIsoDate());
+  const [isMultiDay, setIsMultiDay] = useState(false);
+  const [endDate, setEndDate] = useState(selectedDate || getTodayIsoDate());
+  const [isAllDay, setIsAllDay] = useState(false);
   const [useSessionSlot, setUseSessionSlot] = useState(false);
   const [selectedSession, setSelectedSession] = useState('1-2');
   const [startTime, setStartTime] = useState('07:00');
@@ -55,7 +58,12 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
         setTitle(initialEvent.title);
         setCategory(initialEvent.category || 'Study');
         setDaysOfWeek(initialEvent.daysOfWeek || [1]);
-        setSpecificDate(initialEvent.specificDate || selectedDate || getTodayIsoDate());
+        const sDate = initialEvent.specificDate || selectedDate || getTodayIsoDate();
+        setSpecificDate(sDate);
+        const eDate = initialEvent.endDate || sDate;
+        setEndDate(eDate);
+        setIsMultiDay(Boolean(initialEvent.endDate && initialEvent.endDate !== sDate));
+        setIsAllDay(Boolean(initialEvent.isAllDay));
         if (initialEvent.sessions && initialEvent.sessions.length > 0) {
           setUseSessionSlot(true);
           setSelectedSession(initialEvent.sessions[0]);
@@ -72,7 +80,11 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
         setTitle('');
         setCategory('Study');
         setDaysOfWeek([getIsoDayOfWeek(selectedDate)]);
-        setSpecificDate(selectedDate || getTodayIsoDate());
+        const sDate = selectedDate || getTodayIsoDate();
+        setSpecificDate(sDate);
+        setEndDate(sDate);
+        setIsMultiDay(false);
+        setIsAllDay(false);
         setUseSessionSlot(false);
         setSelectedSession(timeSlots[0]?.session || '1-2');
         setStartTime('07:00');
@@ -85,6 +97,14 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
     }
   }, [isOpen, initialEvent, selectedDate, timeSlots]);
 
+  const daysSpan = React.useMemo(() => {
+    if (type !== 'event' || !isMultiDay || !endDate || endDate < specificDate) return 1;
+    const d1 = new Date(specificDate + 'T00:00:00').getTime();
+    const d2 = new Date(endDate + 'T00:00:00').getTime();
+    const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(1, diff);
+  }, [type, isMultiDay, specificDate, endDate]);
+
   if (!isOpen) return null;
 
   const toggleDayOfWeek = (d: number) => {
@@ -94,6 +114,21 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
       }
     } else {
       setDaysOfWeek([...daysOfWeek, d].sort((a, b) => a - b));
+    }
+  };
+
+  const handleStartDateChange = (val: string) => {
+    setSpecificDate(val);
+    if (isMultiDay && endDate < val) {
+      setEndDate(val);
+    }
+  };
+
+  const handleEndDateChange = (val: string) => {
+    if (val < specificDate) {
+      setEndDate(specificDate);
+    } else {
+      setEndDate(val);
     }
   };
 
@@ -112,7 +147,19 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
 
     let finalDays = daysOfWeek;
     if (type === 'event') {
-      finalDays = [getIsoDayOfWeek(specificDate)];
+      if (isMultiDay && endDate && endDate > specificDate) {
+        const daysSet = new Set<number>();
+        const curr = new Date(specificDate + 'T00:00:00');
+        const endD = new Date(endDate + 'T00:00:00');
+        while (curr <= endD) {
+          const day = curr.getDay() === 0 ? 7 : curr.getDay();
+          daysSet.add(day);
+          curr.setDate(curr.getDate() + 1);
+        }
+        finalDays = Array.from(daysSet).sort((a, b) => a - b);
+      } else {
+        finalDays = [getIsoDayOfWeek(specificDate)];
+      }
     }
 
     const total = viewedSemester.totalWeeks || 19;
@@ -131,9 +178,11 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
       category,
       daysOfWeek: finalDays.map(Number),
       specificDate: type === 'event' ? specificDate : undefined,
-      sessions: useSessionSlot ? [selectedSession] : undefined,
-      startTime,
-      endTime,
+      endDate: type === 'event' && isMultiDay && endDate ? endDate : undefined,
+      isAllDay: type === 'event' ? isAllDay : undefined,
+      sessions: useSessionSlot && !isAllDay ? [selectedSession] : undefined,
+      startTime: isAllDay ? '00:00' : startTime,
+      endTime: isAllDay ? '23:59' : endTime,
       location: location.trim() || undefined,
       notes: notes.trim() || undefined,
       color,
@@ -333,83 +382,208 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
               </div>
             </div>
           ) : (
-            <div className="p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-lg border border-slate-200/80 dark:border-slate-800">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Event Date
-              </label>
-              <input
-                type="date"
-                required
-                value={specificDate}
-                onChange={(e) => setSpecificDate(e.target.value)}
-                className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
-              />
-              <p className="text-[11px] text-slate-400 mt-1 font-mono">
-                {DAY_NAMES_FULL[getIsoDayOfWeek(specificDate)]}
-              </p>
+            <div className="p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-lg border border-slate-200/80 dark:border-slate-800 space-y-3">
+              {/* Event Duration Selector: Single Day vs Multi-Day */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Event Duration
+                </label>
+                <div className="grid grid-cols-2 gap-1.5 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMultiDay(false);
+                      setEndDate(specificDate);
+                    }}
+                    className={`py-1.5 px-2.5 text-xs font-medium rounded-md transition flex items-center justify-center gap-1.5 ${
+                      !isMultiDay
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <Twemoji emoji="📅" className="w-3.5 h-3.5" />
+                    <span>Single Day</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMultiDay(true);
+                      if (!endDate || endDate <= specificDate) {
+                        setEndDate(specificDate);
+                      }
+                    }}
+                    className={`py-1.5 px-2.5 text-xs font-medium rounded-md transition flex items-center justify-center gap-1.5 ${
+                      isMultiDay
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <Twemoji emoji="🗓️" className="w-3.5 h-3.5" />
+                    <span>Multi-Day Range</span>
+                  </button>
+                </div>
+              </div>
+
+              {!isMultiDay ? (
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Event Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={specificDate}
+                    onChange={(e) => handleStartDateChange(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1 font-mono">
+                    {DAY_NAMES_FULL[getIsoDayOfWeek(specificDate)]}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Start Date <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={specificDate}
+                        onChange={(e) => handleStartDateChange(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
+                      />
+                      <span className="text-[10px] text-slate-400 font-mono block mt-0.5 truncate">
+                        {DAY_NAMES_SHORT[getIsoDayOfWeek(specificDate)]}
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        End Date <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        min={specificDate}
+                        value={endDate}
+                        onChange={(e) => handleEndDateChange(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
+                      />
+                      <span className="text-[10px] text-slate-400 font-mono block mt-0.5 truncate">
+                        {DAY_NAMES_SHORT[getIsoDayOfWeek(endDate)]}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Span calculation banner */}
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-700 dark:text-indigo-300 text-xs">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Span: {daysSpan} Day{daysSpan > 1 ? 's' : ''}</span>
+                    </span>
+                    <span className="font-mono text-[11px] opacity-80">
+                      {specificDate} <ArrowRight className="inline w-3 h-3 mx-0.5" /> {endDate}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* All-Day Event Toggle */}
+              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isAllDay}
+                    onChange={(e) => setIsAllDay(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-slate-900 focus:ring-slate-900 dark:focus:ring-white accent-slate-900 dark:accent-white"
+                  />
+                  <div>
+                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                      All-Day Event
+                    </span>
+                    <p className="text-[10px] text-slate-400">
+                      Spans entire day(s) without fixed hours
+                    </p>
+                  </div>
+                </label>
+                {isAllDay && (
+                  <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                    24h Full Day
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
           {/* Time & Session Selection */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Time Schedule
-              </label>
-              <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={useSessionSlot}
-                  onChange={(e) => setUseSessionSlot(e.target.checked)}
-                  className="rounded accent-slate-900 dark:accent-white text-slate-900 focus:ring-slate-900 h-3.5 w-3.5"
-                />
-                <span>Snap to session slot</span>
-              </label>
+          {isAllDay ? (
+            <div className="p-3 rounded-lg border border-amber-200/70 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 flex items-center gap-2 text-xs">
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span>All-day commitment active. Spans the entire schedule without session slots.</span>
             </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Time Schedule
+                </label>
+                <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useSessionSlot}
+                    onChange={(e) => setUseSessionSlot(e.target.checked)}
+                    className="rounded accent-slate-900 dark:accent-white text-slate-900 focus:ring-slate-900 h-3.5 w-3.5"
+                  />
+                  <span>Snap to session slot</span>
+                </label>
+              </div>
 
-            {useSessionSlot ? (
-              <div>
-                <select
-                  value={selectedSession}
-                  onChange={(e) => handleSessionChange(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
-                >
-                  {timeSlots.map((ts) => (
-                    <option key={ts.session} value={ts.session}>
-                      Session {ts.session} ({ts.startTime}–{ts.endTime})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
+              {useSessionSlot ? (
                 <div>
-                  <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
-                    Start Time
-                  </label>
-                  <input
-                    type="time"
-                    required
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
+                  <select
+                    value={selectedSession}
+                    onChange={(e) => handleSessionChange(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
+                  >
+                    {timeSlots.map((ts) => (
+                      <option key={ts.session} value={ts.session}>
+                        Session {ts.session} ({ts.startTime}–{ts.endTime})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div>
-                  <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
-                    End Time
-                  </label>
-                  <input
-                    type="time"
-                    required
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      required
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      required
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Location & Notes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -458,6 +632,71 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
               placeholder="e.g. Bring calculator, formula sheet, cardio routine details"
               className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             />
+          </div>
+
+          {/* Live Preview Card */}
+          <div className="rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-slate-400" />
+                <span>Schedule Preview</span>
+              </span>
+              <span
+                className="text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold"
+                style={{ backgroundColor: `${color}18`, color }}
+              >
+                {category}
+              </span>
+            </div>
+
+            <div
+              className="p-2.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-start gap-2.5"
+              style={{ borderLeftWidth: '3.5px', borderLeftColor: color }}
+            >
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    {title.trim() || 'Untitled Commitment'}
+                  </span>
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                    {type === 'routine'
+                      ? 'Routine'
+                      : isMultiDay
+                      ? `${daysSpan} Days Span`
+                      : 'One-Off'}
+                  </span>
+                  {type === 'event' && isAllDay && (
+                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-semibold border border-amber-200 dark:border-amber-800/60">
+                      All-Day
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono flex-wrap">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-slate-400" />
+                    <span>
+                      {type === 'routine'
+                        ? daysOfWeek.map((d) => DAY_NAMES_SHORT[d]).join(', ')
+                        : isMultiDay && endDate !== specificDate
+                        ? `${specificDate} → ${endDate}`
+                        : specificDate}
+                    </span>
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    <span>{isAllDay ? 'All Day' : `${startTime}–${endTime}`}</span>
+                  </span>
+                  {location.trim() && (
+                    <>
+                      <span>·</span>
+                      <span className="truncate max-w-[120px]">{location.trim()}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Footer Actions */}

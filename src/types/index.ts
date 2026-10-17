@@ -46,6 +46,8 @@ export interface ScheduleEvent {
   category?: 'Study' | 'Fitness' | 'Meeting' | 'Exam' | 'Personal' | string;
   daysOfWeek: number[]; // 1 = Mon .. 7 = Sun
   specificDate?: string; // YYYY-MM-DD for one-off events
+  endDate?: string; // YYYY-MM-DD for multi-day one-off events (inclusive)
+  isAllDay?: boolean; // true if event spans all day without specific fixed hours
   sessions?: string[]; // Snapped sessions e.g. ['1-2'] or empty
   startTime: string; // HH:MM
   endTime: string; // HH:MM
