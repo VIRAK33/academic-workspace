@@ -206,7 +206,15 @@ export const Header: React.FC<HeaderProps> = ({
                   {humanDate}
                 </h1>
                 <span className="text-slate-300 dark:text-slate-700 text-xs">/</span>
-                <div className="relative inline-flex items-center group">
+                <div className="relative inline-flex items-center cursor-pointer group">
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono font-medium border tabular-nums transition group-hover:border-slate-400 dark:group-hover:border-slate-600 ${
+                    currentAcademicWeek >= 1 && currentAcademicWeek <= viewedSemester.totalWeeks
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700'
+                      : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                  }`}>
+                    <span>Week {currentAcademicWeek} / {viewedSemester.totalWeeks}</span>
+                    <ChevronDown className="w-2.5 h-2.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
+                  </span>
                   <select
                     value={currentAcademicWeek}
                     onChange={(e) => {
@@ -217,11 +225,7 @@ export const Header: React.FC<HeaderProps> = ({
                     }}
                     aria-label="Select Academic Week"
                     title="Click to jump to another academic week"
-                    className={`appearance-none cursor-pointer pl-1.5 pr-4 py-0.5 rounded text-[10px] font-mono font-medium border tabular-nums transition focus:outline-none ${
-                      currentAcademicWeek >= 1 && currentAcademicWeek <= viewedSemester.totalWeeks
-                        ? 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700'
-                        : 'bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
-                    }`}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   >
                     {Array.from({ length: viewedSemester.totalWeeks }, (_, i) => i + 1).map((w) => (
                       <option key={w} value={w} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
@@ -229,7 +233,6 @@ export const Header: React.FC<HeaderProps> = ({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="w-2.5 h-2.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 pointer-events-none absolute right-1 top-1/2 -translate-y-1/2" />
                 </div>
               </div>
 
