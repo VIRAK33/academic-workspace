@@ -221,10 +221,20 @@ app.post('/api/notifications/test', async (c) => {
       }
     }
 
+    const userDb = getDb(c);
+    const semesters = await userDb.getSemesters();
+    const activeSem = semesters.find((s) => s.isActive) || semesters[0];
+    const courses = activeSem ? await userDb.getCourses(activeSem.id) : [];
+    const firstCourse = courses[0];
+
     const payload = {
       title: '🔔 Academic Alert Test',
-      body: 'Push notifications are active! You will receive background alerts 30m before scheduled classes.',
-      url: '/',
+      body: firstCourse
+        ? `Push alerts active! Tap to preview class details for ${firstCourse.code}: ${firstCourse.name}.`
+        : 'Push notifications are active! You will receive background alerts 30m before scheduled classes.',
+      url: firstCourse ? `/?previewType=course&previewId=${firstCourse.id}` : '/',
+      previewType: firstCourse ? 'course' : undefined,
+      previewId: firstCourse ? firstCourse.id : undefined,
       tag: 'academic-test-push',
     };
 
@@ -586,8 +596,10 @@ export default {
             if (diff >= 15 && diff <= 30) {
               const payload = {
                 title: `🔔 Class in ${diff}m: ${course.code}`,
-                body: `${course.name}\n📍 ${course.location || 'Campus'} · ${sched.startTime}–${sched.endTime}`,
-                url: '/',
+                body: `${course.name}\n📍 ${course.location || 'Campus'} · ${sched.startTime}–${sched.endTime}\n(Tap to preview class details)`,
+                url: `/?previewType=course&previewId=${course.id}`,
+                previewType: 'course',
+                previewId: course.id,
                 tag: `class-${course.id}-${sched.startTime}`,
               };
               for (const s of subs) {

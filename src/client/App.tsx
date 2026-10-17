@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWorkspace, addDays, getTodayIsoDate } from './hooks/useWorkspace';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
@@ -17,6 +17,7 @@ import { ExperimentLogsView } from './components/views/ExperimentLogsView';
 // Modals
 import { TaskModal } from './components/modals/TaskModal';
 import { CourseModal } from './components/modals/CourseModal';
+import { CourseDetailsModal } from './components/modals/CourseDetailsModal';
 import { SemesterModal } from './components/modals/SemesterModal';
 import { TimeSlotsModal } from './components/modals/TimeSlotsModal';
 import { PaperModal } from './components/modals/PaperModal';
@@ -32,6 +33,7 @@ import { AiScheduleImportModal } from './components/modals/AiScheduleImportModal
 import { ClassRemindersModal } from './components/modals/ClassRemindersModal';
 import { WelcomeGuideModal } from './components/modals/WelcomeGuideModal';
 import { EventModal } from './components/modals/EventModal';
+import { EventDetailsModal } from './components/modals/EventDetailsModal';
 import { CustomizeViewsModal } from './components/modals/CustomizeViewsModal';
 import { AttendanceLogModal } from './components/modals/AttendanceLogModal';
 import { useAuth } from './hooks/useAuth';
@@ -70,7 +72,13 @@ export function App() {
     return localStorage.getItem('phd_workspace_has_onboarded_v1') !== 'true';
   });
 
+  // Notification-Triggered Preview Modals
+  const [previewCourse, setPreviewCourse] = useState<Course | null>(null);
+  const [previewEvent, setPreviewEvent] = useState<ScheduleEvent | null>(null);
+
   const isAnyModalOpen =
+    !!previewCourse ||
+    !!previewEvent ||
     isTaskModalOpen ||
     isCourseModalOpen ||
     isSemesterModalOpen ||
@@ -90,6 +98,70 @@ export function App() {
     isEventModalOpen ||
     isWelcomeGuideOpen ||
     auth.isAuthModalOpen;
+
+  // Handler to open preview of a course, routine, or event triggered from a notification click
+  const handleOpenPreview = useCallback(
+    (type: string, id: string) => {
+      if (!id) return;
+      if (type === 'course') {
+        const found = ws.courses.find((c) => c.id === id);
+        if (found) {
+          setPreviewCourse(found);
+          ws.showToast(`Opening preview: ${found.code} - ${found.name} 📚`);
+        }
+      } else if (type === 'routine' || type === 'event') {
+        const found = ws.events.find((e) => e.id === id);
+        if (found) {
+          setPreviewEvent(found);
+          ws.showToast(`Opening preview: ${found.title} 📅`);
+        }
+      }
+    },
+    [ws.courses, ws.events, ws.showToast]
+  );
+
+  // Listen for Notification clicks across all surfaces (Service worker message, Window CustomEvent, URL query params)
+  useEffect(() => {
+    // 1. Check URL parameters on initial launch or navigation
+    const searchParams = new URLSearchParams(window.location.search);
+    const qType = searchParams.get('previewType');
+    const qId = searchParams.get('previewId');
+    if (qType && qId && (ws.courses.length > 0 || ws.events.length > 0)) {
+      handleOpenPreview(qType, qId);
+      // Clean query string from browser URL
+      const cleanPath = window.location.pathname;
+      window.history.replaceState({}, '', cleanPath);
+    }
+
+    // 2. Service Worker push / notificationclick message handler
+    const handleSwMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'NOTIFICATION_PREVIEW_OPEN') {
+        const { previewType, previewId } = e.data;
+        if (previewType && previewId) {
+          handleOpenPreview(previewType, previewId);
+        }
+      }
+    };
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSwMessage);
+    }
+
+    // 3. Fallback window CustomEvent handler
+    const handleCustomPreview = (e: Event) => {
+      const custom = e as CustomEvent<{ previewType: string; previewId: string }>;
+      if (custom.detail?.previewType && custom.detail?.previewId) {
+        handleOpenPreview(custom.detail.previewType, custom.detail.previewId);
+      }
+    };
+    window.addEventListener('academic-notification-preview', handleCustomPreview);
+
+    return () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+      }
+      window.removeEventListener('academic-notification-preview', handleCustomPreview);
+    };
+  }, [handleOpenPreview, ws.courses, ws.events]);
 
   // Desktop keyboard shortcuts: T (today), [ / ] (prev/next day), 1-5 (views), C (new task), ? (guide)
   useEffect(() => {
@@ -350,6 +422,44 @@ export function App() {
         ws={ws}
         isOpen={isAttendanceLogOpen}
         onClose={() => setIsAttendanceLogOpen(false)}
+      />
+
+      {/* Global Notification Course Details Preview Modal */}
+      <CourseDetailsModal
+        course={previewCourse}
+        isOpen={!!previewCourse}
+        onClose={() => setPreviewCourse(null)}
+        onEdit={(c) => {
+          setPreviewCourse(null);
+          handleOpenEditCourse(c);
+        }}
+        timeSlots={ws.timeSlots}
+        currentAcademicWeek={ws.currentAcademicWeek}
+        totalWeeks={ws.viewedSemester.totalWeeks}
+        tasks={ws.tasks}
+        selectedDate={ws.selectedDate}
+        attendanceRecords={ws.attendanceRecords}
+        getCourseAttendanceStats={ws.getCourseAttendanceStats}
+        setAttendanceStatus={ws.setAttendanceStatus}
+        getAttendanceRecord={ws.getAttendanceRecord}
+      />
+
+      {/* Global Notification Routine & Event Details Preview Modal */}
+      <EventDetailsModal
+        event={previewEvent}
+        isOpen={!!previewEvent}
+        onClose={() => setPreviewEvent(null)}
+        onEdit={(ev) => {
+          setPreviewEvent(null);
+          handleOpenEditEvent(ev);
+        }}
+        onDelete={ws.deleteEvent}
+        currentAcademicWeek={ws.currentAcademicWeek}
+        selectedDate={ws.selectedDate}
+        attendanceRecords={ws.attendanceRecords}
+        getRoutineAttendanceStats={ws.getRoutineAttendanceStats}
+        setAttendanceStatus={ws.setAttendanceStatus}
+        getAttendanceRecord={ws.getAttendanceRecord}
       />
     </div>
   );

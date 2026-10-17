@@ -101,18 +101,27 @@ export function playChime(): void {
   }
 }
 
+export interface AcademicNotificationOptions extends NotificationOptions {
+  data?: {
+    previewType?: 'course' | 'routine' | 'event';
+    previewId?: string;
+    url?: string;
+    [key: string]: any;
+  };
+}
+
 /**
  * Show a system notification via Service Worker or fallback to window.Notification
  */
 export async function showSystemNotification(
   title: string,
-  options: NotificationOptions = {}
+  options: AcademicNotificationOptions = {}
 ): Promise<boolean> {
   if (!isNotificationSupported() || Notification.permission !== 'granted') {
     return false;
   }
 
-  const defaultOptions: NotificationOptions = {
+  const defaultOptions: AcademicNotificationOptions = {
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     ...options,
@@ -133,7 +142,21 @@ export async function showSystemNotification(
 
   // Fallback to window.Notification
   try {
-    new Notification(title, defaultOptions);
+    const notif = new Notification(title, defaultOptions);
+    notif.onclick = (e) => {
+      e.preventDefault();
+      window.focus();
+      if (options.data?.previewType && options.data?.previewId) {
+        window.dispatchEvent(
+          new CustomEvent('academic-notification-preview', {
+            detail: {
+              previewType: options.data.previewType,
+              previewId: options.data.previewId,
+            },
+          })
+        );
+      }
+    };
     return true;
   } catch (err) {
     console.warn('Notification trigger error:', err);
@@ -144,16 +167,28 @@ export async function showSystemNotification(
 /**
  * Send an immediate test notification to verify OS & browser permissions
  */
-export async function sendTestNotification(): Promise<boolean> {
+export async function sendTestNotification(
+  previewTarget?: { type: 'course' | 'routine' | 'event'; id: string; name: string }
+): Promise<boolean> {
   if (Notification.permission !== 'granted') {
     const perm = await requestNotificationPermission();
     if (perm !== 'granted') return false;
   }
 
   playChime();
+  const hasTarget = !!previewTarget;
   return showSystemNotification('🔔 Academic Workspace Alert Test', {
-    body: 'Class reminders are active! You will receive advance notifications 30m before your scheduled classes.',
+    body: hasTarget
+      ? `Class reminders are active! Click here to preview details for ${previewTarget.name}.`
+      : 'Class reminders are active! You will receive advance notifications 30m before your scheduled classes.',
     tag: 'academic-test-alert',
+    data: previewTarget
+      ? {
+          previewType: previewTarget.type,
+          previewId: previewTarget.id,
+          url: `/?previewType=${previewTarget.type}&previewId=${previewTarget.id}`,
+        }
+      : undefined,
   });
 }
 
@@ -298,8 +333,13 @@ export async function checkUpcomingClassAlerts(
           markKeySent(key30m);
           if (settings.playSound) playChime();
           await showSystemNotification(`${titlePrefix}Class in 30 minutes: ${course.code}`, {
-            body: `${course.name}\n📍 ${course.location || 'Campus'} · ${schedule.startTime}–${schedule.endTime}`,
+            body: `${course.name}\n📍 ${course.location || 'Campus'} · ${schedule.startTime}–${schedule.endTime}\n(Click to preview class details)`,
             tag: `class-${course.id}-30m`,
+            data: {
+              previewType: 'course',
+              previewId: course.id,
+              url: `/?previewType=course&previewId=${course.id}`,
+            },
           });
           triggeredAlert = true;
         }
@@ -311,8 +351,13 @@ export async function checkUpcomingClassAlerts(
           markKeySent(key10m);
           if (settings.playSound) playChime();
           await showSystemNotification(`${isSim ? '⏳ [Simulated] ' : '⏳ '}Class in 10 minutes: ${course.code}`, {
-            body: `Starting soon at ${course.location || 'Campus'} (${schedule.startTime})`,
+            body: `${course.name}\nStarting soon at ${course.location || 'Campus'} (${schedule.startTime})\n(Click to preview class details)`,
             tag: `class-${course.id}-10m`,
+            data: {
+              previewType: 'course',
+              previewId: course.id,
+              url: `/?previewType=course&previewId=${course.id}`,
+            },
           });
           triggeredAlert = true;
         }
@@ -324,8 +369,13 @@ export async function checkUpcomingClassAlerts(
           markKeySent(keyStart);
           if (settings.playSound) playChime();
           await showSystemNotification(`${isSim ? '📚 [Simulated] ' : '📚 '}Class Starting Now: ${course.code}`, {
-            body: `${course.name} is starting in ${course.location || 'Campus'}.`,
+            body: `${course.name} is starting in ${course.location || 'Campus'}.\n(Click to preview class details)`,
             tag: `class-${course.id}-start`,
+            data: {
+              previewType: 'course',
+              previewId: course.id,
+              url: `/?previewType=course&previewId=${course.id}`,
+            },
           });
           triggeredAlert = true;
         }
@@ -372,8 +422,13 @@ export async function checkUpcomingClassAlerts(
         markKeySent(key30m);
         if (settings.playSound) playChime();
         await showSystemNotification(`${titlePrefix}${typeLabel} in 30 minutes: ${ev.title}`, {
-          body: `${ev.category ? `[${ev.category}] ` : ''}${ev.startTime}–${ev.endTime}${ev.location ? ` · ${ev.location}` : ''}`,
+          body: `${ev.category ? `[${ev.category}] ` : ''}${ev.startTime}–${ev.endTime}${ev.location ? ` · ${ev.location}` : ''}\n(Click to preview details)`,
           tag: `ev-${ev.id}-30m`,
+          data: {
+            previewType: ev.type === 'routine' ? 'routine' : 'event',
+            previewId: ev.id,
+            url: `/?previewType=${ev.type === 'routine' ? 'routine' : 'event'}&previewId=${ev.id}`,
+          },
         });
         triggeredAlert = true;
       }
@@ -385,8 +440,13 @@ export async function checkUpcomingClassAlerts(
         markKeySent(key10m);
         if (settings.playSound) playChime();
         await showSystemNotification(`${isSim ? '⏳ [Simulated] ' : '⏳ '}${typeLabel} in 10 minutes: ${ev.title}`, {
-          body: `Starting soon at ${ev.startTime}${ev.location ? ` (${ev.location})` : ''}`,
+          body: `${ev.title} starting soon at ${ev.startTime}${ev.location ? ` (${ev.location})` : ''}\n(Click to preview details)`,
           tag: `ev-${ev.id}-10m`,
+          data: {
+            previewType: ev.type === 'routine' ? 'routine' : 'event',
+            previewId: ev.id,
+            url: `/?previewType=${ev.type === 'routine' ? 'routine' : 'event'}&previewId=${ev.id}`,
+          },
         });
         triggeredAlert = true;
       }
@@ -398,8 +458,13 @@ export async function checkUpcomingClassAlerts(
         markKeySent(keyStart);
         if (settings.playSound) playChime();
         await showSystemNotification(`${isSim ? '🎯 [Simulated] ' : '🎯 '}${typeLabel} Starting Now: ${ev.title}`, {
-          body: `${ev.title} is starting now (${ev.startTime}–${ev.endTime}).`,
+          body: `${ev.title} is starting now (${ev.startTime}–${ev.endTime}).\n(Click to preview details)`,
           tag: `ev-${ev.id}-start`,
+          data: {
+            previewType: ev.type === 'routine' ? 'routine' : 'event',
+            previewId: ev.id,
+            url: `/?previewType=${ev.type === 'routine' ? 'routine' : 'event'}&previewId=${ev.id}`,
+          },
         });
         triggeredAlert = true;
       }
@@ -416,8 +481,13 @@ export async function checkUpcomingClassAlerts(
       const sched = firstCourse.schedules?.find((s) => s.dayOfWeek === currentDayOfWeek);
       if (settings.playSound) playChime();
       await showSystemNotification(`🔔 [Simulated Test] Class Alert: ${firstCourse.code}`, {
-        body: `${firstCourse.name}\n📍 ${firstCourse.location || 'Campus'} · ${sched ? `${sched.startTime}–${sched.endTime}` : ''}`,
+        body: `${firstCourse.name}\n📍 ${firstCourse.location || 'Campus'} · ${sched ? `${sched.startTime}–${sched.endTime}` : ''}\n(Click to preview class details)`,
         tag: `sim-force-${firstCourse.id}`,
+        data: {
+          previewType: 'course',
+          previewId: firstCourse.id,
+          url: `/?previewType=course&previewId=${firstCourse.id}`,
+        },
       });
       return true;
     } else {

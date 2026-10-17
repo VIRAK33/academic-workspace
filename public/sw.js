@@ -1,4 +1,4 @@
-const CACHE_NAME = 'phd-workspace-v2';
+const CACHE_NAME = 'phd-workspace-v3';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -145,22 +145,44 @@ self.addEventListener('push', (event) => {
     tag: data.tag || 'academic-alert',
     renotify: true,
     data: {
-      url: data.url || '/',
+      url: data.url || (
+        data.previewType && data.previewId
+          ? `/?previewType=${encodeURIComponent(data.previewType)}&previewId=${encodeURIComponent(data.previewId)}`
+          : '/'
+      ),
+      previewType: data.previewType,
+      previewId: data.previewId,
     },
   };
 
   event.waitUntil(self.registration.showNotification(data.title || 'Academic Workspace', options));
 });
 
-// 5. Notification interaction: Focus or reopen PWA when user taps notification
+// 5. Notification interaction: Focus or reopen PWA and trigger preview modal
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || '/';
+  const notifData = event.notification.data || {};
+  const previewType = notifData.previewType;
+  const previewId = notifData.previewId;
+  const targetUrl = notifData.url || (
+    previewType && previewId
+      ? `/?previewType=${encodeURIComponent(previewType)}&previewId=${encodeURIComponent(previewId)}`
+      : '/'
+  );
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url && 'focus' in client) {
-          return client.focus();
+        if ('focus' in client) {
+          return client.focus().then(() => {
+            if (previewType && previewId) {
+              client.postMessage({
+                type: 'NOTIFICATION_PREVIEW_OPEN',
+                previewType,
+                previewId,
+              });
+            }
+          });
         }
       }
       if (clients.openWindow) {

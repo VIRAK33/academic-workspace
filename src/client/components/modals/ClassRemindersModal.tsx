@@ -106,9 +106,12 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
     setIsTesting(true);
     setTestStatus(null);
     try {
-      const ok = await sendTestNotification();
+      const firstCourse = courses[0];
+      const ok = await sendTestNotification(
+        firstCourse ? { type: 'course', id: firstCourse.id, name: `${firstCourse.code} (${firstCourse.name})` } : undefined
+      );
       if (ok) {
-        setTestStatus('Notification delivered! Check your system notification banner.');
+        setTestStatus('Notification delivered! Tap the banner to preview class details.');
         setPermission(Notification.permission);
       } else {
         setTestStatus('Could not send notification. Please check browser permissions.');
