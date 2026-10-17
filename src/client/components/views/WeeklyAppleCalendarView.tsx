@@ -108,8 +108,8 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
     setSelectedDate,
   } = ws;
 
-  // Half-height hour rows (smaller twice as requested)
-  const hourHeightPx = 28;
+  // Comfortable hour row height (slightly elongated for 2-line title card readability)
+  const hourHeightPx = 40;
   const pxPerMin = hourHeightPx / 60;
 
   // Week view time range: strictly 5:00 AM to 12:00 AM (midnight)
@@ -235,7 +235,7 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
         const eMin = rawEnd <= sMin ? sMin + 50 : rawEnd;
         const durationMins = Math.max(25, eMin - sMin);
         const topPx = Math.round((sMin - startDayMins) * pxPerMin);
-        const heightPx = Math.max(16, Math.round(durationMins * pxPerMin));
+        const heightPx = Math.max(28, Math.round(durationMins * pxPerMin));
 
         timedItems.push({
           id: `course_${c.id}_${startTime}`,
@@ -336,7 +336,7 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
       const eMin = rawEnd <= sMin ? sMin + 45 : rawEnd;
       const durationMins = Math.max(25, eMin - sMin);
       const topPx = Math.round((sMin - startDayMins) * pxPerMin);
-      const heightPx = Math.max(16, Math.round(durationMins * pxPerMin));
+      const heightPx = Math.max(28, Math.round(durationMins * pxPerMin));
 
       timedItems.push({
         id: `ev_${ev.id}`,
@@ -635,7 +635,7 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                   return (
                     <div
                       key={hour}
-                      className="absolute right-1.5 sm:right-2 -translate-y-1/2 text-[9px] sm:text-[10px] font-sans text-slate-400 dark:text-slate-500 tabular-nums text-right pointer-events-none"
+                      className="absolute right-1.5 sm:right-2 -translate-y-1/2 text-[10px] font-sans text-slate-400 dark:text-slate-500 tabular-nums text-right pointer-events-none"
                       style={{ top: `${top}px` }}
                     >
                       {formatAppleHourLabel(hour)}
@@ -690,7 +690,7 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                               e.stopPropagation();
                               handleCardClick(item);
                             }}
-                            className={`absolute rounded-md cursor-pointer overflow-hidden p-1 sm:p-1.5 transition-all duration-100 shadow-2xs hover:shadow-xs flex flex-col justify-between group ${
+                            className={`absolute rounded-md cursor-pointer overflow-hidden p-1 sm:p-1.5 transition-all duration-100 shadow-2xs hover:shadow-xs flex flex-col justify-start group ${
                               isInactive
                                 ? 'opacity-40 border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30'
                                 : 'border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800'
@@ -725,15 +725,13 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                                 </div>
                               )}
 
-                              {/* Title line */}
-                              {item.heightPx >= 26 && (
-                                <div className="font-semibold text-[10px] sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-1 sm:line-clamp-2 leading-tight">
-                                  {item.title}
-                                </div>
-                              )}
+                              {/* Title line - Supports 2 lines if long */}
+                              <div className="font-semibold text-[10px] sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight break-words">
+                                {item.title}
+                              </div>
 
                               {/* Subtitle: Location / Teacher */}
-                              {item.heightPx >= 44 && (item.location || item.teacher) && (
+                              {item.heightPx >= 48 && (item.location || item.teacher) && (
                                 <div className="text-[9px] sm:text-[10px] text-slate-400 truncate leading-none mt-0.5">
                                   {item.location || ''}
                                   {item.teacher ? ` · ${item.teacher}` : ''}
