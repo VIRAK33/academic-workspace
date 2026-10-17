@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useWorkspace, addDays, getTodayIsoDate } from '../../hooks/useWorkspace';
 import { X, Plus } from 'lucide-react';
 import { Task } from '../../../types';
+import { ModalSheet } from '../common/ModalSheet';
 
 interface TaskModalProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -34,8 +35,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
       setCustomTagInput('');
     }
   }, [isOpen, selectedDate, tasks]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,21 +90,24 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92dvh] sm:max-h-[88vh] flex flex-col">
-        {/* Mobile Sheet Drag Indicator */}
-        <div className="pt-2.5 pb-0.5 flex justify-center sm:hidden shrink-0">
-          <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
-        </div>
+    <ModalSheet isOpen={isOpen} onClose={onClose} maxWidthClass="sm:max-w-md">
+      {({ requestClose, dragHandleProps }) => (
+        <>
+          <div
+            {...dragHandleProps}
+            className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+          >
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">New Task</h3>
+            <button
+              type="button"
+              onClick={requestClose}
+              className="p-2 sm:p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">New Task</h3>
-          <button type="button" onClick={onClose} className="p-2 sm:p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
@@ -228,21 +230,22 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
           <div className="px-4 py-3 sm:px-5 sm:py-3.5 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
+              onClick={requestClose}
+              className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs min-h-[42px] sm:min-h-0"
+              className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs min-h-[42px] sm:min-h-0 cursor-pointer"
             >
               {isSubmitting ? 'Saving...' : 'Save Task'}
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  );
+      </>
+    )}
+  </ModalSheet>
+);
 };

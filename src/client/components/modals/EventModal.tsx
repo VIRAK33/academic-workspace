@@ -3,6 +3,7 @@ import { useWorkspace, DAY_NAMES_FULL, DAY_NAMES_SHORT, getIsoDayOfWeek, addDays
 import { X, Trash2, Calendar, Clock, Palette, Sparkles, Dumbbell, BookOpen, Users, AlertCircle, Check, ArrowRight } from 'lucide-react';
 import { ScheduleEvent, EventType } from '../../../types';
 import { Twemoji } from '../common/Twemoji';
+import { ModalSheet } from '../common/ModalSheet';
 
 interface EventModalProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -105,8 +106,6 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
     return Math.max(1, diff);
   }, [type, isMultiDay, specificDate, endDate]);
 
-  if (!isOpen) return null;
-
   const toggleDayOfWeek = (d: number) => {
     if (daysOfWeek.includes(d)) {
       if (daysOfWeek.length > 1) {
@@ -206,34 +205,33 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-2xl sm:rounded-xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh]">
-        {/* Mobile Sheet Drag Indicator */}
-        <div className="pt-2.5 pb-0.5 flex justify-center sm:hidden shrink-0">
-          <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
-        </div>
-
-        {/* Modal Header */}
-        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40 shrink-0">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              {initialEvent ? 'Edit' : 'Add'}
-            </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Add a recurring routine habit or one-off academic event
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+    <ModalSheet isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-lg">
+      {({ requestClose, dragHandleProps }) => (
+        <>
+          {/* Modal Header */}
+          <div
+            {...dragHandleProps}
+            className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40 shrink-0 cursor-grab active:cursor-grabbing select-none"
           >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                {initialEvent ? 'Edit' : 'Add'}
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Add a recurring routine habit or one-off academic event
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={requestClose}
+              className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-        {/* Modal Body Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          {/* Modal Body Form */}
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
             {/* Type Switcher */}
             <div>
@@ -722,7 +720,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={requestClose}
                 className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
               >
                 Cancel
@@ -737,7 +735,8 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
             </div>
           </div>
         </form>
-      </div>
-    </div>
-  );
+      </>
+    )}
+  </ModalSheet>
+);
 };
