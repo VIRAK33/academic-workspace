@@ -199,34 +199,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [yearOffset, setYearOffset] = useState<number>(0);
   const [isDirectoryExpanded, setIsDirectoryExpanded] = useState<boolean>(false);
-  const headerContainerRef = React.useRef<HTMLDivElement>(null);
-  const [isCompactHeader, setIsCompactHeader] = useState<boolean>(false);
 
-  React.useEffect(() => {
-    const el = headerContainerRef.current;
-    if (!el) return;
-
-    const checkWidth = () => {
-      if (el) {
-        setIsCompactHeader(el.clientWidth < 420);
-      }
-    };
-
-    checkWidth();
-
-    if (typeof ResizeObserver !== 'undefined') {
-      const ro = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setIsCompactHeader(entry.contentRect.width < 420);
-        }
-      });
-      ro.observe(el);
-      return () => ro.disconnect();
-    } else {
-      window.addEventListener('resize', checkWidth);
-      return () => window.removeEventListener('resize', checkWidth);
-    }
-  }, []);
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
@@ -262,7 +235,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
 
   const midDayIso = useMemo(() => addDays(mondayIso, 2), [mondayIso]);
   const midDt = useMemo(() => parseIsoDate(midDayIso), [midDayIso]);
-  const monthTitle = `${MONTH_NAMES_SHORT[midDt.getUTCMonth()]}, ${midDt.getUTCFullYear()}`;
+  const monthTitle = MONTH_NAMES_SHORT[midDt.getUTCMonth()];
 
   // Automatically sync offsets when jumping to Today from the top global Header
   React.useEffect(() => {
@@ -280,7 +253,7 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
     }
     if (viewMode === 'month') {
       const baseDt = parseIsoDate(ws.selectedDate || getTodayIsoDate());
-      return `${MONTH_NAMES_SHORT[baseDt.getUTCMonth()]}, ${baseDt.getUTCFullYear()}`;
+      return MONTH_NAMES_SHORT[baseDt.getUTCMonth()];
     }
     return monthTitle;
   }, [viewMode, ws.selectedDate, yearOffset, monthTitle]);
@@ -337,13 +310,13 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
   const skipMatrix: Record<string, boolean> = {};
 
   const renderTitle = (
-    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight font-sans">
+    <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 min-w-0">
+      <h2 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white tracking-tight font-sans truncate">
         {displayTitle}
       </h2>
 
       {viewMode !== 'year' && (
-        <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+        <span className="text-[10px] sm:text-[11px] font-mono px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
           W{activeWeekNum}
         </span>
       )}
@@ -351,66 +324,70 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
   );
 
   const renderModeSwitcher = (
-    <div className="flex justify-center">
+    <div className="flex justify-center shrink-0">
       <div className="inline-flex items-center rounded-lg p-0.5 bg-slate-200/70 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 shadow-2xs">
         <button
           type="button"
           onClick={() => handleViewModeChange('table')}
-          className={`py-1 rounded text-xs transition-all duration-150 flex items-center gap-1 sm:gap-1.5 ${
+          className={`py-1 rounded text-xs transition-all duration-150 flex items-center gap-1 ${
             viewMode === 'table'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold px-2.5'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium px-2'
+              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold px-2 sm:px-2.5'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium px-1.5 sm:px-2'
           }`}
           title="University class matrix table (S1–S10 session grid)"
         >
           <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
-          <span>{viewMode === 'table' ? 'Table' : 'T'}</span>
+          <span className="hidden sm:inline">Table</span>
+          <span className="sm:hidden">{viewMode === 'table' ? 'Table' : 'T'}</span>
         </button>
         <button
           type="button"
           onClick={() => handleViewModeChange('week')}
-          className={`py-1 rounded text-xs transition-all duration-150 flex items-center gap-1 sm:gap-1.5 ${
+          className={`py-1 rounded text-xs transition-all duration-150 flex items-center gap-1 ${
             viewMode === 'week'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold px-2.5'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium px-2'
+              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold px-2 sm:px-2.5'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium px-1.5 sm:px-2'
           }`}
           title="Apple Calendar weekly continuous timeline"
         >
           <CalendarDays className="w-3.5 h-3.5 shrink-0 text-rose-500 dark:text-rose-400" />
-          <span>{viewMode === 'week' ? 'Week' : 'W'}</span>
+          <span className="hidden sm:inline">Week</span>
+          <span className="sm:hidden">{viewMode === 'week' ? 'Week' : 'W'}</span>
         </button>
         <button
           type="button"
           onClick={() => handleViewModeChange('month')}
-          className={`py-1 rounded text-xs transition-all duration-150 flex items-center gap-1 sm:gap-1.5 ${
+          className={`py-1 rounded text-xs transition-all duration-150 flex items-center gap-1 ${
             viewMode === 'month'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold px-2.5'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium px-2'
+              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold px-2 sm:px-2.5'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium px-1.5 sm:px-2'
           }`}
           title="Apple Calendar month overview"
         >
           <Calendar className="w-3.5 h-3.5 shrink-0 text-amber-500 dark:text-amber-400" />
-          <span>{viewMode === 'month' ? 'Month' : 'M'}</span>
+          <span className="hidden sm:inline">Month</span>
+          <span className="sm:hidden">{viewMode === 'month' ? 'Month' : 'M'}</span>
         </button>
         <button
           type="button"
           onClick={() => handleViewModeChange('year')}
-          className={`py-1 rounded text-xs transition-all duration-150 flex items-center gap-1 sm:gap-1.5 ${
+          className={`py-1 rounded text-xs transition-all duration-150 flex items-center gap-1 ${
             viewMode === 'year'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold px-2.5'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium px-2'
+              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold px-2 sm:px-2.5'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium px-1.5 sm:px-2'
           }`}
           title="Apple Calendar 12-month year view"
         >
           <CalendarRange className="w-3.5 h-3.5 shrink-0 text-indigo-500 dark:text-indigo-400" />
-          <span>{viewMode === 'year' ? 'Year' : 'Y'}</span>
+          <span className="hidden sm:inline">Year</span>
+          <span className="sm:hidden">{viewMode === 'year' ? 'Year' : 'Y'}</span>
         </button>
       </div>
     </div>
   );
 
   const renderActionButtons = (
-    <div ref={actionMenuRef} className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+    <div ref={actionMenuRef} className="flex items-center gap-1 sm:gap-1.5 shrink-0">
       {/* Options Dropdown (Includes Weekend, Layers, Configuration & Import) */}
       <div className="relative">
         <button
@@ -419,16 +396,16 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
             setIsOptionsMenuOpen(!isOptionsMenuOpen);
             setIsAddMenuOpen(false);
           }}
-          className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+          className={`p-1.5 sm:px-2 sm:py-1.5 md:px-2.5 rounded-lg border text-xs font-medium transition flex items-center gap-1 shadow-2xs cursor-pointer ${
             isOptionsMenuOpen
               ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white'
               : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
           }`}
           title="Timetable options & display settings"
         >
-          <Settings2 className="w-3.5 h-3.5 text-slate-500" />
-          <span className="hidden sm:inline">Options</span>
-          <ChevronDown className={`w-3 h-3 text-slate-400 hidden sm:inline transition-transform ${isOptionsMenuOpen ? 'rotate-180' : ''}`} />
+          <Settings2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+          <span className="hidden md:inline">Options</span>
+          <ChevronDown className={`w-3 h-3 text-slate-400 hidden md:inline transition-transform ${isOptionsMenuOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {isOptionsMenuOpen && (
@@ -539,12 +516,12 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
             setIsAddMenuOpen(!isAddMenuOpen);
             setIsOptionsMenuOpen(false);
           }}
-          className="p-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+          className="p-1.5 sm:px-2.5 sm:py-1.5 md:px-3 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold transition flex items-center gap-1 shadow-xs cursor-pointer"
           title="Add new course or event"
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Add</span>
-          <ChevronDown className={`w-3 h-3 text-white/80 dark:text-slate-600 hidden sm:inline transition-transform ${isAddMenuOpen ? 'rotate-180' : ''}`} />
+          <Plus className="w-3.5 h-3.5 shrink-0" />
+          <span className="hidden md:inline">Add</span>
+          <ChevronDown className={`w-3 h-3 text-white/80 dark:text-slate-600 hidden md:inline transition-transform ${isAddMenuOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {isAddMenuOpen && (
@@ -596,33 +573,11 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
     <div className="space-y-4">
       {/* ── Main Timetable & Calendar Box ──────────────────────────────── */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-2xs">
-        {/* Unified macOS Apple Header Toolbar */}
-        <div
-          ref={headerContainerRef}
-          className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 transition-all ${
-            isCompactHeader
-              ? 'flex flex-col gap-2'
-              : 'flex items-center justify-between gap-2 sm:gap-3'
-          }`}
-        >
-          {isCompactHeader ? (
-            <>
-              {/* Row 1 on narrow container: Title left, Options & Add right */}
-              <div className="flex items-center justify-between w-full">
-                {renderTitle}
-                {renderActionButtons}
-              </div>
-              {/* Row 2 on narrow container: Mode switcher centered */}
-              {renderModeSwitcher}
-            </>
-          ) : (
-            <>
-              {/* Single row when container has room (>= 420px) */}
-              {renderTitle}
-              {renderModeSwitcher}
-              {renderActionButtons}
-            </>
-          )}
+        {/* Unified macOS Apple Header Toolbar - Always 1 single row */}
+        <div className="px-2.5 sm:px-4 py-2 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between gap-1 sm:gap-2 w-full">
+          {renderTitle}
+          {renderModeSwitcher}
+          {renderActionButtons}
         </div>
 
         {/* ── View Body ─────────────────────────────────────────────────── */}

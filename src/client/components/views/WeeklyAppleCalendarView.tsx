@@ -107,8 +107,8 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
     setSelectedDate,
   } = ws;
 
-  // Clean, comfortable row height with zero density buttons
-  const hourHeightPx = 56;
+  // Half-height hour rows (smaller twice as requested)
+  const hourHeightPx = 28;
   const pxPerMin = hourHeightPx / 60;
 
   // Week view time range: strictly 5:00 AM to 12:00 AM (midnight)
@@ -234,7 +234,7 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
         const eMin = rawEnd <= sMin ? sMin + 50 : rawEnd;
         const durationMins = Math.max(25, eMin - sMin);
         const topPx = Math.round((sMin - startDayMins) * pxPerMin);
-        const heightPx = Math.max(26, Math.round(durationMins * pxPerMin));
+        const heightPx = Math.max(16, Math.round(durationMins * pxPerMin));
 
         timedItems.push({
           id: `course_${c.id}_${startTime}`,
@@ -335,7 +335,7 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
       const eMin = rawEnd <= sMin ? sMin + 45 : rawEnd;
       const durationMins = Math.max(25, eMin - sMin);
       const topPx = Math.round((sMin - startDayMins) * pxPerMin);
-      const heightPx = Math.max(26, Math.round(durationMins * pxPerMin));
+      const heightPx = Math.max(16, Math.round(durationMins * pxPerMin));
 
       timedItems.push({
         id: `ev_${ev.id}`,
@@ -627,7 +627,7 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                   return (
                     <div
                       key={hour}
-                      className="absolute right-2 -translate-y-1/2 text-[10px] font-sans text-slate-400 dark:text-slate-500 tabular-nums text-right pointer-events-none"
+                      className="absolute right-1.5 sm:right-2 -translate-y-1/2 text-[9px] sm:text-[10px] font-sans text-slate-400 dark:text-slate-500 tabular-nums text-right pointer-events-none"
                       style={{ top: `${top}px` }}
                     >
                       {formatAppleHourLabel(hour)}
@@ -679,7 +679,7 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                               e.stopPropagation();
                               handleCardClick(item);
                             }}
-                            className="absolute rounded-md cursor-pointer overflow-hidden p-1.5 transition-all duration-100 hover:shadow-sm hover:brightness-95 dark:hover:brightness-110"
+                            className="absolute rounded-md cursor-pointer overflow-hidden px-1 py-0.5 sm:px-1.5 sm:py-1 transition-all duration-100 hover:shadow-sm hover:brightness-95 dark:hover:brightness-110 flex flex-col justify-start"
                             style={{
                               top: `${item.topPx}px`,
                               height: `${item.heightPx}px`,
@@ -689,30 +689,38 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                               borderWidth: '1px',
                               borderStyle: 'solid',
                               borderColor: hexToRgba(item.color, 0.25),
-                              borderLeftWidth: '3.5px',
+                              borderLeftWidth: '3px',
                               borderLeftColor: item.color,
                             }}
                             title={`${item.title} (${item.timeDisplay12h})`}
                           >
-                            <div className="font-bold text-[10px] leading-tight truncate" style={{ color: item.color }}>
-                              {item.code ? `${item.code}:` : item.category || 'Event'}
-                            </div>
+                            {item.heightPx >= 28 ? (
+                              <>
+                                <div className="font-bold text-[9px] leading-tight truncate" style={{ color: item.color }}>
+                                  {item.code ? `${item.code}:` : item.category || 'Event'}
+                                </div>
 
-                            <div className="font-medium text-[11px] text-slate-800 dark:text-slate-100 line-clamp-2 mt-0.5 leading-snug">
-                              {item.title}
-                            </div>
+                                <div className="font-medium text-[10px] text-slate-800 dark:text-slate-100 line-clamp-1 leading-tight">
+                                  {item.title}
+                                </div>
 
-                            {item.heightPx > 46 && item.location && (
-                              <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate mt-0.5">
-                                <MapPin className="w-2.5 h-2.5 shrink-0 text-slate-400" />
-                                <span className="truncate">{item.location}</span>
-                              </div>
-                            )}
-
-                            {item.heightPx > 60 && (
-                              <div className="text-[10px] text-slate-400 flex items-center gap-1 truncate mt-0.5 tabular-nums">
-                                <Clock className="w-2.5 h-2.5 shrink-0" />
-                                <span>{item.timeDisplay12h}</span>
+                                {item.heightPx > 42 && item.location && (
+                                  <div className="text-[9px] text-slate-500 dark:text-slate-400 flex items-center gap-0.5 truncate leading-none mt-0.5">
+                                    <MapPin className="w-2.5 h-2.5 shrink-0 text-slate-400" />
+                                    <span className="truncate">{item.location}</span>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="flex items-center gap-1 leading-none h-full overflow-hidden">
+                                <span className="font-bold text-[9px] shrink-0" style={{ color: item.color }}>
+                                  {item.code || item.title}
+                                </span>
+                                {item.code && (
+                                  <span className="font-medium text-[9px] text-slate-800 dark:text-slate-200 truncate">
+                                    {item.title}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
