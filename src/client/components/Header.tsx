@@ -15,6 +15,8 @@ interface HeaderProps {
   onOpenRemindersModal: () => void;
   onOpenGuideModal: () => void;
   onOpenCustomizeViews: () => void;
+  isMobileDrawerOpen?: boolean;
+  onToggleMobileDrawer?: (open: boolean) => void;
 }
 
 interface HeaderTooltipButtonProps {
@@ -82,6 +84,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenRemindersModal,
   onOpenGuideModal,
   onOpenCustomizeViews,
+  isMobileDrawerOpen: externalIsMobileDrawerOpen,
+  onToggleMobileDrawer,
 }) => {
   const {
     viewedSemester,
@@ -106,7 +110,15 @@ export const Header: React.FC<HeaderProps> = ({
   } = ws;
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [internalMobileDrawerOpen, setInternalMobileDrawerOpen] = useState(false);
+  const isMobileDrawerOpen = externalIsMobileDrawerOpen !== undefined ? externalIsMobileDrawerOpen : internalMobileDrawerOpen;
+  const setIsMobileDrawerOpen = (open: boolean) => {
+    if (onToggleMobileDrawer) {
+      onToggleMobileDrawer(open);
+    } else {
+      setInternalMobileDrawerOpen(open);
+    }
+  };
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
 

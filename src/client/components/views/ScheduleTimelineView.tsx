@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   useWorkspace,
   DAY_NAMES_FULL,
@@ -32,6 +32,7 @@ interface ScheduleTimelineViewProps {
   onOpenTaskModal: () => void;
   onEditCourse?: (course: Course) => void;
   onEditEvent?: (event: ScheduleEvent) => void;
+  onOpenEventModal?: () => void;
 }
 
 interface TimelineItem {
@@ -73,6 +74,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
   onOpenTaskModal,
   onEditCourse,
   onEditEvent,
+  onOpenEventModal,
 }) => {
   const {
     viewedSemester,
@@ -102,6 +104,46 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
   const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
   const [viewingEvent, setViewingEvent] = useState<ScheduleEvent | null>(null);
   const [isHoursModalOpen, setIsHoursModalOpen] = useState(false);
+
+  const currentTimeRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll timeline to current time line on today's view
+  useEffect(() => {
+    if (selectedDate === getTodayIsoDate() && currentTimeRef.current) {
+      const timer = setTimeout(() => {
+        currentTimeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedDate]);
+
+  // Touch Swipe Gestures for Day Switching
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+
+    // Horizontal swipe threshold: 48px deltaX and deltaX is at least 1.5x deltaY
+    if (Math.abs(deltaX) > 48 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+      if (deltaX < 0) {
+        // Swiped left -> Next Day
+        setSelectedDate(addDays(selectedDate, 1));
+      } else {
+        // Swiped right -> Previous Day
+        setSelectedDate(addDays(selectedDate, -1));
+      }
+    }
+  };
 
   const targetDow = getIsoDayOfWeek(selectedDate);
   const dayName = DAY_NAMES_FULL[targetDow];
@@ -633,7 +675,11 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left 7 Cols: Proportional Calendar Grid */}
-        <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs">
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs"
+        >
           {/* Canvas Card Header with unified controls */}
           <div className="px-3.5 py-2.5 border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 bg-slate-50/50 dark:bg-slate-800/40">
             <div className="flex items-center gap-1.5 sm:gap-2">
@@ -765,6 +811,12 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
               const topPx = item.topPx;
               const heightPx = item.heightPx;
 
+              // Active Class / Commitment Pulse Indicator
+              const isOngoing =
+                selectedDate === getTodayIsoDate() &&
+                simulatedMinutes >= item.startMins &&
+                simulatedMinutes < item.endMins;
+
               // If overlapping, calculate side-by-side column width & offset:
               const isOverlapped = item.totalCols > 1;
               const leftStyle = isOverlapped
@@ -784,16 +836,18 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                     <div
                       key={item.id}
                       onClick={() => item.course && setViewingCourse(item.course)}
-                      className="absolute z-10 hover:z-20 rounded-lg border px-2.5 py-1.5 transition-all hover:shadow-md calendar-card-hatch overflow-hidden flex flex-col justify-between cursor-pointer"
-                      title="Click to view course details"
+                      className={`absolute z-10 hover:z-20 rounded-lg border px-2.5 py-1.5 transition-all hover:shadow-md calendar-card-hatch overflow-hidden flex flex-col justify-between cursor-pointer ${
+                        isOngoing ? 'ring-2 ring-emerald-500/60 shadow-md' : ''
+                      }`}
+                      title={isOngoing ? 'Class currently in progress' : 'Click to view course details'}
                       style={{
                         top: `${topPx}px`,
                         height: `${heightPx}px`,
                         left: leftStyle,
                         width: widthStyle,
                         right: rightStyle,
-                        backgroundColor: 'rgba(37, 99, 235, 0.08)',
-                        borderColor: 'rgba(37, 99, 235, 0.35)',
+                        backgroundColor: isOngoing ? 'rgba(16, 185, 129, 0.09)' : 'rgba(37, 99, 235, 0.08)',
+                        borderColor: isOngoing ? 'rgba(16, 185, 129, 0.7)' : 'rgba(37, 99, 235, 0.35)',
                       }}
                     >
                       <div>
@@ -805,6 +859,12 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                             <span className="text-[10px] font-mono font-medium px-1 py-0.2 rounded bg-white/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 shrink-0">
                               {item.course.code}
                             </span>
+                            {isOngoing && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 animate-pulse shrink-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                <span>Now · {item.endMins - simulatedMinutes}m left</span>
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             {item.totalCols <= 2 && (
@@ -892,19 +952,25 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                   <div
                     key={item.id}
                     onClick={() => item.event && setViewingEvent(item.event)}
-                    className="absolute z-10 hover:z-20 rounded-lg border transition-all hover:shadow-md cursor-pointer flex flex-col justify-between overflow-hidden p-2 group bg-white/95 dark:bg-slate-800/95"
+                    className={`absolute z-10 hover:z-20 rounded-lg border transition-all hover:shadow-md cursor-pointer flex flex-col justify-between overflow-hidden p-2 group bg-white/95 dark:bg-slate-800/95 ${
+                      isOngoing ? 'ring-2 ring-emerald-500/60 shadow-md' : ''
+                    }`}
                     style={{
                       top: `${topPx}px`,
                       height: `${heightPx}px`,
                       left: leftStyle,
                       width: widthStyle,
                       right: rightStyle,
-                      borderColor: item.color || (isRoutine ? '#059669' : '#dc2626'),
+                      borderColor: isOngoing ? '#10b981' : (item.color || (isRoutine ? '#059669' : '#dc2626')),
                       borderStyle: isRoutine ? 'dashed' : 'solid',
                       borderLeftWidth: '3.5px',
-                      backgroundColor: isRoutine ? 'rgba(5, 150, 105, 0.05)' : 'rgba(220, 38, 38, 0.05)',
+                      backgroundColor: isOngoing
+                        ? 'rgba(16, 185, 129, 0.08)'
+                        : isRoutine
+                        ? 'rgba(5, 150, 105, 0.05)'
+                        : 'rgba(220, 38, 38, 0.05)',
                     }}
-                    title={`Click to view ${isRoutine ? 'routine' : 'event'} details`}
+                    title={isOngoing ? 'Commitment currently ongoing' : `Click to view ${isRoutine ? 'routine' : 'event'} details`}
                   >
                     <div className="min-w-0">
                       <div className="flex items-center justify-between gap-1">
@@ -919,6 +985,12 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                           <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                             {item.title}
                           </span>
+                          {isOngoing && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 animate-pulse shrink-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <span>Now · {item.endMins - simulatedMinutes}m left</span>
+                            </span>
+                          )}
                         </div>
                         {onEditEvent && (
                           <button
@@ -946,15 +1018,55 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
               return null;
             })}
 
-            {/* Empty Note */}
+            {/* Clean Minimalist Empty State */}
             {layoutItems.length === 0 && (
-              <div className="absolute inset-x-0 top-12 flex justify-center pointer-events-none z-10">
-                <div className="px-3 py-1.5 rounded-lg bg-slate-50/90 dark:bg-slate-800/90 border border-dashed border-slate-200 dark:border-slate-700 text-center">
-                  <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                    No classes or commitments scheduled on {dayName} (Week {currentAcademicWeek})
+              <div className="absolute inset-x-4 top-14 sm:top-20 flex justify-center z-10">
+                <div className="max-w-md w-full p-5 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs border border-slate-200/90 dark:border-slate-800 text-center shadow-xs">
+                  <div className="w-9 h-9 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 mb-2.5">
+                    <Calendar className="w-4 h-4" />
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
-                    Schedule runs {format12HourTime(startDayMins, false)} – {format12HourTime(endDayMins, false)}
+                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    No commitments scheduled on {dayName}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
+                    Your schedule is clear for Week {currentAcademicWeek}. Great time for lab work, literature review, or taking a rest.
+                  </p>
+                  <div className="flex items-center justify-center gap-2 mt-3.5">
+                    {(onOpenEventModal || onEditEvent) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onOpenEventModal) {
+                            onOpenEventModal();
+                          } else if (onEditEvent) {
+                            onEditEvent({
+                              id: '',
+                              semesterId: viewedSemester.id,
+                              title: '',
+                              type: 'routine',
+                              category: 'Study',
+                              daysOfWeek: [targetDow],
+                              specificDate: selectedDate,
+                              startTime: '09:00',
+                              endTime: '11:00',
+                              color: '#059669',
+                            });
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-2xs active:scale-95 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Commitment</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={onOpenTaskModal}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 transition shadow-2xs active:scale-95 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Task</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -963,6 +1075,7 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
             {/* Red Current-Time Indicator */}
             {simulatedMinutes >= startDayMins && simulatedMinutes <= endDayMins && (
               <div
+                ref={currentTimeRef}
                 className="absolute left-0 right-0 z-20 pointer-events-none"
                 style={{ top: `${Math.round(TOP_PAD_PX + (simulatedMinutes - startDayMins) * PX_PER_MINUTE)}px` }}
               >

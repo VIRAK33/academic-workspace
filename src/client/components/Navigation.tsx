@@ -84,8 +84,10 @@ export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal, on
   const essentialTabs = ALL_TABS.filter(t => TAB_METADATA[t].group === 'essentials');
   const researchTabs = ALL_TABS.filter(t => TAB_METADATA[t].group === 'research');
 
+  const isResearchActive = ['kanban', 'papers', 'advisor', 'conferences', 'experiments'].includes(activeTab);
+
   return (
-    <div className="border-b border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
+    <div className={`${isResearchActive ? 'block' : 'hidden md:block'} border-b border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between gap-2 py-1.5">
           {/* Main Tabs Navigation */}
@@ -95,12 +97,16 @@ export const Navigation: React.FC<NavigationProps> = ({ ws, onOpenGuideModal, on
               const isActive = activeTab === key;
               const badge = tabBadges[key];
 
+              // On mobile, if inside research suite, only show research tabs here (bottom nav handles essentials)
+              const isResearchTab = TAB_METADATA[key].group === 'research';
+              const mobileHideClass = !isResearchTab ? 'hidden md:inline-flex' : 'inline-flex';
+
               return (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setActiveTab(key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap ${
+                  className={`${mobileHideClass} items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 cursor-pointer ${
                     isActive
                       ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'

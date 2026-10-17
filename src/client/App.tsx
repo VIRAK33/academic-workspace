@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { useWorkspace } from './hooks/useWorkspace';
+import React, { useState, useEffect } from 'react';
+import { useWorkspace, addDays, getTodayIsoDate } from './hooks/useWorkspace';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 // Views
 import { ScheduleTimelineView } from './components/views/ScheduleTimelineView';
@@ -62,9 +63,84 @@ export function App() {
   const [isCustomizeViewsOpen, setIsCustomizeViewsOpen] = useState(false);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isWelcomeGuideOpen, setIsWelcomeGuideOpen] = useState(() => {
     return localStorage.getItem('phd_workspace_has_onboarded_v1') !== 'true';
   });
+
+  const isAnyModalOpen =
+    isTaskModalOpen ||
+    isCourseModalOpen ||
+    isSemesterModalOpen ||
+    isTimeSlotsModalOpen ||
+    isPaperModalOpen ||
+    isConferenceModalOpen ||
+    isExperimentModalOpen ||
+    isAdvisorMeetingModalOpen ||
+    isDigestModalOpen ||
+    isCliModalOpen ||
+    isBackupModalOpen ||
+    isKanbanModalOpen ||
+    isAiImportModalOpen ||
+    isRemindersModalOpen ||
+    isCustomizeViewsOpen ||
+    isEventModalOpen ||
+    isWelcomeGuideOpen ||
+    auth.isAuthModalOpen;
+
+  // Desktop keyboard shortcuts: T (today), [ / ] (prev/next day), 1-5 (views), C (new task), ? (guide)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (isAnyModalOpen) return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (
+        tag === 'input' ||
+        tag === 'textarea' ||
+        tag === 'select' ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        ws.setSelectedDate(getTodayIsoDate());
+        ws.showToast('Jumped to Today 📅');
+      } else if (e.key === '[') {
+        e.preventDefault();
+        ws.setSelectedDate((prev) => addDays(prev, -1));
+      } else if (e.key === ']') {
+        e.preventDefault();
+        ws.setSelectedDate((prev) => addDays(prev, 1));
+      } else if (e.key === '1') {
+        e.preventDefault();
+        ws.setActiveTab('timeline');
+      } else if (e.key === '2') {
+        e.preventDefault();
+        ws.setActiveTab('courses');
+      } else if (e.key === '3') {
+        e.preventDefault();
+        ws.setActiveTab('todo');
+      } else if (e.key === '4') {
+        e.preventDefault();
+        ws.setActiveTab('kanban');
+      } else if (e.key === '5') {
+        e.preventDefault();
+        ws.setActiveTab('papers');
+      } else if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        setIsTaskModalOpen(true);
+      } else if (e.key === '?') {
+        e.preventDefault();
+        setIsWelcomeGuideOpen(true);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAnyModalOpen, ws]);
 
   const handleOpenAddCourse = () => {
     setEditingCourse(null);
@@ -110,6 +186,8 @@ export function App() {
         onOpenRemindersModal={() => setIsRemindersModalOpen(true)}
         onOpenGuideModal={() => setIsWelcomeGuideOpen(true)}
         onOpenCustomizeViews={() => setIsCustomizeViewsOpen(true)}
+        isMobileDrawerOpen={isMobileDrawerOpen}
+        onToggleMobileDrawer={setIsMobileDrawerOpen}
       />
 
       {/* Tabs Navigation */}
@@ -120,13 +198,14 @@ export function App() {
       />
 
       {/* Main View Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-24">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-32 md:pb-24">
         {activeTab === 'timeline' && (
           <ScheduleTimelineView
             ws={ws}
             onOpenTaskModal={() => setIsTaskModalOpen(true)}
             onEditCourse={handleOpenEditCourse}
             onEditEvent={handleOpenEditEvent}
+            onOpenEventModal={handleOpenAddEvent}
           />
         )}
 
@@ -187,12 +266,18 @@ export function App() {
         )}
       </main>
 
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        ws={ws}
+        onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
+      />
+
       {/* Floating Action Button */}
       <button
         type="button"
         onClick={() => setIsTaskModalOpen(true)}
         aria-label="Quick Add Task"
-        className="fixed bottom-5 right-5 z-40 h-10 px-3.5 rounded-full bg-slate-900 dark:bg-white hover:bg-slate-800 text-white dark:text-slate-900 shadow-lg flex items-center gap-1.5 text-xs font-medium transition"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+68px)] md:bottom-5 right-4 md:right-5 z-30 h-10 px-3.5 rounded-full bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-lg flex items-center gap-1.5 text-xs font-medium transition active:scale-95"
       >
         <Plus className="w-4 h-4" />
         <span>New Task</span>
@@ -200,7 +285,7 @@ export function App() {
 
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-3.5 py-2 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium shadow-md flex items-center gap-2 animate-bounce">
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+68px)] md:bottom-5 left-1/2 -translate-x-1/2 z-50 px-3.5 py-2 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium shadow-md flex items-center gap-2 animate-bounce">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 dark:bg-emerald-600" />
           <span>{toastMsg}</span>
         </div>
