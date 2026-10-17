@@ -51,8 +51,12 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[88vh] animate-in fade-in zoom-in-95 duration-100">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-2xl sm:rounded-xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] animate-in fade-in duration-100">
+        {/* Mobile Sheet Drag Indicator */}
+        <div className="pt-2.5 pb-0.5 flex justify-center sm:hidden shrink-0">
+          <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
+        </div>
         
         {/* Header Bar with Course Color Accent */}
         <div
@@ -82,7 +86,7 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             title="Close"
           >
             <X className="w-4 h-4" />
@@ -212,11 +216,11 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
         </div>
 
         {/* Modal Footer with Actions */}
-        <div className="px-4 py-3 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition"
+            className="px-4 py-2 sm:px-3.5 sm:py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
           >
             Close
           </button>
@@ -227,9 +231,9 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
               onClose();
               onEdit(course);
             }}
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition flex items-center gap-1.5 shadow-xs"
+            className="px-4 py-2 sm:px-3.5 sm:py-1.5 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition flex items-center gap-1.5 shadow-xs min-h-[42px] sm:min-h-0"
           >
-            <Pencil className="w-3.5 h-3.5" />
+            <Pencil className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             <span>Edit Course</span>
           </button>
         </div>
