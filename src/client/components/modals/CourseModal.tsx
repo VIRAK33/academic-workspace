@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWorkspace, timeToMinutes, DAY_NAMES_FULL, DAY_NAMES_SHORT } from '../../hooks/useWorkspace';
-import { X, Plus, Trash2, Calendar, Clock, Palette } from 'lucide-react';
+import { X, Plus, Trash2, Calendar, Clock, Palette, Check, Sparkles } from 'lucide-react';
 import { Course, CourseSchedule } from '../../../types';
 
 interface CourseModalProps {
@@ -9,6 +9,17 @@ interface CourseModalProps {
   onClose: () => void;
   editingCourse?: Course | null;
 }
+
+const COLOR_PALETTE = [
+  '#059669', // Emerald
+  '#6366F1', // Indigo
+  '#2563EB', // Blue
+  '#D97706', // Amber
+  '#DC2626', // Red
+  '#9333EA', // Purple
+  '#0D9488', // Teal
+  '#475569', // Slate
+];
 
 interface ScheduleDraft {
   dayOfWeek: number;
@@ -36,7 +47,7 @@ function formatWeeksToRangeString(weeks: number[]): string {
 }
 
 export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, editingCourse }) => {
-  const { viewedSemester, timeSlots, saveCourse } = ws;
+  const { viewedSemester, timeSlots, saveCourse, deleteCourse } = ws;
 
   const [code, setCode] = useState('CS501');
   const [name, setName] = useState('');
@@ -197,6 +208,13 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
     }
   };
 
+  const handleDelete = () => {
+    if (editingCourse && confirm(`Delete course "${editingCourse.code} - ${editingCourse.name}"?`)) {
+      deleteCourse(editingCourse.id);
+      onClose();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-white dark:bg-slate-900 w-full sm:max-w-xl rounded-t-2xl sm:rounded-xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92dvh] sm:max-h-[88vh] flex flex-col">
@@ -206,18 +224,27 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
         </div>
 
         {/* Modal Header */}
-        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-              {editingCourse ? `Edit Course: ${editingCourse.code}` : 'Add University Course'}
-            </h3>
-            {editingCourse && (
-              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-                Updating Existing
-              </span>
-            )}
+        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40 shrink-0">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                {editingCourse ? `Edit Course: ${editingCourse.code}` : 'Add Course'}
+              </h3>
+              {editingCourse && (
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                  Editing
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              Configure course schedule, location, instructor, and active weeks
+            </p>
           </div>
-          <button type="button" onClick={onClose} className="p-2 sm:p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -225,38 +252,33 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
-            {/* Row 1: Code, Title, Color */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            {/* Row 1: Code & Title */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Code</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Course Code <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  placeholder="CS801"
+                  placeholder="e.g. CS801"
                   className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Course Title</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Course Title <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Foundations of Deep Learning"
+                  placeholder="e.g. Foundations of Deep Learning"
                   className="w-full px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                   autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Badge Color</label>
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-full h-11 sm:h-9 p-1 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer bg-white dark:bg-slate-800"
                 />
               </div>
             </div>
@@ -264,25 +286,51 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
             {/* Row 2: Location, Teacher */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Room / Location</label>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Room / Location <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Turing Hall 101"
+                  placeholder="e.g. Turing Hall 101"
                   className="w-full px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Instructor</label>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Instructor (Optional)
+                </label>
                 <input
                   type="text"
                   value={teacher}
                   onChange={(e) => setTeacher(e.target.value)}
-                  placeholder="Prof. Alan Turing"
+                  placeholder="e.g. Prof. Alan Turing"
                   className="w-full px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 />
+              </div>
+            </div>
+
+            {/* Row 3: Color Tag with Presets */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Badge Color
+              </label>
+              <div className="flex items-center gap-2 sm:gap-1.5 h-9 sm:h-8 flex-wrap">
+                {COLOR_PALETTE.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    className={`w-7 h-7 sm:w-6 sm:h-6 rounded-full transition flex items-center justify-center shrink-0 ${
+                      color === c ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white scale-110' : 'hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: c }}
+                  >
+                    {color === c && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -433,24 +481,92 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                 className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
               />
             </div>
+
+            {/* Live Preview Card */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-slate-400" />
+                  <span>Course Card Preview</span>
+                </span>
+                <span
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold"
+                  style={{ backgroundColor: `${color}18`, color }}
+                >
+                  {code.trim() || 'CS???'}
+                </span>
+              </div>
+
+              <div
+                className="p-3 sm:p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-start gap-2.5"
+                style={{ borderLeftWidth: '3.5px', borderLeftColor: color }}
+              >
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                      {name.trim() || 'Untitled Course'}
+                    </span>
+                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                      {schedules.length} Meeting{schedules.length > 1 ? 's' : ''}/Wk
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      <span>
+                        {schedules
+                          .map((s) => `${DAY_NAMES_SHORT[s.dayOfWeek]} S${s.sessions.join('+')}`)
+                          .join(', ')}
+                      </span>
+                    </span>
+                    {location.trim() && (
+                      <>
+                        <span>·</span>
+                        <span className="truncate max-w-[120px]">{location.trim()}</span>
+                      </>
+                    )}
+                    {teacher.trim() && (
+                      <>
+                        <span>·</span>
+                        <span className="truncate max-w-[120px]">{teacher.trim()}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Sticky Thumb-Friendly Action Bar */}
-          <div className="px-4 py-3 sm:px-5 sm:py-3.5 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs min-h-[42px] sm:min-h-0"
-            >
-              {isSubmitting ? 'Saving...' : editingCourse ? 'Save Changes' : 'Create Course'}
-            </button>
+          <div className="px-4 py-3 sm:px-5 sm:py-3.5 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
+            {editingCourse ? (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="px-3.5 py-2.5 sm:py-1.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-1.5 min-h-[42px] sm:min-h-0"
+              >
+                <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                <span>Delete</span>
+              </button>
+            ) : <div />}
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs min-h-[42px] sm:min-h-0"
+              >
+                {isSubmitting ? 'Saving...' : editingCourse ? 'Save Changes' : 'Create Course'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
