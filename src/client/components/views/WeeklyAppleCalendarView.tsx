@@ -725,16 +725,39 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                                 </div>
                               )}
 
-                              {/* Title line - Supports 2 lines if long */}
-                              <div className="font-semibold text-[10px] sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight break-words">
+                              {/* Title line - Dynamically expands to full lines if card has space */}
+                              <div
+                                className={`font-semibold text-[10px] sm:text-xs text-slate-800 dark:text-slate-100 leading-tight break-words ${
+                                  item.heightPx >= 72
+                                    ? 'line-clamp-none'
+                                    : item.heightPx >= 50
+                                    ? 'line-clamp-3'
+                                    : 'line-clamp-2'
+                                }`}
+                              >
                                 {item.title}
                               </div>
 
                               {/* Subtitle: Location / Teacher */}
-                              {item.heightPx >= 48 && (item.location || item.teacher) && (
+                              {item.heightPx >= 44 && (item.location || item.teacher) && (
                                 <div className="text-[9px] sm:text-[10px] text-slate-400 truncate leading-none mt-0.5">
                                   {item.location || ''}
                                   {item.teacher ? ` · ${item.teacher}` : ''}
+                                </div>
+                              )}
+
+                              {/* Time range badge when card has room (>= 64px) */}
+                              {item.heightPx >= 64 && (
+                                <div className="text-[9px] text-slate-400 dark:text-slate-500 font-mono flex items-center gap-1 mt-0.5 tabular-nums">
+                                  <Clock className="w-2.5 h-2.5 shrink-0 text-slate-400" />
+                                  <span className="truncate">{item.timeDisplay12h}</span>
+                                </div>
+                              )}
+
+                              {/* Notes if ample room (>= 90px) */}
+                              {item.heightPx >= 90 && item.notes && (
+                                <div className="text-[9px] text-slate-500 dark:text-slate-400 line-clamp-2 italic leading-tight mt-0.5">
+                                  {item.notes}
                                 </div>
                               )}
                             </div>
