@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, RotateCcw, Check } from 'lucide-react';
+import { RotateCcw, Check } from 'lucide-react';
 import { format12HourTime } from '../../hooks/useWorkspace';
+import { ModalSheet } from '../common/ModalSheet';
 
 interface ScheduleHoursModalProps {
   isOpen: boolean;
@@ -56,8 +57,6 @@ export const ScheduleHoursModal: React.FC<ScheduleHoursModalProps> = ({
     }
   }, [isOpen, startHour, endHour]);
 
-  if (!isOpen) return null;
-
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedStart >= selectedEnd) {
@@ -73,149 +72,144 @@ export const ScheduleHoursModal: React.FC<ScheduleHoursModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
-              <Clock className="w-4 h-4" />
-            </div>
+    <ModalSheet isOpen={isOpen} onClose={onClose} maxWidthClass="sm:max-w-md">
+      {({ requestClose, dragHandleProps }) => (
+        <>
+          {/* Header */}
+          <div
+            {...dragHandleProps}
+            className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+          >
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Schedule Display Hours
               </h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 Customize daily active timeline window
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
 
-        {/* Content Form */}
-        <form onSubmit={handleSave} className="p-4 space-y-4">
-          {/* Presets */}
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              Quick Presets
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {PRESETS.map((p) => {
-                const isActive = selectedStart === p.start && selectedEnd === p.end;
-                return (
-                  <button
-                    key={p.label}
-                    type="button"
-                    onClick={() => {
-                      setSelectedStart(p.start);
-                      setSelectedEnd(p.end);
-                    }}
-                    className={`p-2 rounded-lg text-left border transition flex flex-col justify-between ${
-                      isActive
-                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white ring-1 ring-slate-900/20 dark:ring-white/20'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800'
-                    }`}
+          {/* Content Form */}
+          <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="p-3.5 sm:p-4 space-y-3 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+              {/* Presets */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                  Quick Presets
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {PRESETS.map((p) => {
+                    const isActive = selectedStart === p.start && selectedEnd === p.end;
+                    return (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => {
+                          setSelectedStart(p.start);
+                          setSelectedEnd(p.end);
+                        }}
+                        className={`p-2 rounded-lg text-left border transition flex flex-col justify-between cursor-pointer ${
+                          isActive
+                            ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white ring-1 ring-slate-900/20 dark:ring-white/20'
+                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold">{p.label}</span>
+                          {isActive && <Check className="w-3.5 h-3.5 text-slate-900 dark:text-white" />}
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                          {p.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Time pickers */}
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <div>
+                  <label htmlFor="scheduleStartHourSelect" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Day Start Hour
+                  </label>
+                  <select
+                    id="scheduleStartHourSelect"
+                    value={selectedStart}
+                    onChange={(e) => setSelectedStart(Number(e.target.value))}
+                    className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold">{p.label}</span>
-                      {isActive && <Check className="w-3.5 h-3.5 text-slate-900 dark:text-white" />}
-                    </div>
-                    <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
-                      {p.desc}
-                    </span>
-                  </button>
-                );
-              })}
+                    {START_HOUR_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="scheduleEndHourSelect" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Day End Hour
+                  </label>
+                  <select
+                    id="scheduleEndHourSelect"
+                    value={selectedEnd}
+                    onChange={(e) => setSelectedEnd(Number(e.target.value))}
+                    className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                  >
+                    {END_HOUR_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Current Selection Preview */}
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-500 dark:text-slate-400">Timeline Window:</span>
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {format12HourTime(selectedStart * 60, false)} – {format12HourTime(selectedEnd * 60, false)}
+                </span>
+              </div>
+
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                💡 If any classes, routines, or events fall earlier or later on a specific day, the timeline automatically extends to guarantee nothing is clipped.
+              </p>
             </div>
-          </div>
 
-          {/* Time pickers */}
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <div>
-              <label htmlFor="scheduleStartHourSelect" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Day Start Hour
-              </label>
-              <select
-                id="scheduleStartHourSelect"
-                value={selectedStart}
-                onChange={(e) => setSelectedStart(Number(e.target.value))}
-                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
-              >
-                {START_HOUR_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="scheduleEndHourSelect" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Day End Hour
-              </label>
-              <select
-                id="scheduleEndHourSelect"
-                value={selectedEnd}
-                onChange={(e) => setSelectedEnd(Number(e.target.value))}
-                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
-              >
-                {END_HOUR_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Current Selection Preview */}
-          <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs font-mono">
-            <span className="text-slate-500 dark:text-slate-400">Timeline Window:</span>
-            <span className="font-semibold text-slate-900 dark:text-white">
-              {format12HourTime(selectedStart * 60, false)} – {format12HourTime(selectedEnd * 60, false)}
-            </span>
-          </div>
-
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-            💡 If any classes, routines, or events fall earlier or later on a specific day, the timeline automatically extends to guarantee nothing is clipped.
-          </p>
-
-          {/* Footer Actions */}
-          <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5 px-2 py-1 rounded transition"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Default</span>
-            </button>
-
-            <div className="flex items-center gap-2">
+            {/* Footer Actions */}
+            <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
               <button
                 type="button"
-                onClick={onClose}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                onClick={handleReset}
+                className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5 px-2 py-1 rounded transition cursor-pointer"
               >
-                Cancel
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Default</span>
               </button>
-              <button
-                type="submit"
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-xs transition"
-              >
-                Save Hours
-              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={requestClose}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-xs transition cursor-pointer"
+                >
+                  Save Hours
+                </button>
+              </div>
             </div>
-          </div>
-        </form>
-      </div>
-    </div>
+          </form>
+        </>
+      )}
+    </ModalSheet>
   );
 };
