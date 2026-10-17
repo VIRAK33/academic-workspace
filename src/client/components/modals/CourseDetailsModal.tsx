@@ -61,11 +61,10 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
     <ModalSheet isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-lg">
       {({ requestClose, dragHandleProps }) => (
         <>
-          {/* Header Bar with Course Color Accent */}
+          {/* Header Bar */}
           <div
             {...dragHandleProps}
-            className="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between bg-slate-50/60 dark:bg-slate-800/40 relative shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
-            style={{ borderTopWidth: '4px', borderTopColor: activeCourse.color || '#2563eb' }}
+            className="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between bg-white dark:bg-slate-900 relative shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
             <div className="space-y-1 pr-6">
               <div className="flex items-center gap-2">
@@ -82,8 +81,12 @@ export const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({
                   {isWeekActive ? `In Session · Week ${currentAcademicWeek}` : `Off this Week (W${currentAcademicWeek})`}
                 </span>
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug">
-                {activeCourse.name}
+              <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug flex items-center gap-2">
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: activeCourse.color || '#2563eb' }}
+                />
+                <span>{activeCourse.name}</span>
               </h3>
             </div>
 

@@ -59,8 +59,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           {/* Header Bar */}
           <div
             {...dragHandleProps}
-            className="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between bg-slate-50/60 dark:bg-slate-800/40 relative shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
-            style={{ borderTopWidth: '4px', borderTopColor: activeEvent.color || '#059669' }}
+            className="px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between bg-white dark:bg-slate-900 relative shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
             <div className="space-y-1.5 pr-6">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -90,8 +89,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 )}
               </div>
 
-              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
-                {activeEvent.title}
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug flex items-center gap-2">
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: activeEvent.color || '#059669' }}
+                />
+                <span>{activeEvent.title}</span>
               </h3>
             </div>
 

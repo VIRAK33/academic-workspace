@@ -221,7 +221,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
           {/* Modal Header */}
           <div
             {...dragHandleProps}
-            className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40 shrink-0 cursor-grab active:cursor-grabbing select-none"
+            className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
             <div>
               <div className="flex items-center gap-2">
