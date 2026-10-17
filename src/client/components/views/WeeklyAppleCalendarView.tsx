@@ -11,6 +11,7 @@ import {
 } from '../../hooks/useWorkspace';
 import { Course, ScheduleEvent } from '../../../types';
 import { Clock, MapPin } from 'lucide-react';
+import { Twemoji } from '../common/Twemoji';
 
 interface WeeklyAppleCalendarViewProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -593,17 +594,24 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                     const isWeekend = wd.dayNum >= 6;
                     return (
                       <div key={wd.dayNum} className={`space-y-0.5 px-0.5 ${isWeekend ? 'bg-slate-100/20 dark:bg-slate-800/30' : ''}`}>
-                        {allDay.map((item) => (
-                          <div
-                            key={item.id}
-                            onClick={() => handleCardClick(item)}
-                            className="px-2 py-0.5 rounded text-[10px] font-semibold text-white truncate cursor-pointer shadow-2xs hover:opacity-90 transition flex items-center gap-1"
-                            style={{ backgroundColor: item.color }}
-                          >
-                            <span>★</span>
-                            <span className="truncate">{item.title}</span>
-                          </div>
-                        ))}
+                        {allDay.map((item) => {
+                          const isRoutine = item.kind === 'routine';
+                          return (
+                            <div
+                              key={item.id}
+                              onClick={() => handleCardClick(item)}
+                              className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 truncate cursor-pointer shadow-2xs hover:shadow-xs transition flex items-center gap-1 text-[10px]"
+                              style={{ borderLeftWidth: '3px', borderLeftColor: item.color }}
+                              title={`${item.title} (${item.timeDisplay12h})`}
+                            >
+                              <Twemoji emoji={isRoutine ? '🔁' : '📅'} className="w-2.5 h-2.5 shrink-0" />
+                              <span className="font-mono text-[9px] font-bold shrink-0 truncate max-w-[48px]" style={{ color: item.color }}>
+                                {item.category || (isRoutine ? 'Routine' : 'Event')}
+                              </span>
+                              <span className="truncate font-semibold text-slate-800 dark:text-slate-100">{item.title}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })}
@@ -671,6 +679,9 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                       {items.map((item) => {
                         const colWidthPct = 100 / item.totalCols;
                         const leftPct = item.colIndex * colWidthPct;
+                        const isCourse = item.kind === 'course';
+                        const isRoutine = item.kind === 'routine';
+                        const isInactive = isCourse && item.isWeekActive === false;
 
                         return (
                           <div
@@ -679,50 +690,56 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                               e.stopPropagation();
                               handleCardClick(item);
                             }}
-                            className="absolute rounded-md cursor-pointer overflow-hidden px-1 py-0.5 sm:px-1.5 sm:py-1 transition-all duration-100 hover:shadow-sm hover:brightness-95 dark:hover:brightness-110 flex flex-col justify-start"
+                            className={`absolute rounded-md cursor-pointer overflow-hidden p-1 sm:p-1.5 transition-all duration-100 shadow-2xs hover:shadow-xs flex flex-col justify-between group ${
+                              isInactive
+                                ? 'opacity-40 border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30'
+                                : 'border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800'
+                            }`}
                             style={{
                               top: `${item.topPx}px`,
                               height: `${item.heightPx}px`,
                               left: `calc(${leftPct}% + 1px)`,
                               width: `calc(${colWidthPct}% - 2px)`,
-                              backgroundColor: hexToRgba(item.color, 0.10),
-                              borderWidth: '1px',
-                              borderStyle: 'solid',
-                              borderColor: hexToRgba(item.color, 0.25),
                               borderLeftWidth: '3px',
                               borderLeftColor: item.color,
                             }}
                             title={`${item.title} (${item.timeDisplay12h})`}
                           >
-                            {item.heightPx >= 28 ? (
-                              <>
-                                <div className="font-bold text-[9px] leading-tight truncate" style={{ color: item.color }}>
-                                  {item.code ? `${item.code}:` : item.category || 'Event'}
+                            <div className="space-y-0.5 min-w-0 w-full overflow-hidden">
+                              {/* Header: Course Code or Routine/Event Category */}
+                              {isCourse ? (
+                                <div className="flex items-center justify-between gap-1 leading-none">
+                                  <span
+                                    className="font-mono text-[9px] sm:text-[10px] font-bold truncate"
+                                    style={{ color: item.color }}
+                                  >
+                                    {item.code || item.title}
+                                  </span>
                                 </div>
+                              ) : (
+                                <div className="flex items-center gap-1 leading-none">
+                                  <div className="flex items-center gap-0.5 font-mono text-[9px] font-bold truncate" style={{ color: item.color }}>
+                                    <Twemoji emoji={isRoutine ? '🔁' : '📅'} className="w-2.5 h-2.5 shrink-0" />
+                                    <span className="truncate">{item.category || (isRoutine ? 'Routine' : 'Event')}</span>
+                                  </div>
+                                </div>
+                              )}
 
-                                <div className="font-medium text-[10px] text-slate-800 dark:text-slate-100 line-clamp-1 leading-tight">
+                              {/* Title line */}
+                              {item.heightPx >= 26 && (
+                                <div className="font-semibold text-[10px] sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-1 sm:line-clamp-2 leading-tight">
                                   {item.title}
                                 </div>
+                              )}
 
-                                {item.heightPx > 42 && item.location && (
-                                  <div className="text-[9px] text-slate-500 dark:text-slate-400 flex items-center gap-0.5 truncate leading-none mt-0.5">
-                                    <MapPin className="w-2.5 h-2.5 shrink-0 text-slate-400" />
-                                    <span className="truncate">{item.location}</span>
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              <div className="flex items-center gap-1 leading-none h-full overflow-hidden">
-                                <span className="font-bold text-[9px] shrink-0" style={{ color: item.color }}>
-                                  {item.code || item.title}
-                                </span>
-                                {item.code && (
-                                  <span className="font-medium text-[9px] text-slate-800 dark:text-slate-200 truncate">
-                                    {item.title}
-                                  </span>
-                                )}
-                              </div>
-                            )}
+                              {/* Subtitle: Location / Teacher */}
+                              {item.heightPx >= 44 && (item.location || item.teacher) && (
+                                <div className="text-[9px] sm:text-[10px] text-slate-400 truncate leading-none mt-0.5">
+                                  {item.location || ''}
+                                  {item.teacher ? ` · ${item.teacher}` : ''}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -785,23 +802,31 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                 </div>
 
                 <div className="space-y-0.5 mt-1">
-                  {cell.items.slice(0, 2).map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCardClick(item);
-                      }}
-                      className="px-1.5 py-0.5 rounded text-[10px] font-medium truncate"
-                      style={{
-                        backgroundColor: hexToRgba(item.color, 0.12),
-                        borderLeft: `2.5px solid ${item.color}`,
-                        color: item.color,
-                      }}
-                    >
-                      {item.title}
-                    </div>
-                  ))}
+                  {cell.items.slice(0, 2).map((item) => {
+                    const isRoutine = item.kind === 'routine';
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCardClick(item);
+                        }}
+                        className="px-1.5 py-0.5 rounded text-[10px] truncate bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs hover:shadow-xs flex items-center gap-1 cursor-pointer"
+                        style={{
+                          borderLeft: `3px solid ${item.color}`,
+                        }}
+                      >
+                        {item.kind === 'course' ? (
+                          <span className="font-mono text-[9px] font-bold shrink-0" style={{ color: item.color }}>
+                            {item.code || item.title}
+                          </span>
+                        ) : (
+                          <Twemoji emoji={isRoutine ? '🔁' : '📅'} className="w-2.5 h-2.5 shrink-0" />
+                        )}
+                        <span className="truncate text-slate-800 dark:text-slate-100 font-semibold">{item.title}</span>
+                      </div>
+                    );
+                  })}
                   {cell.items.length > 2 && (
                     <div className="text-[9px] text-slate-400 pl-1 font-mono">
                       +{cell.items.length - 2} more
