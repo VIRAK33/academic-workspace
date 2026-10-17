@@ -211,11 +211,11 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
           {/* Modal Header */}
           <div
             {...dragHandleProps}
-            className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+            className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                {initialEvent ? 'Edit' : 'Add'}
+                {initialEvent ? 'Edit Commitment' : 'Add Commitment'}
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 Add a recurring routine habit or one-off academic event
@@ -225,17 +225,17 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
 
           {/* Modal Body Form */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+          <div className="p-3.5 sm:p-4 space-y-3 overflow-y-auto custom-scrollbar flex-1 min-h-0">
             {/* Type Switcher */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Commitment Type
               </label>
-              <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+              <div className="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setType('routine')}
-                  className={`py-2.5 sm:py-2 px-3 text-xs sm:text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 min-h-[42px] sm:min-h-[36px] ${
+                  className={`py-1.5 px-3 text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 ${
                     type === 'routine'
                       ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -247,7 +247,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                 <button
                   type="button"
                   onClick={() => setType('event')}
-                  className={`py-2.5 sm:py-2 px-3 text-xs sm:text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 min-h-[42px] sm:min-h-[36px] ${
+                  className={`py-1.5 px-3 text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 ${
                     type === 'event'
                       ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -275,7 +275,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={type === 'routine' ? 'e.g. Morning Workout / Gym' : 'e.g. CS820 Midterm Exam'}
-                className="w-full px-3.5 py-2.5 sm:px-3 sm:py-2 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
               />
             </div>
 
@@ -284,7 +284,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Category
               </label>
-              <div className="flex flex-wrap gap-2 sm:gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {CATEGORY_PRESETS.map((cat) => (
                   <button
                     key={cat.name}
@@ -293,7 +293,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                       setCategory(cat.name);
                       setColor(cat.color);
                     }}
-                    className={`px-3 py-2 sm:px-2.5 sm:py-1 text-xs rounded-lg sm:rounded-md transition border flex items-center gap-1.5 min-h-[38px] sm:min-h-[28px] ${
+                    className={`px-2.5 py-1 text-xs rounded-lg transition border flex items-center gap-1.5 ${
                       category === cat.name
                         ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
                         : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
@@ -308,12 +308,12 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
 
             {/* Schedule Configuration */}
             {type === 'routine' ? (
-              <div className="space-y-3 p-3.5 sm:p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800">
+              <div className="space-y-2.5 p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Repeats on Days
                   </label>
-                  <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+                  <div className="grid grid-cols-7 gap-1">
                     {[1, 2, 3, 4, 5, 6, 7].map((d) => {
                       const isSelected = daysOfWeek.includes(d);
                       const isWeekend = d >= 6;
@@ -322,7 +322,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                           key={d}
                           type="button"
                           onClick={() => toggleDayOfWeek(d)}
-                          className={`py-2.5 sm:py-1.5 min-h-[42px] sm:min-h-[32px] text-xs font-mono font-medium rounded-lg sm:rounded-md transition text-center flex items-center justify-center ${
+                          className={`py-1.5 text-xs font-mono font-medium rounded-lg transition text-center flex items-center justify-center ${
                             isSelected
                               ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
                               : isWeekend
@@ -345,7 +345,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                     <button
                       type="button"
                       onClick={() => setActiveWeeksPreset('all')}
-                      className={`py-2 sm:py-1 px-2 min-h-[38px] sm:min-h-[28px] rounded-lg sm:rounded border text-center transition flex items-center justify-center ${
+                      className={`py-1 px-2 rounded-lg border text-center transition flex items-center justify-center ${
                         activeWeeksPreset === 'all'
                           ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
                           : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
@@ -356,7 +356,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                     <button
                       type="button"
                       onClick={() => setActiveWeeksPreset('odd')}
-                      className={`py-2 sm:py-1 px-2 min-h-[38px] sm:min-h-[28px] rounded-lg sm:rounded border text-center transition flex items-center justify-center ${
+                      className={`py-1 px-2 rounded-lg border text-center transition flex items-center justify-center ${
                         activeWeeksPreset === 'odd'
                           ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
                           : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
@@ -367,7 +367,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                     <button
                       type="button"
                       onClick={() => setActiveWeeksPreset('even')}
-                      className={`py-2 sm:py-1 px-2 min-h-[38px] sm:min-h-[28px] rounded-lg sm:rounded border text-center transition flex items-center justify-center ${
+                      className={`py-1 px-2 rounded-lg border text-center transition flex items-center justify-center ${
                         activeWeeksPreset === 'even'
                           ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
                           : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
@@ -379,7 +379,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                 </div>
               </div>
             ) : (
-              <div className="p-3.5 sm:p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+              <div className="p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-2.5">
                 {/* Event Duration Selector: Single Day vs Multi-Day */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
@@ -392,7 +392,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                         setIsMultiDay(false);
                         setEndDate(specificDate);
                       }}
-                      className={`py-2 sm:py-1.5 px-2.5 text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[32px] ${
+                      className={`py-1.5 px-2.5 text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 ${
                         !isMultiDay
                           ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-semibold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -409,7 +409,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                           setEndDate(specificDate);
                         }
                       }}
-                      className={`py-2 sm:py-1.5 px-2.5 text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[32px] ${
+                      className={`py-1.5 px-2.5 text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 ${
                         isMultiDay
                           ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-semibold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -431,7 +431,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                       required
                       value={specificDate}
                       onChange={(e) => handleStartDateChange(e.target.value)}
-                      className="w-full px-3.5 py-2.5 sm:px-3 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                      className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                     />
                     <p className="text-[11px] text-slate-400 mt-1 font-mono">
                       {DAY_NAMES_FULL[getIsoDayOfWeek(specificDate)]}
@@ -439,7 +439,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
                         <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
                           Start Date <span className="text-rose-500">*</span>
@@ -449,7 +449,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                           required
                           value={specificDate}
                           onChange={(e) => handleStartDateChange(e.target.value)}
-                          className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                          className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                         />
                         <span className="text-[10px] text-slate-400 font-mono block mt-0.5 truncate">
                           {DAY_NAMES_SHORT[getIsoDayOfWeek(specificDate)]}
@@ -466,7 +466,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                           min={specificDate}
                           value={endDate}
                           onChange={(e) => handleEndDateChange(e.target.value)}
-                          className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                          className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                         />
                         <span className="text-[10px] text-slate-400 font-mono block mt-0.5 truncate">
                           {DAY_NAMES_SHORT[getIsoDayOfWeek(endDate)]}
@@ -475,7 +475,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                     </div>
 
                     {/* Span calculation banner */}
-                    <div className="flex items-center justify-between p-2.5 sm:p-2 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-700 dark:text-indigo-300 text-xs">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-700 dark:text-indigo-300 text-xs">
                       <span className="flex items-center gap-1.5 font-medium">
                         <Sparkles className="w-3.5 h-3.5" />
                         <span>Span: {daysSpan} Day{daysSpan > 1 ? 's' : ''}</span>
@@ -542,7 +542,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                     <select
                       value={selectedSession}
                       onChange={(e) => handleSessionChange(e.target.value)}
-                      className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                      className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                     >
                       {timeSlots.map((ts) => (
                         <option key={ts.session} value={ts.session}>
@@ -562,7 +562,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                         required
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
-                        className="w-full px-3 py-2 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                        className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                       />
                     </div>
                     <div>
@@ -574,7 +574,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                         required
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
-                        className="w-full px-3 py-2 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                        className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                       />
                     </div>
                   </div>
@@ -593,20 +593,20 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g. Science Library 3F, Gym"
-                  className="w-full px-3.5 py-2.5 sm:px-3 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Color Tag
                 </label>
-                <div className="flex items-center gap-2 sm:gap-1.5 h-9 sm:h-8">
+                <div className="flex items-center gap-1.5 h-8">
                   {COLOR_PALETTE.map((c) => (
                     <button
                       key={c}
                       type="button"
                       onClick={() => setColor(c)}
-                      className={`w-7 h-7 sm:w-6 sm:h-6 rounded-full transition flex items-center justify-center shrink-0 ${
+                      className={`w-6 h-6 rounded-full transition flex items-center justify-center shrink-0 ${
                         color === c ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white scale-110' : 'hover:scale-105'
                       }`}
                       style={{ backgroundColor: c }}
@@ -627,7 +627,7 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="e.g. Bring calculator, formula sheet, cardio routine details"
-                className="w-full px-3.5 py-2.5 sm:px-3 sm:py-1.5 text-base sm:text-xs min-h-[72px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                className="w-full px-3 py-1.5 text-xs min-h-[60px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
               />
             </div>
 
@@ -647,12 +647,12 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
               </div>
 
               <div
-                className="p-3 sm:p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-start gap-2.5"
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-start gap-2.5"
                 style={{ borderLeftWidth: '3.5px', borderLeftColor: color }}
               >
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs sm:text-xs font-bold text-slate-900 dark:text-white truncate">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
                       {title.trim() || 'Untitled Commitment'}
                     </span>
                     <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
@@ -697,15 +697,15 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
             </div>
           </div>
 
-          {/* Sticky Thumb-Friendly Action Bar */}
-          <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
+          {/* Action Bar */}
+          <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
             {initialEvent ? (
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-3.5 py-2.5 sm:py-1.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-1.5 min-h-[42px] sm:min-h-0"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-1.5"
               >
-                <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete</span>
               </button>
             ) : <div />}
@@ -714,14 +714,14 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
               <button
                 type="button"
                 onClick={requestClose}
-                className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition shadow-xs disabled:opacity-50 min-h-[42px] sm:min-h-0"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition shadow-xs disabled:opacity-50"
               >
                 {isSubmitting ? 'Saving...' : initialEvent ? 'Save Changes' : 'Add to Schedule'}
               </button>

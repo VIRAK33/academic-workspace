@@ -221,7 +221,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
           {/* Modal Header */}
           <div
             {...dragHandleProps}
-            className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+            className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
             <div>
               <div className="flex items-center gap-2">
@@ -242,9 +242,9 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
 
           {/* Form Body */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+          <div className="p-3.5 sm:p-4 space-y-3 overflow-y-auto custom-scrollbar flex-1 min-h-0">
             {/* Row 1: Code & Title */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Course Code <span className="text-rose-500">*</span>
@@ -255,7 +255,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="e.g. CS801"
-                  className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                  className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -268,14 +268,14 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Foundations of Deep Learning"
-                  className="w-full px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                   autoFocus
                 />
               </div>
             </div>
 
             {/* Row 2: Location, Teacher */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Room / Location <span className="text-rose-500">*</span>
@@ -286,7 +286,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g. Turing Hall 101"
-                  className="w-full px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 />
               </div>
               <div>
@@ -298,7 +298,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                   value={teacher}
                   onChange={(e) => setTeacher(e.target.value)}
                   placeholder="e.g. Prof. Alan Turing"
-                  className="w-full px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 />
               </div>
             </div>
@@ -308,25 +308,25 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Badge Color
               </label>
-              <div className="flex items-center gap-2 sm:gap-1.5 h-9 sm:h-8 flex-wrap">
+              <div className="flex items-center gap-1.5 h-7 flex-wrap">
                 {COLOR_PALETTE.map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setColor(c)}
-                    className={`w-7 h-7 sm:w-6 sm:h-6 rounded-full transition flex items-center justify-center shrink-0 ${
+                    className={`w-6 h-6 rounded-full transition flex items-center justify-center shrink-0 ${
                       color === c ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white scale-110' : 'hover:scale-105'
                     }`}
                     style={{ backgroundColor: c }}
                   >
-                    {color === c && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                    {color === c && <Check className="w-3 h-3 text-white stroke-[3]" />}
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Weekly Schedules Section (Supports 2 or more meetings per week) */}
-            <div className="space-y-3 pt-1">
+            <div className="space-y-2.5 pt-1">
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
@@ -339,9 +339,9 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                 <button
                   type="button"
                   onClick={handleAddMeetingTime}
-                  className="px-3 py-2 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1 min-h-[38px] sm:min-h-0"
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1"
                 >
-                  <Plus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                  <Plus className="w-3 h-3" />
                   <span>Add Day</span>
                 </button>
               </div>
@@ -365,7 +365,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                           <select
                             value={item.dayOfWeek}
                             onChange={(e) => handleUpdateScheduleDay(idx, parseInt(e.target.value, 10))}
-                            className="px-3 py-2 sm:px-2 sm:py-1 text-base sm:text-xs min-h-[40px] sm:min-h-[32px] font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                            className="px-2 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                           >
                             <option value={1}>Monday</option>
                             <option value={2}>Tuesday</option>
@@ -381,10 +381,10 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                           <button
                             type="button"
                             onClick={() => handleRemoveMeetingTime(idx)}
-                            className="text-slate-400 hover:text-rose-600 p-2 sm:p-1 rounded-lg transition min-h-[36px] sm:min-h-0 flex items-center justify-center"
+                            className="text-slate-400 hover:text-rose-600 p-1 rounded-lg transition flex items-center justify-center"
                             title="Remove this meeting day"
                           >
-                            <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
@@ -394,7 +394,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                         <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1">
                           Select Session Slot(s) on {DAY_NAMES_FULL[item.dayOfWeek]}:
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-1.5">
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
                           {timeSlots.map(ts => {
                             const checked = item.sessions.includes(ts.session);
                             return (
@@ -402,7 +402,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                                 key={ts.session}
                                 type="button"
                                 onClick={() => handleToggleScheduleSession(idx, ts.session)}
-                                className={`p-2.5 sm:p-2 rounded-lg border text-left transition min-h-[44px] sm:min-h-[36px] ${
+                                className={`p-2 rounded-lg border text-left transition ${
                                   checked
                                     ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white font-semibold shadow-xs'
                                     : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-400'
@@ -419,7 +419,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                       </div>
 
                       {/* Merged Window Preview */}
-                      <div className="px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+                      <div className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
                         <span className="text-slate-500 dark:text-slate-400 font-sans">
                           Calculated Time Window:
                         </span>
@@ -437,11 +437,11 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
             <div className="pt-1">
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">Active Weeks</label>
-                <div className="flex items-center gap-2 sm:gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setWeeksStr('1-16')}
-                    className="text-xs sm:text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline p-1"
+                    className="text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline p-0.5"
                   >
                     1-16
                   </button>
@@ -449,7 +449,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                   <button
                     type="button"
                     onClick={() => setWeeksStr('6-17')}
-                    className="text-xs sm:text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline p-1"
+                    className="text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline p-0.5"
                   >
                     6-17
                   </button>
@@ -457,7 +457,7 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                   <button
                     type="button"
                     onClick={() => setWeeksStr(`1-${viewedSemester.totalWeeks}`)}
-                    className="text-xs sm:text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline p-1"
+                    className="text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline p-0.5"
                   >
                     All 1-{viewedSemester.totalWeeks}
                   </button>
@@ -469,12 +469,12 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
                 value={weeksStr}
                 onChange={(e) => setWeeksStr(e.target.value)}
                 placeholder="e.g. 1-16 or 6-17 or 1-4, 9-14"
-                className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
               />
             </div>
 
             {/* Live Preview Card */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2">
+            <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-2.5 space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-slate-400" />
@@ -489,8 +489,8 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
               </div>
 
               <div
-                className="p-3 sm:p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-start gap-2.5"
-                style={{ borderLeftWidth: '3.5px', borderLeftColor: color }}
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-start gap-2"
+                style={{ borderLeftWidth: '3px', borderLeftColor: color }}
               >
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -529,15 +529,15 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
             </div>
           </div>
 
-          {/* Sticky Thumb-Friendly Action Bar */}
-          <div className="px-4 py-3 sm:px-5 sm:py-3.5 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
+          {/* Action Bar */}
+          <div className="px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
             {editingCourse ? (
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-3.5 py-2.5 sm:py-1.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-1.5 min-h-[42px] sm:min-h-0"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-1.5 cursor-pointer"
               >
-                <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete</span>
               </button>
             ) : <div />}
@@ -546,14 +546,14 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
               <button
                 type="button"
                 onClick={requestClose}
-                className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs min-h-[42px] sm:min-h-0"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs cursor-pointer"
               >
                 {isSubmitting ? 'Saving...' : editingCourse ? 'Save Changes' : 'Create Course'}
               </button>

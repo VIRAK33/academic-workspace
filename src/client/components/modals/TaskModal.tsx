@@ -95,13 +95,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
         <>
           <div
             {...dragHandleProps}
-            className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
+            className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0 cursor-grab active:cursor-grabbing select-none touch-none"
           >
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">New Task</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">New Task</h3>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+          <div className="p-3.5 sm:p-4 space-y-3 overflow-y-auto custom-scrollbar flex-1 min-h-0">
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
               <input
@@ -110,18 +110,18 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Draft ablation study for Graph-RAG paper..."
-                className="w-full px-3.5 py-2.5 sm:px-3 sm:py-2 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 autoFocus
               />
             </div>
 
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Due Date</label>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setDueDate(getTodayIsoDate())}
-                  className={`px-3 py-2 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium transition min-h-[38px] sm:min-h-0 flex items-center justify-center ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center justify-center ${
                     dueDate === getTodayIsoDate()
                       ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
@@ -132,7 +132,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
                 <button
                   type="button"
                   onClick={() => setDueDate(addDays(getTodayIsoDate(), 1))}
-                  className={`px-3 py-2 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium transition min-h-[38px] sm:min-h-0 flex items-center justify-center ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center justify-center ${
                     dueDate === addDays(getTodayIsoDate(), 1)
                       ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
@@ -144,7 +144,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full sm:w-auto sm:ml-auto text-base sm:text-xs min-h-[40px] sm:min-h-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                  className="w-full sm:w-auto sm:ml-auto text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 font-mono text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 />
               </div>
             </div>
@@ -156,7 +156,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
               </div>
               
               {/* Tag Badges */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-1.5 mb-2.5">
+              <div className="flex flex-wrap items-center gap-1.5 mb-2">
                 {availableTags.map(tag => {
                   const isSelected = selectedTags.includes(tag);
                   const isCustom = !PRESET_TAGS.includes(tag);
@@ -164,7 +164,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
                     <div
                       key={tag}
                       onClick={() => toggleTag(tag)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-2 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium border cursor-pointer select-none transition min-h-[38px] sm:min-h-0 ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border cursor-pointer select-none transition ${
                         isSelected
                           ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs'
                           : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400'
@@ -175,12 +175,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
                         <button
                           type="button"
                           onClick={(e) => handleRemoveCustomTag(tag, e)}
-                          className={`p-1 sm:p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/20 transition ${
+                          className={`p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/20 transition ${
                             isSelected ? 'text-white/80 dark:text-slate-900/80' : 'text-slate-400 hover:text-slate-600'
                           }`}
                           title="Remove tag"
                         >
-                          <X className="w-3 h-3 sm:w-2.5 sm:h-2.5" />
+                          <X className="w-2.5 h-2.5" />
                         </button>
                       )}
                     </div>
@@ -189,9 +189,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
               </div>
 
               {/* Add Custom Tag Input */}
-              <div className="flex items-center gap-2 sm:gap-1.5">
+              <div className="flex items-center gap-1.5">
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono">#</span>
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono">#</span>
                   <input
                     type="text"
                     value={customTagInput}
@@ -203,35 +203,35 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
                       }
                     }}
                     placeholder="New tag (e.g. Lab, Exam, Thesis)..."
-                    className="w-full pl-7 pr-3 py-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white font-mono transition"
+                    className="w-full pl-6 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white font-mono transition"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleAddCustomTag}
                   disabled={!customTagInput.trim()}
-                  className="px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 transition flex items-center gap-1 shrink-0 min-h-[44px] sm:min-h-0"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 transition flex items-center gap-1 shrink-0"
                 >
-                  <Plus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>Add</span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Sticky Thumb-Friendly Action Bar */}
-          <div className="px-4 py-3 sm:px-5 sm:py-3.5 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
+          {/* Action Bar */}
+          <div className="px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
             <button
               type="button"
               onClick={requestClose}
-              className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0 cursor-pointer"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs min-h-[42px] sm:min-h-0 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs cursor-pointer"
             >
               {isSubmitting ? 'Saving...' : 'Save Task'}
             </button>
