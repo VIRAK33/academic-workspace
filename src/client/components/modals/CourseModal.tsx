@@ -198,12 +198,17 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-xl rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[85dvh] sm:max-h-[88vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-xl rounded-t-2xl sm:rounded-xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92dvh] sm:max-h-[88vh] flex flex-col">
+        {/* Mobile Sheet Drag Indicator */}
+        <div className="pt-2.5 pb-0.5 flex justify-center sm:hidden shrink-0">
+          <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
+        </div>
+
         {/* Modal Header */}
         <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               {editingCourse ? `Edit Course: ${editingCourse.code}` : 'Add University Course'}
             </h3>
             {editingCourse && (
@@ -212,236 +217,237 @@ export const CourseModal: React.FC<CourseModalProps> = ({ ws, isOpen, onClose, e
               </span>
             )}
           </div>
-          <button type="button" onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+          <button type="button" onClick={onClose} className="p-2 sm:p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-3.5 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1">
-          
-          {/* Row 1: Code, Title, Color */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Code</label>
-              <input
-                type="text"
-                required
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="CS801"
-                className="w-full px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Course Title</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Foundations of Deep Learning"
-                className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                autoFocus
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Badge Color</label>
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="w-full h-8 p-0.5 rounded border border-slate-200 dark:border-slate-700 cursor-pointer bg-white dark:bg-slate-800"
-              />
-            </div>
-          </div>
-
-          {/* Row 2: Location, Teacher */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Room / Location</label>
-              <input
-                type="text"
-                required
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Turing Hall 101"
-                className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Instructor</label>
-              <input
-                type="text"
-                value={teacher}
-                onChange={(e) => setTeacher(e.target.value)}
-                placeholder="Prof. Alan Turing"
-                className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-              />
-            </div>
-          </div>
-
-          {/* Weekly Schedules Section (Supports 2 or more meetings per week) */}
-          <div className="space-y-3 pt-1">
-            <div className="flex items-center justify-between">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+            {/* Row 1: Code, Title, Color */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
-                  <span>Weekly Meeting Times ({schedules.length} per week)</span>
-                </label>
-                <p className="text-[11px] text-slate-400">Add multiple meeting days if your course meets 2, 3 or more times per week</p>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Code</label>
+                <input
+                  type="text"
+                  required
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="CS801"
+                  className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                />
               </div>
-
-              <button
-                type="button"
-                onClick={handleAddMeetingTime}
-                className="px-2.5 py-1 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Add Meeting Day</span>
-              </button>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Course Title</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Foundations of Deep Learning"
+                  className="w-full px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Badge Color</label>
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="w-full h-11 sm:h-9 p-1 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer bg-white dark:bg-slate-800"
+                />
+              </div>
             </div>
 
-            <div className="space-y-3">
-              {schedules.map((item, idx) => {
-                const bounds = computeMergedBounds(item.sessions);
-                return (
-                  <div
-                    key={idx}
-                    className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2.5"
+            {/* Row 2: Location, Teacher */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Room / Location</label>
+                <input
+                  type="text"
+                  required
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Turing Hall 101"
+                  className="w-full px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Instructor</label>
+                <input
+                  type="text"
+                  value={teacher}
+                  onChange={(e) => setTeacher(e.target.value)}
+                  placeholder="Prof. Alan Turing"
+                  className="w-full px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                />
+              </div>
+            </div>
+
+            {/* Weekly Schedules Section (Supports 2 or more meetings per week) */}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
+                    <span>Weekly Meeting Times ({schedules.length} per week)</span>
+                  </label>
+                  <p className="text-[11px] text-slate-400">Add multiple meeting days if your course meets 2, 3 or more times per week</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddMeetingTime}
+                  className="px-3 py-2 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1 min-h-[38px] sm:min-h-0"
+                >
+                  <Plus className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                  <span>Add Day</span>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {schedules.map((item, idx) => {
+                  const bounds = computeMergedBounds(item.sessions);
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-mono text-[10px] flex items-center justify-center font-bold">
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            Meeting {idx + 1}:
+                          </span>
+                          <select
+                            value={item.dayOfWeek}
+                            onChange={(e) => handleUpdateScheduleDay(idx, parseInt(e.target.value, 10))}
+                            className="px-3 py-2 sm:px-2 sm:py-1 text-base sm:text-xs min-h-[40px] sm:min-h-[32px] font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                          >
+                            <option value={1}>Monday</option>
+                            <option value={2}>Tuesday</option>
+                            <option value={3}>Wednesday</option>
+                            <option value={4}>Thursday</option>
+                            <option value={5}>Friday</option>
+                            <option value={6}>Saturday</option>
+                            <option value={7}>Sunday</option>
+                          </select>
+                        </div>
+
+                        {schedules.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMeetingTime(idx)}
+                            className="text-slate-400 hover:text-rose-600 p-2 sm:p-1 rounded-lg transition min-h-[36px] sm:min-h-0 flex items-center justify-center"
+                            title="Remove this meeting day"
+                          >
+                            <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Session Selector for this meeting */}
+                      <div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                          Select Session Slot(s) on {DAY_NAMES_FULL[item.dayOfWeek]}:
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-1.5">
+                          {timeSlots.map(ts => {
+                            const checked = item.sessions.includes(ts.session);
+                            return (
+                              <button
+                                key={ts.session}
+                                type="button"
+                                onClick={() => handleToggleScheduleSession(idx, ts.session)}
+                                className={`p-2.5 sm:p-2 rounded-lg border text-left transition min-h-[44px] sm:min-h-[36px] ${
+                                  checked
+                                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white font-semibold shadow-xs'
+                                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                                }`}
+                              >
+                                <div className="text-xs font-mono font-medium">S{ts.session}</div>
+                                <div className={`text-[10px] font-mono ${checked ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'}`}>
+                                  {ts.startTime}–{ts.endTime}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Merged Window Preview */}
+                      <div className="px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+                        <span className="text-slate-500 dark:text-slate-400 font-sans">
+                          Calculated Time Window:
+                        </span>
+                        <span className="font-mono font-medium text-slate-900 dark:text-white">
+                          {DAY_NAMES_SHORT[item.dayOfWeek]} S{item.sessions.join('+')} ({bounds.startTime} – {bounds.endTime})
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Active Weeks */}
+            <div className="pt-1">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">Active Weeks</label>
+                <div className="flex items-center gap-2 sm:gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setWeeksStr('1-16')}
+                    className="text-xs sm:text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline p-1"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-mono text-[10px] flex items-center justify-center font-bold">
-                          {idx + 1}
-                        </span>
-                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                          Meeting {idx + 1}:
-                        </span>
-                        <select
-                          value={item.dayOfWeek}
-                          onChange={(e) => handleUpdateScheduleDay(idx, parseInt(e.target.value, 10))}
-                          className="px-2 py-1 text-xs font-semibold rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                        >
-                          <option value={1}>Monday</option>
-                          <option value={2}>Tuesday</option>
-                          <option value={3}>Wednesday</option>
-                          <option value={4}>Thursday</option>
-                          <option value={5}>Friday</option>
-                          <option value={6}>Saturday</option>
-                          <option value={7}>Sunday</option>
-                        </select>
-                      </div>
-
-                      {schedules.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveMeetingTime(idx)}
-                          className="text-slate-400 hover:text-rose-600 p-1 rounded transition"
-                          title="Remove this meeting day"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Session Selector for this meeting */}
-                    <div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1">
-                        Select Session Slot(s) on {DAY_NAMES_FULL[item.dayOfWeek]}:
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
-                        {timeSlots.map(ts => {
-                          const checked = item.sessions.includes(ts.session);
-                          return (
-                            <button
-                              key={ts.session}
-                              type="button"
-                              onClick={() => handleToggleScheduleSession(idx, ts.session)}
-                              className={`p-2 rounded border text-left transition ${
-                                checked
-                                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white font-semibold shadow-xs'
-                                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-400'
-                              }`}
-                            >
-                              <div className="text-xs font-mono">S{ts.session}</div>
-                              <div className={`text-[10px] font-mono ${checked ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'}`}>
-                                {ts.startTime}–{ts.endTime}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Merged Window Preview */}
-                    <div className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
-                      <span className="text-slate-500 dark:text-slate-400 font-sans">
-                        Calculated Time Window:
-                      </span>
-                      <span className="font-mono font-medium text-slate-900 dark:text-white">
-                        {DAY_NAMES_SHORT[item.dayOfWeek]} S{item.sessions.join('+')} ({bounds.startTime} – {bounds.endTime})
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Active Weeks */}
-          <div className="pt-1">
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">Active Weeks</label>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setWeeksStr('1-16')}
-                  className="text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline"
-                >
-                  1-16
-                </button>
-                <span>·</span>
-                <button
-                  type="button"
-                  onClick={() => setWeeksStr('6-17')}
-                  className="text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline"
-                >
-                  6-17
-                </button>
-                <span>·</span>
-                <button
-                  type="button"
-                  onClick={() => setWeeksStr(`1-${viewedSemester.totalWeeks}`)}
-                  className="text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline"
-                >
-                  All 1-{viewedSemester.totalWeeks}
-                </button>
+                    1-16
+                  </button>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={() => setWeeksStr('6-17')}
+                    className="text-xs sm:text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline p-1"
+                  >
+                    6-17
+                  </button>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={() => setWeeksStr(`1-${viewedSemester.totalWeeks}`)}
+                    className="text-xs sm:text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white underline p-1"
+                  >
+                    All 1-{viewedSemester.totalWeeks}
+                  </button>
+                </div>
               </div>
+              <input
+                type="text"
+                required
+                value={weeksStr}
+                onChange={(e) => setWeeksStr(e.target.value)}
+                placeholder="e.g. 1-16 or 6-17 or 1-4, 9-14"
+                className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+              />
             </div>
-            <input
-              type="text"
-              required
-              value={weeksStr}
-              onChange={(e) => setWeeksStr(e.target.value)}
-              placeholder="e.g. 1-16 or 6-17 or 1-4, 9-14"
-              className="w-full px-2.5 py-1.5 text-xs font-mono rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-            />
           </div>
 
-          {/* Action Buttons */}
-          <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+          {/* Sticky Thumb-Friendly Action Bar */}
+          <div className="px-4 py-3 sm:px-5 sm:py-3.5 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 rounded text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs"
+              className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs min-h-[42px] sm:min-h-0"
             >
               {isSubmitting ? 'Saving...' : editingCourse ? 'Save Changes' : 'Create Course'}
             </button>

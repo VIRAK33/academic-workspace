@@ -206,508 +206,515 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[88vh]">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-2xl sm:rounded-xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh]">
+        {/* Mobile Sheet Drag Indicator */}
+        <div className="pt-2.5 pb-0.5 flex justify-center sm:hidden shrink-0">
+          <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
+        </div>
+
         {/* Modal Header */}
         <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40 shrink-0">
           <div>
-            <h3 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {initialEvent ? 'Edit' : 'Add'}
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               Add a recurring routine habit or one-off academic event
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body Form */}
-        <form onSubmit={handleSubmit} className="p-3.5 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1">
-          {/* Type Switcher */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-              Commitment Type
-            </label>
-            <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setType('routine')}
-                className={`py-2 px-3 text-xs font-medium rounded-md transition flex items-center justify-center gap-1.5 ${
-                  type === 'routine'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Twemoji emoji="🔁" className="w-3.5 h-3.5" />
-                <span>Recurring Routine</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setType('event')}
-                className={`py-2 px-3 text-xs font-medium rounded-md transition flex items-center justify-center gap-1.5 ${
-                  type === 'event'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Twemoji emoji="📅" className="w-3.5 h-3.5" />
-                <span>One-Off Event</span>
-              </button>
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              {type === 'routine'
-                ? 'Repeats every week (e.g. Morning gym, focus study hours, lab meeting).'
-                : 'Occurs on a single date (e.g. Midterm exam, project presentation, thesis check-in).'}
-            </p>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Title <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={type === 'routine' ? 'e.g. Morning Workout / Gym' : 'e.g. CS820 Midterm Exam'}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
-            />
-          </div>
-
-          {/* Category Presets */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Category
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {CATEGORY_PRESETS.map((cat) => (
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+            {/* Type Switcher */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                Commitment Type
+              </label>
+              <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
                 <button
-                  key={cat.name}
                   type="button"
-                  onClick={() => {
-                    setCategory(cat.name);
-                    setColor(cat.color);
-                  }}
-                  className={`px-2.5 py-1 text-xs rounded-md transition border flex items-center gap-1.5 ${
-                    category === cat.name
-                      ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
-                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                  onClick={() => setType('routine')}
+                  className={`py-2.5 sm:py-2 px-3 text-xs sm:text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 min-h-[42px] sm:min-h-[36px] ${
+                    type === 'routine'
+                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <Twemoji emoji={cat.icon} className="w-3.5 h-3.5" />
-                  <span>{cat.name}</span>
+                  <Twemoji emoji="🔁" className="w-3.5 h-3.5" />
+                  <span>Recurring Routine</span>
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Schedule Configuration */}
-          {type === 'routine' ? (
-            <div className="space-y-3 p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-lg border border-slate-200/80 dark:border-slate-800">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  Repeats on Days
-                </label>
-                <div className="grid grid-cols-7 gap-1">
-                  {[1, 2, 3, 4, 5, 6, 7].map((d) => {
-                    const isSelected = daysOfWeek.includes(d);
-                    const isWeekend = d >= 6;
-                    return (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => toggleDayOfWeek(d)}
-                        className={`py-1.5 text-xs font-mono font-medium rounded-md transition text-center ${
-                          isSelected
-                            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
-                            : isWeekend
-                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200/70'
-                            : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                        }`}
-                      >
-                        {DAY_NAMES_SHORT[d]}
-                      </button>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setType('event')}
+                  className={`py-2.5 sm:py-2 px-3 text-xs sm:text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 min-h-[42px] sm:min-h-[36px] ${
+                    type === 'event'
+                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Twemoji emoji="📅" className="w-3.5 h-3.5" />
+                  <span>One-Off Event</span>
+                </button>
               </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Active Weeks
-                </label>
-                <div className="grid grid-cols-3 gap-1.5 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setActiveWeeksPreset('all')}
-                    className={`py-1 px-2 rounded border text-center transition ${
-                      activeWeeksPreset === 'all'
-                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    All Weeks (1–{viewedSemester.totalWeeks})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveWeeksPreset('odd')}
-                    className={`py-1 px-2 rounded border text-center transition ${
-                      activeWeeksPreset === 'odd'
-                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    Odd Weeks
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveWeeksPreset('even')}
-                    className={`py-1 px-2 rounded border text-center transition ${
-                      activeWeeksPreset === 'even'
-                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    Even Weeks
-                  </button>
-                </div>
-              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {type === 'routine'
+                  ? 'Repeats every week (e.g. Morning gym, focus study hours, lab meeting).'
+                  : 'Occurs on a single date (e.g. Midterm exam, project presentation, thesis check-in).'}
+              </p>
             </div>
-          ) : (
-            <div className="p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-lg border border-slate-200/80 dark:border-slate-800 space-y-3">
-              {/* Event Duration Selector: Single Day vs Multi-Day */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                  Event Duration
-                </label>
-                <div className="grid grid-cols-2 gap-1.5 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMultiDay(false);
-                      setEndDate(specificDate);
-                    }}
-                    className={`py-1.5 px-2.5 text-xs font-medium rounded-md transition flex items-center justify-center gap-1.5 ${
-                      !isMultiDay
-                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-semibold'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Twemoji emoji="📅" className="w-3.5 h-3.5" />
-                    <span>Single Day</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMultiDay(true);
-                      if (!endDate || endDate <= specificDate) {
-                        setEndDate(specificDate);
-                      }
-                    }}
-                    className={`py-1.5 px-2.5 text-xs font-medium rounded-md transition flex items-center justify-center gap-1.5 ${
-                      isMultiDay
-                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-semibold'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Twemoji emoji="🗓️" className="w-3.5 h-3.5" />
-                    <span>Multi-Day Range</span>
-                  </button>
-                </div>
-              </div>
 
-              {!isMultiDay ? (
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Event Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={specificDate}
-                    onChange={(e) => handleStartDateChange(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1 font-mono">
-                    {DAY_NAMES_FULL[getIsoDayOfWeek(specificDate)]}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Start Date <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={specificDate}
-                        onChange={(e) => handleStartDateChange(e.target.value)}
-                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
-                      />
-                      <span className="text-[10px] text-slate-400 font-mono block mt-0.5 truncate">
-                        {DAY_NAMES_SHORT[getIsoDayOfWeek(specificDate)]}
-                      </span>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        End Date <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        min={specificDate}
-                        value={endDate}
-                        onChange={(e) => handleEndDateChange(e.target.value)}
-                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
-                      />
-                      <span className="text-[10px] text-slate-400 font-mono block mt-0.5 truncate">
-                        {DAY_NAMES_SHORT[getIsoDayOfWeek(endDate)]}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Span calculation banner */}
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-700 dark:text-indigo-300 text-xs">
-                    <span className="flex items-center gap-1.5 font-medium">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Span: {daysSpan} Day{daysSpan > 1 ? 's' : ''}</span>
-                    </span>
-                    <span className="font-mono text-[11px] opacity-80">
-                      {specificDate} <ArrowRight className="inline w-3 h-3 mx-0.5" /> {endDate}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* All-Day Event Toggle */}
-              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={isAllDay}
-                    onChange={(e) => setIsAllDay(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-slate-900 focus:ring-slate-900 dark:focus:ring-white accent-slate-900 dark:accent-white"
-                  />
-                  <div>
-                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                      All-Day Event
-                    </span>
-                    <p className="text-[10px] text-slate-400">
-                      Spans entire day(s) without fixed hours
-                    </p>
-                  </div>
-                </label>
-                {isAllDay && (
-                  <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
-                    24h Full Day
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Time & Session Selection */}
-          {isAllDay ? (
-            <div className="p-3 rounded-lg border border-amber-200/70 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 flex items-center gap-2 text-xs">
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span>All-day commitment active. Spans the entire schedule without session slots.</span>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Time Schedule
-                </label>
-                <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useSessionSlot}
-                    onChange={(e) => setUseSessionSlot(e.target.checked)}
-                    className="rounded accent-slate-900 dark:accent-white text-slate-900 focus:ring-slate-900 h-3.5 w-3.5"
-                  />
-                  <span>Snap to session slot</span>
-                </label>
-              </div>
-
-              {useSessionSlot ? (
-                <div>
-                  <select
-                    value={selectedSession}
-                    onChange={(e) => handleSessionChange(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white"
-                  >
-                    {timeSlots.map((ts) => (
-                      <option key={ts.session} value={ts.session}>
-                        Session {ts.session} ({ts.startTime}–{ts.endTime})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
-                      Start Time
-                    </label>
-                    <input
-                      type="time"
-                      required
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
-                      End Time
-                    </label>
-                    <input
-                      type="time"
-                      required
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Location & Notes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Title */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Location / Link (Optional)
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Title <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Science Library 3F, Gym"
-                className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={type === 'routine' ? 'e.g. Morning Workout / Gym' : 'e.g. CS820 Midterm Exam'}
+                className="w-full px-3.5 py-2.5 sm:px-3 sm:py-2 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
               />
             </div>
+
+            {/* Category Presets */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Color Tag
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Category
               </label>
-              <div className="flex items-center gap-1.5 h-8">
-                {COLOR_PALETTE.map((c) => (
+              <div className="flex flex-wrap gap-2 sm:gap-1.5">
+                {CATEGORY_PRESETS.map((cat) => (
                   <button
-                    key={c}
+                    key={cat.name}
                     type="button"
-                    onClick={() => setColor(c)}
-                    className={`w-6 h-6 rounded-full transition flex items-center justify-center ${
-                      color === c ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white scale-110' : 'hover:scale-105'
+                    onClick={() => {
+                      setCategory(cat.name);
+                      setColor(cat.color);
+                    }}
+                    className={`px-3 py-2 sm:px-2.5 sm:py-1 text-xs rounded-lg sm:rounded-md transition border flex items-center gap-1.5 min-h-[38px] sm:min-h-[28px] ${
+                      category === cat.name
+                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
                     }`}
-                    style={{ backgroundColor: c }}
                   >
-                    {color === c && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                    <Twemoji emoji={cat.icon} className="w-3.5 h-3.5" />
+                    <span>{cat.name}</span>
                   </button>
                 ))}
               </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Notes (Optional)
-            </label>
-            <textarea
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Bring calculator, formula sheet, cardio routine details"
-              className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-            />
-          </div>
+            {/* Schedule Configuration */}
+            {type === 'routine' ? (
+              <div className="space-y-3 p-3.5 sm:p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Repeats on Days
+                  </label>
+                  <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+                    {[1, 2, 3, 4, 5, 6, 7].map((d) => {
+                      const isSelected = daysOfWeek.includes(d);
+                      const isWeekend = d >= 6;
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => toggleDayOfWeek(d)}
+                          className={`py-2.5 sm:py-1.5 min-h-[42px] sm:min-h-[32px] text-xs font-mono font-medium rounded-lg sm:rounded-md transition text-center flex items-center justify-center ${
+                            isSelected
+                              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                              : isWeekend
+                              ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200/70'
+                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          {DAY_NAMES_SHORT[d]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-          {/* Live Preview Card */}
-          <div className="rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-slate-400" />
-                <span>Schedule Preview</span>
-              </span>
-              <span
-                className="text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold"
-                style={{ backgroundColor: `${color}18`, color }}
-              >
-                {category}
-              </span>
-            </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Active Weeks
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setActiveWeeksPreset('all')}
+                      className={`py-2 sm:py-1 px-2 min-h-[38px] sm:min-h-[28px] rounded-lg sm:rounded border text-center transition flex items-center justify-center ${
+                        activeWeeksPreset === 'all'
+                          ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      All ({viewedSemester.totalWeeks}w)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveWeeksPreset('odd')}
+                      className={`py-2 sm:py-1 px-2 min-h-[38px] sm:min-h-[28px] rounded-lg sm:rounded border text-center transition flex items-center justify-center ${
+                        activeWeeksPreset === 'odd'
+                          ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      Odd Weeks
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveWeeksPreset('even')}
+                      className={`py-2 sm:py-1 px-2 min-h-[38px] sm:min-h-[28px] rounded-lg sm:rounded border text-center transition flex items-center justify-center ${
+                        activeWeeksPreset === 'even'
+                          ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs ring-1 ring-slate-900/20 dark:ring-white/20'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      Even Weeks
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3.5 sm:p-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+                {/* Event Duration Selector: Single Day vs Multi-Day */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    Event Duration
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMultiDay(false);
+                        setEndDate(specificDate);
+                      }}
+                      className={`py-2 sm:py-1.5 px-2.5 text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[32px] ${
+                        !isMultiDay
+                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-semibold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Twemoji emoji="📅" className="w-3.5 h-3.5" />
+                      <span>Single Day</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMultiDay(true);
+                        if (!endDate || endDate <= specificDate) {
+                          setEndDate(specificDate);
+                        }
+                      }}
+                      className={`py-2 sm:py-1.5 px-2.5 text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[32px] ${
+                        isMultiDay
+                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs font-semibold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Twemoji emoji="🗓️" className="w-3.5 h-3.5" />
+                      <span>Multi-Day Range</span>
+                    </button>
+                  </div>
+                </div>
 
-            <div
-              className="p-2.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-start gap-2.5"
-              style={{ borderLeftWidth: '3.5px', borderLeftColor: color }}
-            >
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                    {title.trim() || 'Untitled Commitment'}
-                  </span>
-                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
-                    {type === 'routine'
-                      ? 'Routine'
-                      : isMultiDay
-                      ? `${daysSpan} Days Span`
-                      : 'One-Off'}
-                  </span>
-                  {type === 'event' && isAllDay && (
-                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-semibold border border-amber-200 dark:border-amber-800/60">
-                      All-Day
+                {!isMultiDay ? (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Event Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={specificDate}
+                      onChange={(e) => handleStartDateChange(e.target.value)}
+                      className="w-full px-3.5 py-2.5 sm:px-3 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1 font-mono">
+                      {DAY_NAMES_FULL[getIsoDayOfWeek(specificDate)]}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-2">
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          Start Date <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={specificDate}
+                          onChange={(e) => handleStartDateChange(e.target.value)}
+                          className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                        />
+                        <span className="text-[10px] text-slate-400 font-mono block mt-0.5 truncate">
+                          {DAY_NAMES_SHORT[getIsoDayOfWeek(specificDate)]}
+                        </span>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          End Date <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          min={specificDate}
+                          value={endDate}
+                          onChange={(e) => handleEndDateChange(e.target.value)}
+                          className="w-full px-3 py-2.5 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                        />
+                        <span className="text-[10px] text-slate-400 font-mono block mt-0.5 truncate">
+                          {DAY_NAMES_SHORT[getIsoDayOfWeek(endDate)]}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Span calculation banner */}
+                    <div className="flex items-center justify-between p-2.5 sm:p-2 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-700 dark:text-indigo-300 text-xs">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Span: {daysSpan} Day{daysSpan > 1 ? 's' : ''}</span>
+                      </span>
+                      <span className="font-mono text-[11px] opacity-80">
+                        {specificDate} <ArrowRight className="inline w-3 h-3 mx-0.5" /> {endDate}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* All-Day Event Toggle */}
+                <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isAllDay}
+                      onChange={(e) => setIsAllDay(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-slate-900 focus:ring-slate-900 dark:focus:ring-white accent-slate-900 dark:accent-white"
+                    />
+                    <div>
+                      <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                        All-Day Event
+                      </span>
+                      <p className="text-[10px] text-slate-400">
+                        Spans entire day(s) without fixed hours
+                      </p>
+                    </div>
+                  </label>
+                  {isAllDay && (
+                    <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                      24h Full Day
                     </span>
                   )}
                 </div>
+              </div>
+            )}
 
-                <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono flex-wrap">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-slate-400" />
-                    <span>
-                      {type === 'routine'
-                        ? daysOfWeek.map((d) => DAY_NAMES_SHORT[d]).join(', ')
-                        : isMultiDay && endDate !== specificDate
-                        ? `${specificDate} → ${endDate}`
-                        : specificDate}
+            {/* Time & Session Selection */}
+            {isAllDay ? (
+              <div className="p-3 rounded-lg border border-amber-200/70 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 flex items-center gap-2 text-xs">
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span>All-day commitment active. Spans the entire schedule without session slots.</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Time Schedule
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useSessionSlot}
+                      onChange={(e) => setUseSessionSlot(e.target.checked)}
+                      className="rounded accent-slate-900 dark:accent-white text-slate-900 focus:ring-slate-900 h-4 w-4"
+                    />
+                    <span>Snap to session slot</span>
+                  </label>
+                </div>
+
+                {useSessionSlot ? (
+                  <div>
+                    <select
+                      value={selectedSession}
+                      onChange={(e) => handleSessionChange(e.target.value)}
+                      className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                    >
+                      {timeSlots.map((ts) => (
+                        <option key={ts.session} value={ts.session}>
+                          Session {ts.session} ({ts.startTime}–{ts.endTime})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                    <div>
+                      <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
+                        Start Time
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full px-3 py-2 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
+                        End Time
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full px-3 py-2 sm:px-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Location & Notes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Location / Link (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. Science Library 3F, Gym"
+                  className="w-full px-3.5 py-2.5 sm:px-3 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Color Tag
+                </label>
+                <div className="flex items-center gap-2 sm:gap-1.5 h-9 sm:h-8">
+                  {COLOR_PALETTE.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setColor(c)}
+                      className={`w-7 h-7 sm:w-6 sm:h-6 rounded-full transition flex items-center justify-center shrink-0 ${
+                        color === c ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white scale-110' : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: c }}
+                    >
+                      {color === c && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Notes (Optional)
+              </label>
+              <textarea
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g. Bring calculator, formula sheet, cardio routine details"
+                className="w-full px-3.5 py-2.5 sm:px-3 sm:py-1.5 text-base sm:text-xs min-h-[72px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+              />
+            </div>
+
+            {/* Live Preview Card */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-slate-400" />
+                  <span>Schedule Preview</span>
+                </span>
+                <span
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold"
+                  style={{ backgroundColor: `${color}18`, color }}
+                >
+                  {category}
+                </span>
+              </div>
+
+              <div
+                className="p-3 sm:p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xs flex items-start gap-2.5"
+                style={{ borderLeftWidth: '3.5px', borderLeftColor: color }}
+              >
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs sm:text-xs font-bold text-slate-900 dark:text-white truncate">
+                      {title.trim() || 'Untitled Commitment'}
                     </span>
-                  </span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-slate-400" />
-                    <span>{isAllDay ? 'All Day' : `${startTime}–${endTime}`}</span>
-                  </span>
-                  {location.trim() && (
-                    <>
-                      <span>·</span>
-                      <span className="truncate max-w-[120px]">{location.trim()}</span>
-                    </>
-                  )}
+                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                      {type === 'routine'
+                        ? 'Routine'
+                        : isMultiDay
+                        ? `${daysSpan} Days Span`
+                        : 'One-Off'}
+                    </span>
+                    {type === 'event' && isAllDay && (
+                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-semibold border border-amber-200 dark:border-amber-800/60">
+                        All-Day
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-slate-400" />
+                      <span>
+                        {type === 'routine'
+                          ? daysOfWeek.map((d) => DAY_NAMES_SHORT[d]).join(', ')
+                          : isMultiDay && endDate !== specificDate
+                          ? `${specificDate} → ${endDate}`
+                          : specificDate}
+                      </span>
+                    </span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      <span>{isAllDay ? 'All Day' : `${startTime}–${endTime}`}</span>
+                    </span>
+                    {location.trim() && (
+                      <>
+                        <span>·</span>
+                        <span className="truncate max-w-[120px]">{location.trim()}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Footer Actions */}
-          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          {/* Sticky Thumb-Friendly Action Bar */}
+          <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs flex items-center justify-between shrink-0 z-10">
             {initialEvent ? (
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-1"
+                className="px-3.5 py-2.5 sm:py-1.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition flex items-center gap-1.5 min-h-[42px] sm:min-h-0"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                 <span>Delete</span>
               </button>
             ) : <div />}
@@ -716,14 +723,14 @@ export const EventModal: React.FC<EventModalProps> = ({ ws, isOpen, onClose, ini
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition shadow-xs disabled:opacity-50"
+                className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 transition shadow-xs disabled:opacity-50 min-h-[42px] sm:min-h-0"
               >
                 {isSubmitting ? 'Saving...' : initialEvent ? 'Save Changes' : 'Add to Schedule'}
               </button>

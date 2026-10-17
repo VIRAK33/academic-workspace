@@ -91,144 +91,152 @@ export const TaskModal: React.FC<TaskModalProps> = ({ ws, isOpen, onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-xl sm:rounded-lg shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[85dvh] sm:max-h-[88vh] flex flex-col">
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">New Task</h3>
-          <button type="button" onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-xl shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92dvh] sm:max-h-[88vh] flex flex-col">
+        {/* Mobile Sheet Drag Indicator */}
+        <div className="pt-2.5 pb-0.5 flex justify-center sm:hidden shrink-0">
+          <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
+        </div>
+
+        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">New Task</h3>
+          <button type="button" onClick={onClose} className="p-2 sm:p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-3.5 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Draft ablation study for Graph-RAG paper..."
-              className="w-full px-3 py-2 text-xs sm:text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-slate-900 dark:focus:border-slate-400"
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Due Date</label>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setDueDate(getTodayIsoDate())}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition ${
-                  dueDate === getTodayIsoDate()
-                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                Today
-              </button>
-              <button
-                type="button"
-                onClick={() => setDueDate(addDays(getTodayIsoDate(), 1))}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition ${
-                  dueDate === addDays(getTodayIsoDate(), 1)
-                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                Tomorrow
-              </button>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
               <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="ml-auto text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 font-mono text-slate-700 dark:text-slate-200"
+                type="text"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g., Draft ablation study for Graph-RAG paper..."
+                className="w-full px-3.5 py-2.5 sm:px-3 sm:py-2 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
+                autoFocus
               />
             </div>
-          </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">Tags</label>
-              <span className="text-[11px] text-slate-400">Select or add custom tags</span>
-            </div>
-            
-            {/* Tag Badges */}
-            <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
-              {availableTags.map(tag => {
-                const isSelected = selectedTags.includes(tag);
-                const isCustom = !PRESET_TAGS.includes(tag);
-                return (
-                  <div
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium border cursor-pointer select-none transition ${
-                      isSelected
-                        ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs'
-                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400'
-                    }`}
-                  >
-                    <span>{tag}</span>
-                    {isCustom && (
-                      <button
-                        type="button"
-                        onClick={(e) => handleRemoveCustomTag(tag, e)}
-                        className={`p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/20 transition ${
-                          isSelected ? 'text-white/80 dark:text-slate-900/80' : 'text-slate-400 hover:text-slate-600'
-                        }`}
-                        title="Remove tag"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Add Custom Tag Input */}
-            <div className="flex items-center gap-1.5">
-              <div className="relative flex-1">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono">#</span>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Due Date</label>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setDueDate(getTodayIsoDate())}
+                  className={`px-3 py-2 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium transition min-h-[38px] sm:min-h-0 flex items-center justify-center ${
+                    dueDate === getTodayIsoDate()
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDueDate(addDays(getTodayIsoDate(), 1))}
+                  className={`px-3 py-2 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium transition min-h-[38px] sm:min-h-0 flex items-center justify-center ${
+                    dueDate === addDays(getTodayIsoDate(), 1)
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  Tomorrow
+                </button>
                 <input
-                  type="text"
-                  value={customTagInput}
-                  onChange={(e) => setCustomTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddCustomTag();
-                    }
-                  }}
-                  placeholder="New tag (e.g. Lab, Exam, Presentation)..."
-                  className="w-full pl-6 pr-3 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-slate-900 dark:focus:border-slate-400 font-mono"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full sm:w-auto sm:ml-auto text-base sm:text-xs min-h-[40px] sm:min-h-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition"
                 />
               </div>
-              <button
-                type="button"
-                onClick={handleAddCustomTag}
-                disabled={!customTagInput.trim()}
-                className="px-2.5 py-1.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 transition flex items-center gap-1 shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Tag</span>
-              </button>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">Tags</label>
+                <span className="text-[11px] text-slate-400">Select or add custom tags</span>
+              </div>
+              
+              {/* Tag Badges */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-1.5 mb-2.5">
+                {availableTags.map(tag => {
+                  const isSelected = selectedTags.includes(tag);
+                  const isCustom = !PRESET_TAGS.includes(tag);
+                  return (
+                    <div
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-2 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium border cursor-pointer select-none transition min-h-[38px] sm:min-h-0 ${
+                        isSelected
+                          ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs'
+                          : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                      }`}
+                    >
+                      <span>{tag}</span>
+                      {isCustom && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleRemoveCustomTag(tag, e)}
+                          className={`p-1 sm:p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/20 transition ${
+                            isSelected ? 'text-white/80 dark:text-slate-900/80' : 'text-slate-400 hover:text-slate-600'
+                          }`}
+                          title="Remove tag"
+                        >
+                          <X className="w-3 h-3 sm:w-2.5 sm:h-2.5" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add Custom Tag Input */}
+              <div className="flex items-center gap-2 sm:gap-1.5">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono">#</span>
+                  <input
+                    type="text"
+                    value={customTagInput}
+                    onChange={(e) => setCustomTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomTag();
+                      }
+                    }}
+                    placeholder="New tag (e.g. Lab, Exam, Thesis)..."
+                    className="w-full pl-7 pr-3 py-2.5 sm:py-1.5 text-base sm:text-xs min-h-[44px] sm:min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white font-mono transition"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddCustomTag}
+                  disabled={!customTagInput.trim()}
+                  className="px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 transition flex items-center gap-1 shrink-0 min-h-[44px] sm:min-h-0"
+                >
+                  <Plus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                  <span>Add</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+          {/* Sticky Thumb-Friendly Action Bar */}
+          <div className="px-4 py-3 sm:px-5 sm:py-3.5 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shrink-0 z-10">
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 rounded text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-h-[42px] sm:min-h-0"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs"
+              className="px-5 py-2.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 disabled:opacity-50 transition shadow-xs min-h-[42px] sm:min-h-0"
             >
               {isSubmitting ? 'Saving...' : 'Save Task'}
             </button>
