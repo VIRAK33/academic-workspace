@@ -191,7 +191,7 @@ export const api = {
     try {
       const res = await fetch('/api/semesters', { headers: getAuthHeaders() });
       const data = await parseJsonResponse<Semester[]>(res);
-      if (data && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     } catch (e) {}
     return localDb.getSemesters();
   },
@@ -567,6 +567,31 @@ export const api = {
       '',
       '---\n*Academic Workspace*',
     ].join('\n');
+  },
+
+  // Sample Data & Workspace Reset
+  async loadSampleData(): Promise<boolean> {
+    try {
+      const res = await fetch('/api/workspace/sample-data', {
+        method: 'POST',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
+
+  async clearWorkspace(): Promise<boolean> {
+    try {
+      const res = await fetch('/api/workspace/clear', {
+        method: 'POST',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   },
 
   // Backup / Restore

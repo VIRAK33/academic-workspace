@@ -157,7 +157,7 @@ export function formatCourseDurationWeeks(weeks?: number[], totalWeeks?: number)
 }
 
 
-export function useWorkspace() {
+export function useWorkspace(currentUserId?: string) {
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -345,25 +345,47 @@ export function useWorkspace() {
       api.getServerTime(),
       api.getAttendanceRecords(),
     ]);
-    setSemesters(sems);
-    setTimeSlots(deduplicateTimeSlots(slots));
-    setCourses(crs);
-    setTasks(tks);
-    setKanban(kb);
-    setPapers(pps);
-    setConferences(confs);
-    setExperimentLogs(exps);
-    setAdvisorMeetings(mtgs);
-    setEvents(evts);
+    setSemesters(sems || []);
+    setTimeSlots(deduplicateTimeSlots(slots || []));
+    setCourses(crs || []);
+    setTasks(tks || []);
+    setKanban(kb || []);
+    setPapers(pps || []);
+    setConferences(confs || []);
+    setExperimentLogs(exps || []);
+    setAdvisorMeetings(mtgs || []);
+    setEvents(evts || []);
     setAttendanceRecords(atts || []);
 
-    const active = sems.find(s => s.isActive) || sems[0];
+    const active = sems?.find(s => s.isActive) || sems?.[0];
     if (active) setViewedSemesterId(active.id);
   }, []);
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData, currentUserId]);
+
+  const loadSampleData = useCallback(async () => {
+    const ok = await api.loadSampleData();
+    if (ok) {
+      await loadData();
+      showToast('Loaded sample data successfully');
+    } else {
+      showToast('Please sign in to load sample data into your account');
+    }
+    return ok;
+  }, [loadData, showToast]);
+
+  const clearWorkspace = useCallback(async () => {
+    const ok = await api.clearWorkspace();
+    if (ok) {
+      await loadData();
+      showToast('Cleared workspace data');
+    } else {
+      showToast('Failed to clear workspace');
+    }
+    return ok;
+  }, [loadData, showToast]);
 
   const viewedSemester = useMemo(() => {
     return semesters.find(s => s.id === viewedSemesterId) || semesters[0] || {
@@ -894,6 +916,8 @@ export function useWorkspace() {
     toggleAttendance,
     getCourseAttendanceStats,
     getRoutineAttendanceStats,
+    loadSampleData,
+    clearWorkspace,
     refreshData: loadData,
   };
 }

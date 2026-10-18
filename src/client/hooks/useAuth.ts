@@ -227,6 +227,7 @@ export function useAuth() {
     setUser(null);
     setStoredAuthToken(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem('phd_workspace_offline_v1');
 
     // Revoke GIS prompt if present
     if (typeof (window as any).google?.accounts?.id?.disableAutoSelect === 'function') {

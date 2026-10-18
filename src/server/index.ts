@@ -536,6 +536,23 @@ app.get('/api/storage/file', async (c) => {
   return c.text('File storage simulated in local dev mode.');
 });
 
+// --- SAMPLE DATA & WORKSPACE RESET ---
+app.post('/api/workspace/sample-data', async (c) => {
+  const userId = c.get('userId');
+  if (!userId) return c.json({ success: false, error: 'Unauthorized' }, 401);
+  const db = getDb(c);
+  await db.loadSampleData();
+  return c.json({ success: true });
+});
+
+app.post('/api/workspace/clear', async (c) => {
+  const userId = c.get('userId');
+  if (!userId) return c.json({ success: false, error: 'Unauthorized' }, 401);
+  const db = getDb(c);
+  await db.clearUserData();
+  return c.json({ success: true });
+});
+
 // --- BACKUP & RESTORE ---
 app.get('/api/backup', async (c) => {
   const db = getDb(c);

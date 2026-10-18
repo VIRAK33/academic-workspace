@@ -1139,6 +1139,15 @@ export const ScheduleTimelineView: React.FC<ScheduleTimelineViewProps> = ({
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Task</span>
                     </button>
+                    {courses.length === 0 && events.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => ws.loadSampleData()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition shadow-2xs active:scale-95 cursor-pointer"
+                      >
+                        <span>Try Sample Data</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

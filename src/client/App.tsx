@@ -43,8 +43,8 @@ import { Plus } from 'lucide-react';
 import { Course, ScheduleEvent } from '../types';
 
 export function App() {
-  const ws = useWorkspace();
   const auth = useAuth();
+  const ws = useWorkspace(auth.user?.id);
   const { activeTab, toastMsg } = ws;
 
   // Modal open states

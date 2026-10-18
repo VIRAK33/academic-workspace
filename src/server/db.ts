@@ -25,6 +25,22 @@ export interface DatabaseEnv {
 // In-memory / localStorage fallback store for local development, CLI & offline PWA
 const OFFLINE_STORAGE_KEY = 'phd_workspace_offline_v1';
 
+export function createEmptyWorkspaceData(): WorkspaceData {
+  return {
+    semesters: [],
+    timeSlots: defaultWorkspaceData.timeSlots,
+    courses: [],
+    events: [],
+    tasks: [],
+    kanban: [],
+    papers: [],
+    conferences: [],
+    experimentLogs: [],
+    advisorMeetings: [],
+    attendanceRecords: [],
+  };
+}
+
 function initMemoryStore(): WorkspaceData {
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
@@ -32,8 +48,8 @@ function initMemoryStore(): WorkspaceData {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.semesters) && Array.isArray(parsed.courses) && Array.isArray(parsed.tasks)) {
-          if (!parsed.events) parsed.events = defaultWorkspaceData.events || [];
-          if (!parsed.attendanceRecords) parsed.attendanceRecords = defaultWorkspaceData.attendanceRecords || [];
+          if (!parsed.events) parsed.events = [];
+          if (!parsed.attendanceRecords) parsed.attendanceRecords = [];
           return parsed;
         }
       }
@@ -41,7 +57,7 @@ function initMemoryStore(): WorkspaceData {
       console.warn('Could not read offline workspace storage:', e);
     }
   }
-  return JSON.parse(JSON.stringify(defaultWorkspaceData));
+  return createEmptyWorkspaceData();
 }
 
 let memoryStore: WorkspaceData = initMemoryStore();
@@ -57,7 +73,7 @@ export function syncMemoryStore() {
 }
 
 export function resetOfflineWorkspace(): WorkspaceData {
-  memoryStore = JSON.parse(JSON.stringify(defaultWorkspaceData));
+  memoryStore = createEmptyWorkspaceData();
   syncMemoryStore();
   return memoryStore;
 }
@@ -146,23 +162,10 @@ export class WorkspaceDatabase {
         .run();
 
       const user = await this.getUserById(id);
-      if (user && !existing) {
-        // Seed default template for newly registered user so they have a starter dashboard
-        await this.seedUserDefaultData(id);
-      }
       return user || { id, ...userData, createdAt: now, updatedAt: now };
     }
 
     return { id, ...userData, createdAt: now, updatedAt: now };
-  }
-
-  async seedUserDefaultData(targetUserId: string): Promise<void> {
-    if (!this.d1) return;
-    const scopedDb = new WorkspaceDatabase({ DB: this.d1 }, targetUserId);
-    const existing = await scopedDb.getSemesters();
-    if (existing.length === 0) {
-      await scopedDb.importAll(defaultWorkspaceData);
-    }
   }
 
   // --- PUSH NOTIFICATION SUBSCRIPTIONS ---
@@ -237,15 +240,11 @@ export class WorkspaceDatabase {
   // --- SEMESTERS ---
   async getSemesters(): Promise<Semester[]> {
     if (this.d1) {
-      let query = 'SELECT * FROM semesters';
-      const params: any[] = [];
-      if (this.userId) {
-        query += ' WHERE user_id = ?';
-        params.push(this.userId);
-      }
-      query += ' ORDER BY start_date DESC';
-
-      const { results } = await this.d1.prepare(query).bind(...params).all();
+      if (!this.userId) return [];
+      const { results } = await this.d1
+        .prepare('SELECT * FROM semesters WHERE user_id = ? ORDER BY start_date DESC')
+        .bind(this.userId)
+        .all();
       return (results || []).map((r: any) => ({
         id: r.id,
         name: r.name,
@@ -260,22 +259,19 @@ export class WorkspaceDatabase {
 
   async saveSemester(sem: Semester): Promise<Semester> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       if (sem.isActive) {
-        if (this.userId) {
-          await this.d1
-            .prepare('UPDATE semesters SET is_active = 0, is_archived = 1 WHERE user_id = ?')
-            .bind(this.userId)
-            .run();
-        } else {
-          await this.d1.prepare('UPDATE semesters SET is_active = 0, is_archived = 1').run();
-        }
+        await this.d1
+          .prepare('UPDATE semesters SET is_active = 0, is_archived = 1 WHERE user_id = ?')
+          .bind(this.userId)
+          .run();
       }
       await this.d1
         .prepare(`
           INSERT INTO semesters (id, user_id, name, start_date, total_weeks, is_active, is_archived)
           VALUES (?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
-            user_id = COALESCE(excluded.user_id, semesters.user_id),
+            user_id = excluded.user_id,
             name = excluded.name,
             start_date = excluded.start_date,
             total_weeks = excluded.total_weeks,
@@ -284,7 +280,7 @@ export class WorkspaceDatabase {
         `)
         .bind(
           sem.id,
-          this.userId || null,
+          this.userId,
           sem.name,
           sem.startDate,
           sem.totalWeeks,
@@ -309,22 +305,24 @@ export class WorkspaceDatabase {
 
   async deleteSemester(id: string): Promise<boolean> {
     if (this.d1) {
+      if (!this.userId) return false;
       await this.d1
-        .prepare('DELETE FROM course_schedules WHERE course_id IN (SELECT id FROM courses WHERE semester_id = ?)')
-        .bind(id)
+        .prepare('DELETE FROM course_schedules WHERE course_id IN (SELECT id FROM courses WHERE semester_id = ? AND user_id = ?)')
+        .bind(id, this.userId)
         .run();
-      await this.d1.prepare('DELETE FROM courses WHERE semester_id = ?').bind(id).run();
-      await this.d1.prepare('DELETE FROM schedule_events WHERE semester_id = ?').bind(id).run();
-      await this.d1.prepare('UPDATE tasks SET semester_id = NULL WHERE semester_id = ?').bind(id).run();
-      await this.d1.prepare('DELETE FROM semesters WHERE id = ?').bind(id).run();
+      await this.d1.prepare('DELETE FROM courses WHERE semester_id = ? AND user_id = ?').bind(id, this.userId).run();
+      await this.d1.prepare('DELETE FROM schedule_events WHERE semester_id = ? AND user_id = ?').bind(id, this.userId).run();
+      await this.d1.prepare('UPDATE tasks SET semester_id = NULL WHERE semester_id = ? AND user_id = ?').bind(id, this.userId).run();
+      await this.d1.prepare('DELETE FROM semesters WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
 
-      const userFilter = this.userId ? ' WHERE user_id = ?' : '';
-      const params = this.userId ? [this.userId] : [];
-      const { results } = await this.d1.prepare(`SELECT id, is_active FROM semesters${userFilter}`).bind(...params).all();
+      const { results } = await this.d1
+        .prepare('SELECT id, is_active FROM semesters WHERE user_id = ?')
+        .bind(this.userId)
+        .all();
       if (results && results.length > 0 && !results.some((r: any) => Boolean(r.is_active))) {
         await this.d1
-          .prepare('UPDATE semesters SET is_active = 1, is_archived = 0 WHERE id = ?')
-          .bind(results[0].id)
+          .prepare('UPDATE semesters SET is_active = 1, is_archived = 0 WHERE id = ? AND user_id = ?')
+          .bind(results[0].id, this.userId)
           .run();
       }
       return true;
@@ -347,60 +345,49 @@ export class WorkspaceDatabase {
   // --- TIME SLOTS ---
   async getTimeSlots(): Promise<TimeSlot[]> {
     if (this.d1) {
-      let results: any[] = [];
       if (this.userId) {
         const userRes = await this.d1
           .prepare('SELECT * FROM time_slots WHERE user_id = ? ORDER BY display_order ASC')
           .bind(this.userId)
           .all();
         if (userRes.results && userRes.results.length > 0) {
-          results = userRes.results;
-        }
-      }
-
-      if (results.length === 0) {
-        const defaultRes = await this.d1
-          .prepare('SELECT * FROM time_slots WHERE user_id IS NULL ORDER BY display_order ASC')
-          .all();
-        if (defaultRes.results && defaultRes.results.length > 0) {
-          results = defaultRes.results;
-        }
-      }
-
-      if (results.length > 0) {
-        const seen = new Set<string>();
-        const mapped: TimeSlot[] = [];
-        for (const r of results) {
-          if (!seen.has(r.session_code)) {
-            seen.add(r.session_code);
-            mapped.push({
-              id: r.id,
-              session: r.session_code,
-              startTime: r.start_time,
-              endTime: r.end_time,
-              displayOrder: r.display_order,
-            });
+          const seen = new Set<string>();
+          const mapped: TimeSlot[] = [];
+          for (const r of (userRes.results as any[])) {
+            if (!seen.has(r.session_code)) {
+              seen.add(r.session_code);
+              mapped.push({
+                id: r.id,
+                session: r.session_code,
+                startTime: r.start_time,
+                endTime: r.end_time,
+                displayOrder: r.display_order,
+              });
+            }
           }
+          return mapped;
         }
-        return mapped;
       }
+      return defaultWorkspaceData.timeSlots;
     }
-    return memoryStore.timeSlots;
+    return memoryStore.timeSlots && memoryStore.timeSlots.length > 0 ? memoryStore.timeSlots : defaultWorkspaceData.timeSlots;
   }
 
   async saveTimeSlots(slots: TimeSlot[]): Promise<TimeSlot[]> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       for (const slot of slots) {
-        const id = slot.id || `ts_${slot.session}`;
+        const id = `${slot.session}_${this.userId}`;
         await this.d1
           .prepare(`
             INSERT INTO time_slots (id, user_id, session_code, start_time, end_time, display_order)
             VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               start_time = excluded.start_time,
-              end_time = excluded.end_time
+              end_time = excluded.end_time,
+              display_order = excluded.display_order
           `)
-          .bind(id, this.userId || null, slot.session, slot.startTime, slot.endTime, slot.displayOrder || 0)
+          .bind(id, this.userId, slot.session, slot.startTime, slot.endTime, slot.displayOrder || 0)
           .run();
       }
       return this.getTimeSlots();
@@ -413,12 +400,9 @@ export class WorkspaceDatabase {
   // --- COURSES ---
   async getCourses(semesterId?: string): Promise<Course[]> {
     if (this.d1) {
-      let query = 'SELECT * FROM courses WHERE 1=1';
-      const params: any[] = [];
-      if (this.userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
-        params.push(this.userId);
-      }
+      if (!this.userId) return [];
+      let query = 'SELECT * FROM courses WHERE user_id = ?';
+      const params: any[] = [this.userId];
       if (semesterId) {
         query += ' AND semester_id = ?';
         params.push(semesterId);
@@ -464,12 +448,13 @@ export class WorkspaceDatabase {
 
   async saveCourse(course: Course): Promise<Course> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       await this.d1
         .prepare(`
           INSERT INTO courses (id, user_id, semester_id, code, name, teacher, location, color, active_weeks_json)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
-            user_id = COALESCE(excluded.user_id, courses.user_id),
+            user_id = excluded.user_id,
             semester_id = excluded.semester_id,
             code = excluded.code,
             name = excluded.name,
@@ -480,7 +465,7 @@ export class WorkspaceDatabase {
         `)
         .bind(
           course.id,
-          this.userId || null,
+          this.userId,
           course.semesterId,
           course.code,
           course.name,
@@ -516,8 +501,12 @@ export class WorkspaceDatabase {
 
   async deleteCourse(id: string): Promise<void> {
     if (this.d1) {
-      await this.d1.prepare('DELETE FROM course_schedules WHERE course_id = ?').bind(id).run();
-      await this.d1.prepare('DELETE FROM courses WHERE id = ?').bind(id).run();
+      if (!this.userId) return;
+      await this.d1
+        .prepare('DELETE FROM course_schedules WHERE course_id IN (SELECT id FROM courses WHERE id = ? AND user_id = ?)')
+        .bind(id, this.userId)
+        .run();
+      await this.d1.prepare('DELETE FROM courses WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
       return;
     }
     memoryStore.courses = memoryStore.courses.filter((c) => c.id !== id);
@@ -527,13 +516,10 @@ export class WorkspaceDatabase {
   // --- EVENTS & ROUTINES ---
   async getEvents(semesterId?: string): Promise<ScheduleEvent[]> {
     if (this.d1) {
+      if (!this.userId) return [];
       await ensureScheduleEventsColumns(this.d1);
-      let query = 'SELECT * FROM schedule_events WHERE 1=1';
-      const params: any[] = [];
-      if (this.userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
-        params.push(this.userId);
-      }
+      let query = 'SELECT * FROM schedule_events WHERE user_id = ?';
+      const params: any[] = [this.userId];
       if (semesterId) {
         query += ' AND semester_id = ?';
         params.push(semesterId);
@@ -561,9 +547,10 @@ export class WorkspaceDatabase {
           activeWeeks: JSON.parse(r.active_weeks_json || '[]'),
         }));
       }
+      return [];
     }
 
-    if (!memoryStore.events) memoryStore.events = defaultWorkspaceData.events || [];
+    if (!memoryStore.events) memoryStore.events = [];
     if (semesterId) {
       return memoryStore.events.filter((e) => e.semesterId === semesterId);
     }
@@ -572,6 +559,7 @@ export class WorkspaceDatabase {
 
   async saveEvent(event: ScheduleEvent): Promise<ScheduleEvent> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       await ensureScheduleEventsColumns(this.d1);
       await this.d1
         .prepare(`
@@ -582,7 +570,7 @@ export class WorkspaceDatabase {
           )
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
-            user_id = COALESCE(excluded.user_id, schedule_events.user_id),
+            user_id = excluded.user_id,
             semester_id = excluded.semester_id,
             title = excluded.title,
             type = excluded.type,
@@ -601,7 +589,7 @@ export class WorkspaceDatabase {
         `)
         .bind(
           event.id,
-          this.userId || null,
+          this.userId,
           event.semesterId,
           event.title,
           event.type,
@@ -622,7 +610,7 @@ export class WorkspaceDatabase {
       return event;
     }
 
-    if (!memoryStore.events) memoryStore.events = defaultWorkspaceData.events || [];
+    if (!memoryStore.events) memoryStore.events = [];
     const idx = memoryStore.events.findIndex((e) => e.id === event.id);
     if (idx >= 0) memoryStore.events[idx] = event;
     else memoryStore.events.push(event);
@@ -632,10 +620,11 @@ export class WorkspaceDatabase {
 
   async deleteEvent(id: string): Promise<void> {
     if (this.d1) {
-      await this.d1.prepare('DELETE FROM schedule_events WHERE id = ?').bind(id).run();
+      if (!this.userId) return;
+      await this.d1.prepare('DELETE FROM schedule_events WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
       return;
     }
-    if (!memoryStore.events) memoryStore.events = defaultWorkspaceData.events || [];
+    if (!memoryStore.events) memoryStore.events = [];
     memoryStore.events = memoryStore.events.filter((e) => e.id !== id);
     syncMemoryStore();
   }
@@ -643,12 +632,9 @@ export class WorkspaceDatabase {
   // --- TASKS ---
   async getTasks(semesterId?: string): Promise<Task[]> {
     if (this.d1) {
-      let query = 'SELECT * FROM tasks WHERE 1=1';
-      const params: any[] = [];
-      if (this.userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
-        params.push(this.userId);
-      }
+      if (!this.userId) return [];
+      let query = 'SELECT * FROM tasks WHERE user_id = ?';
+      const params: any[] = [this.userId];
       if (semesterId) {
         query += ' AND (semester_id = ? OR semester_id IS NULL)';
         params.push(semesterId);
@@ -678,12 +664,13 @@ export class WorkspaceDatabase {
 
   async saveTask(task: Task): Promise<Task> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       await this.d1
         .prepare(`
           INSERT INTO tasks (id, user_id, semester_id, title, category, tags_json, due_date, status, priority, linked_paper_id, linked_milestone_id)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
-            user_id = COALESCE(excluded.user_id, tasks.user_id),
+            user_id = excluded.user_id,
             semester_id = excluded.semester_id,
             title = excluded.title,
             category = excluded.category,
@@ -696,7 +683,7 @@ export class WorkspaceDatabase {
         `)
         .bind(
           task.id,
-          this.userId || null,
+          this.userId,
           task.semesterId || null,
           task.title,
           task.category,
@@ -720,7 +707,8 @@ export class WorkspaceDatabase {
 
   async deleteTask(id: string): Promise<void> {
     if (this.d1) {
-      await this.d1.prepare('DELETE FROM tasks WHERE id = ?').bind(id).run();
+      if (!this.userId) return;
+      await this.d1.prepare('DELETE FROM tasks WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
       return;
     }
     memoryStore.tasks = memoryStore.tasks.filter((t) => t.id !== id);
@@ -730,12 +718,9 @@ export class WorkspaceDatabase {
   // --- KANBAN ---
   async getKanban(semesterId?: string): Promise<KanbanMilestone[]> {
     if (this.d1) {
-      let query = 'SELECT * FROM kanban_milestones WHERE 1=1';
-      const params: any[] = [];
-      if (this.userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
-        params.push(this.userId);
-      }
+      if (!this.userId) return [];
+      let query = 'SELECT * FROM kanban_milestones WHERE user_id = ?';
+      const params: any[] = [this.userId];
       if (semesterId) {
         query += ' AND (semester_id = ? OR semester_id IS NULL)';
         params.push(semesterId);
@@ -759,12 +744,13 @@ export class WorkspaceDatabase {
 
   async saveKanban(item: KanbanMilestone): Promise<KanbanMilestone> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       await this.d1
         .prepare(`
           INSERT INTO kanban_milestones (id, user_id, semester_id, title, stage, target_week, project, notes, sort_order)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
-            user_id = COALESCE(excluded.user_id, kanban_milestones.user_id),
+            user_id = excluded.user_id,
             semester_id = excluded.semester_id,
             title = excluded.title,
             stage = excluded.stage,
@@ -775,7 +761,7 @@ export class WorkspaceDatabase {
         `)
         .bind(
           item.id,
-          this.userId || null,
+          this.userId,
           item.semesterId || null,
           item.title,
           item.stage,
@@ -796,7 +782,8 @@ export class WorkspaceDatabase {
 
   async deleteKanban(id: string): Promise<void> {
     if (this.d1) {
-      await this.d1.prepare('DELETE FROM kanban_milestones WHERE id = ?').bind(id).run();
+      if (!this.userId) return;
+      await this.d1.prepare('DELETE FROM kanban_milestones WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
       return;
     }
     memoryStore.kanban = memoryStore.kanban.filter((k) => k.id !== id);
@@ -806,15 +793,11 @@ export class WorkspaceDatabase {
   // --- PAPERS (LITERATURE) ---
   async getPapers(): Promise<Paper[]> {
     if (this.d1) {
-      let query = 'SELECT * FROM papers WHERE 1=1';
-      const params: any[] = [];
-      if (this.userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
-        params.push(this.userId);
-      }
-      query += ' ORDER BY created_at DESC';
-
-      const { results } = await this.d1.prepare(query).bind(...params).all();
+      if (!this.userId) return [];
+      const { results } = await this.d1
+        .prepare('SELECT * FROM papers WHERE user_id = ? ORDER BY created_at DESC')
+        .bind(this.userId)
+        .all();
       return (results || []).map((r: any) => ({
         id: r.id,
         title: r.title,
@@ -837,12 +820,13 @@ export class WorkspaceDatabase {
 
   async savePaper(paper: Paper): Promise<Paper> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       await this.d1
         .prepare(`
           INSERT INTO papers (id, user_id, title, authors, venue, year, arxiv_id, pdf_r2_key, code_url, status, rating, tldr, tags_json, bibtex, notes_markdown)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
-            user_id = COALESCE(excluded.user_id, papers.user_id),
+            user_id = excluded.user_id,
             title = excluded.title,
             authors = excluded.authors,
             venue = excluded.venue,
@@ -859,7 +843,7 @@ export class WorkspaceDatabase {
         `)
         .bind(
           paper.id,
-          this.userId || null,
+          this.userId,
           paper.title,
           paper.authors || null,
           paper.venue || null,
@@ -886,7 +870,8 @@ export class WorkspaceDatabase {
 
   async deletePaper(id: string): Promise<boolean> {
     if (this.d1) {
-      await this.d1.prepare('DELETE FROM papers WHERE id = ?').bind(id).run();
+      if (!this.userId) return false;
+      await this.d1.prepare('DELETE FROM papers WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
       return true;
     }
     memoryStore.papers = memoryStore.papers.filter((p) => p.id !== id);
@@ -897,15 +882,11 @@ export class WorkspaceDatabase {
   // --- CONFERENCES ---
   async getConferences(): Promise<Conference[]> {
     if (this.d1) {
-      let query = 'SELECT * FROM conferences WHERE 1=1';
-      const params: any[] = [];
-      if (this.userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
-        params.push(this.userId);
-      }
-      query += ' ORDER BY submission_deadline ASC';
-
-      const { results } = await this.d1.prepare(query).bind(...params).all();
+      if (!this.userId) return [];
+      const { results } = await this.d1
+        .prepare('SELECT * FROM conferences WHERE user_id = ? ORDER BY submission_deadline ASC')
+        .bind(this.userId)
+        .all();
       return (results || []).map((r: any) => ({
         id: r.id,
         name: r.name,
@@ -924,12 +905,13 @@ export class WorkspaceDatabase {
 
   async saveConference(conf: Conference): Promise<Conference> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       await this.d1
         .prepare(`
           INSERT INTO conferences (id, user_id, name, acronym, tier, abstract_deadline, submission_deadline, rebuttal_deadline, camera_ready_deadline, paper_title, status)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
-            user_id = COALESCE(excluded.user_id, conferences.user_id),
+            user_id = excluded.user_id,
             name = excluded.name,
             acronym = excluded.acronym,
             tier = excluded.tier,
@@ -942,7 +924,7 @@ export class WorkspaceDatabase {
         `)
         .bind(
           conf.id,
-          this.userId || null,
+          this.userId,
           conf.name,
           conf.acronym,
           conf.tier || 'A*',
@@ -965,7 +947,8 @@ export class WorkspaceDatabase {
 
   async deleteConference(id: string): Promise<boolean> {
     if (this.d1) {
-      await this.d1.prepare('DELETE FROM conferences WHERE id = ?').bind(id).run();
+      if (!this.userId) return false;
+      await this.d1.prepare('DELETE FROM conferences WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
       return true;
     }
     memoryStore.conferences = memoryStore.conferences.filter((c) => c.id !== id);
@@ -976,15 +959,11 @@ export class WorkspaceDatabase {
   // --- EXPERIMENT LOGS ---
   async getExperiments(): Promise<ExperimentLog[]> {
     if (this.d1) {
-      let query = 'SELECT * FROM experiment_logs WHERE 1=1';
-      const params: any[] = [];
-      if (this.userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
-        params.push(this.userId);
-      }
-      query += ' ORDER BY created_at DESC';
-
-      const { results } = await this.d1.prepare(query).bind(...params).all();
+      if (!this.userId) return [];
+      const { results } = await this.d1
+        .prepare('SELECT * FROM experiment_logs WHERE user_id = ? ORDER BY created_at DESC')
+        .bind(this.userId)
+        .all();
       return (results || []).map((r: any) => ({
         id: r.id,
         projectTag: r.project_tag,
@@ -1003,12 +982,13 @@ export class WorkspaceDatabase {
 
   async saveExperiment(exp: ExperimentLog): Promise<ExperimentLog> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       await this.d1
         .prepare(`
           INSERT INTO experiment_logs (id, user_id, project_tag, name, hypothesis, dataset, hyperparameters_json, metrics_json, status, plot_r2_key, notes)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
-            user_id = COALESCE(excluded.user_id, experiment_logs.user_id),
+            user_id = excluded.user_id,
             project_tag = excluded.project_tag,
             name = excluded.name,
             hypothesis = excluded.hypothesis,
@@ -1021,7 +1001,7 @@ export class WorkspaceDatabase {
         `)
         .bind(
           exp.id,
-          this.userId || null,
+          this.userId,
           exp.projectTag,
           exp.name,
           exp.hypothesis || null,
@@ -1042,18 +1022,25 @@ export class WorkspaceDatabase {
     return exp;
   }
 
+  async deleteExperiment(id: string): Promise<boolean> {
+    if (this.d1) {
+      if (!this.userId) return false;
+      await this.d1.prepare('DELETE FROM experiment_logs WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
+      return true;
+    }
+    memoryStore.experimentLogs = memoryStore.experimentLogs.filter((e) => e.id !== id);
+    syncMemoryStore();
+    return true;
+  }
+
   // --- ADVISOR MEETINGS ---
   async getMeetings(): Promise<AdvisorMeeting[]> {
     if (this.d1) {
-      let query = 'SELECT * FROM advisor_meetings WHERE 1=1';
-      const params: any[] = [];
-      if (this.userId) {
-        query += ' AND (user_id = ? OR user_id IS NULL)';
-        params.push(this.userId);
-      }
-      query += ' ORDER BY meeting_date DESC';
-
-      const { results } = await this.d1.prepare(query).bind(...params).all();
+      if (!this.userId) return [];
+      const { results } = await this.d1
+        .prepare('SELECT * FROM advisor_meetings WHERE user_id = ? ORDER BY meeting_date DESC')
+        .bind(this.userId)
+        .all();
       return (results || []).map((r: any) => ({
         id: r.id,
         meetingDate: r.meeting_date,
@@ -1068,12 +1055,13 @@ export class WorkspaceDatabase {
 
   async saveMeeting(meeting: AdvisorMeeting): Promise<AdvisorMeeting> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       await this.d1
         .prepare(`
           INSERT INTO advisor_meetings (id, user_id, meeting_date, agenda_markdown, discussion_notes, action_items_json, weekly_digest_markdown)
           VALUES (?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
-            user_id = COALESCE(excluded.user_id, advisor_meetings.user_id),
+            user_id = excluded.user_id,
             meeting_date = excluded.meeting_date,
             agenda_markdown = excluded.agenda_markdown,
             discussion_notes = excluded.discussion_notes,
@@ -1082,7 +1070,7 @@ export class WorkspaceDatabase {
         `)
         .bind(
           meeting.id,
-          this.userId || null,
+          this.userId,
           meeting.meetingDate,
           meeting.agendaMarkdown || null,
           meeting.discussionNotes || null,
@@ -1099,16 +1087,24 @@ export class WorkspaceDatabase {
     return meeting;
   }
 
+  async deleteMeeting(id: string): Promise<boolean> {
+    if (this.d1) {
+      if (!this.userId) return false;
+      await this.d1.prepare('DELETE FROM advisor_meetings WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
+      return true;
+    }
+    memoryStore.advisorMeetings = memoryStore.advisorMeetings.filter((m) => m.id !== id);
+    syncMemoryStore();
+    return true;
+  }
+
   // --- ATTENDANCE & ROUTINE COMPLETION RECORDS ---
   async getAttendanceRecords(date?: string, targetId?: string): Promise<AttendanceRecord[]> {
     if (this.d1) {
+      if (!this.userId) return [];
       try {
-        let query = 'SELECT * FROM attendance_records WHERE 1=1';
-        const params: any[] = [];
-        if (this.userId) {
-          query += ' AND (user_id = ? OR user_id IS NULL)';
-          params.push(this.userId);
-        }
+        let query = 'SELECT * FROM attendance_records WHERE user_id = ?';
+        const params: any[] = [this.userId];
         if (date) {
           query += ' AND date = ?';
           params.push(date);
@@ -1131,8 +1127,9 @@ export class WorkspaceDatabase {
           updatedAt: r.updated_at,
         }));
       } catch (e) {
-        console.warn('Could not read attendance_records from D1 (table may not exist yet):', e);
+        console.warn('Could not read attendance_records from D1:', e);
       }
+      return [];
     }
     let list = memoryStore.attendanceRecords || [];
     if (date) list = list.filter((r) => r.date === date);
@@ -1142,13 +1139,14 @@ export class WorkspaceDatabase {
 
   async saveAttendanceRecord(record: AttendanceRecord): Promise<AttendanceRecord> {
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       try {
         await this.d1
           .prepare(`
             INSERT INTO attendance_records (id, user_id, target_id, target_type, date, status, academic_week, note, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
-              user_id = COALESCE(excluded.user_id, attendance_records.user_id),
+              user_id = excluded.user_id,
               target_id = excluded.target_id,
               target_type = excluded.target_type,
               date = excluded.date,
@@ -1159,7 +1157,7 @@ export class WorkspaceDatabase {
           `)
           .bind(
             record.id,
-            this.userId || null,
+            this.userId,
             record.targetId,
             record.targetType,
             record.date,
@@ -1184,8 +1182,9 @@ export class WorkspaceDatabase {
 
   async deleteAttendanceRecord(id: string): Promise<boolean> {
     if (this.d1) {
+      if (!this.userId) return false;
       try {
-        await this.d1.prepare('DELETE FROM attendance_records WHERE id = ?').bind(id).run();
+        await this.d1.prepare('DELETE FROM attendance_records WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
         return true;
       } catch (e) {}
     }
@@ -1194,6 +1193,99 @@ export class WorkspaceDatabase {
       syncMemoryStore();
     }
     return true;
+  }
+
+  // --- SAMPLE DATA & WORKSPACE RESET ---
+  async loadSampleData(): Promise<void> {
+    if (!this.userId) throw new Error('Unauthorized');
+    const userSuffix = this.userId.replace(/[^a-zA-Z0-9]/g, '').slice(-6);
+    
+    // Deep clone default template
+    const sample = JSON.parse(JSON.stringify(defaultWorkspaceData)) as WorkspaceData;
+
+    // Remap semesters
+    const semIdMap = new Map<string, string>();
+    sample.semesters.forEach((s) => {
+      const oldId = s.id;
+      s.id = `${s.id}_${userSuffix}`;
+      semIdMap.set(oldId, s.id);
+    });
+
+    sample.courses.forEach((c) => {
+      c.id = `${c.id}_${userSuffix}`;
+      if (c.semesterId && semIdMap.has(c.semesterId)) {
+        c.semesterId = semIdMap.get(c.semesterId)!;
+      }
+      c.schedules?.forEach((sc) => {
+        sc.id = `${sc.id}_${userSuffix}`;
+        sc.courseId = c.id;
+      });
+    });
+
+    sample.events?.forEach((e) => {
+      e.id = `${e.id}_${userSuffix}`;
+      if (e.semesterId && semIdMap.has(e.semesterId)) {
+        e.semesterId = semIdMap.get(e.semesterId)!;
+      }
+    });
+
+    sample.tasks.forEach((t) => {
+      t.id = `${t.id}_${userSuffix}`;
+      if (t.semesterId && semIdMap.has(t.semesterId)) {
+        t.semesterId = semIdMap.get(t.semesterId)!;
+      }
+    });
+
+    sample.kanban.forEach((k) => {
+      k.id = `${k.id}_${userSuffix}`;
+      if (k.semesterId && semIdMap.has(k.semesterId)) {
+        k.semesterId = semIdMap.get(k.semesterId)!;
+      }
+    });
+
+    sample.papers.forEach((p) => {
+      p.id = `${p.id}_${userSuffix}`;
+    });
+
+    sample.conferences.forEach((c) => {
+      c.id = `${c.id}_${userSuffix}`;
+    });
+
+    sample.experimentLogs.forEach((x) => {
+      x.id = `${x.id}_${userSuffix}`;
+    });
+
+    sample.advisorMeetings.forEach((m) => {
+      m.id = `${m.id}_${userSuffix}`;
+    });
+
+    sample.attendanceRecords?.forEach((a) => {
+      a.id = `${a.id}_${userSuffix}`;
+    });
+
+    await this.importAll(sample);
+  }
+
+  async clearUserData(): Promise<void> {
+    if (!this.userId) throw new Error('Unauthorized');
+    if (this.d1) {
+      await this.d1.prepare('DELETE FROM course_schedules WHERE course_id IN (SELECT id FROM courses WHERE user_id = ?)').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM courses WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM schedule_events WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM tasks WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM kanban_milestones WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM papers WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM conferences WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM experiment_logs WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM advisor_meetings WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM attendance_records WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM semesters WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM time_slots WHERE user_id = ?').bind(this.userId).run();
+      return;
+    }
+
+    memoryStore = createEmptyWorkspaceData();
+    syncMemoryStore();
   }
 
   // --- FULL DUMP / RESTORE ---

@@ -81,16 +81,54 @@ export const BackupModal: React.FC<BackupModalProps> = ({ ws, isOpen, onClose })
           </div>
 
           {/* Body */}
-          <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1 min-h-0 space-y-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Export a full JSON dump of your courses, assignments, tasks, and schedule, or restore from a previous backup.
-            </p>
-            <textarea
-              rows={12}
-              value={jsonText}
-              onChange={(e) => setJsonText(e.target.value)}
-              className="w-full p-3.5 rounded-lg bg-slate-950 text-slate-200 font-mono text-[11px] leading-relaxed border border-slate-800 focus:outline-none focus:border-slate-700"
-            />
+          <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1 min-h-0 space-y-4">
+            {/* Quick Template & Clean Workspace Actions */}
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white">Workspace Data Management</div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Newly registered accounts start completely clean. You can load sample courses and research milestones to explore features, or reset back to an empty workspace anytime.
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm('Load sample courses, routines, and research pipeline into your account?')) {
+                      await ws.loadSampleData();
+                      const data = await api.exportBackup();
+                      setJsonText(JSON.stringify(data, null, 2));
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-2xs active:scale-95 cursor-pointer"
+                >
+                  Load Sample Data
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm('Are you sure you want to clear your workspace? All your courses, events, and tasks will be erased.')) {
+                      await ws.clearWorkspace();
+                      const data = await api.exportBackup();
+                      setJsonText(JSON.stringify(data, null, 2));
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition active:scale-95 cursor-pointer"
+                >
+                  Reset to Clean / Empty Workspace
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                Export a full JSON dump of your courses, assignments, tasks, and schedule, or restore from a previous backup.
+              </p>
+              <textarea
+                rows={10}
+                value={jsonText}
+                onChange={(e) => setJsonText(e.target.value)}
+                className="w-full p-3.5 rounded-lg bg-slate-950 text-slate-200 font-mono text-[11px] leading-relaxed border border-slate-800 focus:outline-none focus:border-slate-700"
+              />
+            </div>
           </div>
 
           {/* Footer */}
