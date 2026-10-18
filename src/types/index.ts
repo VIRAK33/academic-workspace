@@ -163,6 +163,8 @@ export interface KanbanMilestone {
   connectedArtifacts?: ConnectedArtifact[];
   comments?: IssueComment[];
   completedNote?: string;
+  completedAt?: string; // ISO string when marked done
+  createdAt?: string;
 }
 
 export interface Paper {

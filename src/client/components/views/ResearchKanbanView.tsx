@@ -123,10 +123,14 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
             completedSprints.reduce((acc, s) => acc + (s.velocityPoints || 0), 0) /
               completedSprints.length
           )
-        : 34;
+        : (activeSprint
+            ? kanban
+                .filter((k) => k.sprintId === activeSprint.id && k.stage === 'done')
+                .reduce((acc, c) => acc + (c.storyPoints || 1), 0)
+            : 0);
 
     return { totalIssues, totalEffort, avgVelocity };
-  }, [kanban, sprints]);
+  }, [kanban, sprints, activeSprint]);
 
   // Filter evaluation
   const filterCard = (card: KanbanMilestone): boolean => {
@@ -153,7 +157,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
   // Active Sprint Stats
   const activeSprintStats = useMemo(() => {
     if (!activeSprint) {
-      return { totalCards: 0, completedCards: 0, totalPts: 0, completedPts: 0, percent: 0, daysLeft: 0, targetVelocity: 35 };
+      return { totalCards: 0, completedCards: 0, totalPts: 0, completedPts: 0, percent: 0, daysLeft: 0, targetVelocity: 0 };
     }
     const allInSprint = kanban.filter((k) => k.sprintId === activeSprint.id);
     const totalCards = allInSprint.length;
@@ -169,7 +173,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
     const diffTime = endDate.getTime() - today.getTime();
     const daysLeft = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
-    return { totalCards, completedCards, totalPts, completedPts, percent, daysLeft, targetVelocity: Math.max(35, totalPts) };
+    return { totalCards, completedCards, totalPts, completedPts, percent, daysLeft, targetVelocity: totalPts };
   }, [kanban, activeSprint]);
 
   // Backlog cards

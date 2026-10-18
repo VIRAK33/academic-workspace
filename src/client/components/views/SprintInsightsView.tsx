@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useWorkspace } from '../../hooks/useWorkspace';
 import {
   Sprint,
@@ -19,6 +19,7 @@ import {
   UnfoldVertical,
   Activity,
   Award,
+  Zap,
 } from 'lucide-react';
 
 interface SprintInsightsViewProps {
@@ -49,14 +50,42 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
 
   const [selectedSprintId, setSelectedSprintId] = useState<string>(activeSprint?.id || '');
   const [showSprintMenu, setShowSprintMenu] = useState(false);
-  const [clapCount, setClapCount] = useState(0);
 
   // Fallback to active sprint if selected id not in list
   const currentSprint = useMemo(() => {
     return sprints.find((s) => s.id === selectedSprintId) || activeSprint;
   }, [sprints, selectedSprintId, activeSprint]);
 
-  // Sprint metrics calculation
+  // Persisted cheer/kudos count per sprint
+  const kudosStorageKey = currentSprint ? `aw_sprint_kudos_${currentSprint.id}` : 'aw_sprint_kudos_default';
+  const [clapCount, setClapCount] = useState<number>(() => {
+    try {
+      const val = localStorage.getItem(kudosStorageKey);
+      return val ? Number(val) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    if (!currentSprint) return;
+    try {
+      const val = localStorage.getItem(`aw_sprint_kudos_${currentSprint.id}`);
+      setClapCount(val ? Number(val) : 0);
+    } catch {
+      setClapCount(0);
+    }
+  }, [currentSprint]);
+
+  const handleClap = () => {
+    const next = clapCount + 1;
+    setClapCount(next);
+    try {
+      localStorage.setItem(kudosStorageKey, String(next));
+    } catch {}
+  };
+
+  // Sprint metrics calculation from real DB records
   const metrics = useMemo(() => {
     if (!currentSprint) {
       return {
@@ -68,20 +97,39 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
         dayCurrent: 1,
         daysLeft: 14,
         blockersCount: 0,
+        blockedPts: 0,
+        healthPercent: 100,
         scopeChangePts: 0,
+        scopeChangeCount: 0,
         issues: [],
         completedIssues: [],
+        remainingIssues: [],
+        inProgressIssues: [],
         typeDistribution: [],
+        projectDistribution: [],
+        dailyBurnRate: 0,
+        daysNeeded: 0,
+        predictionText: 'Planned',
+        confidenceScore: 100,
       };
     }
 
+    // Filter deliverables belonging to this sprint
     const issues = kanban.filter((k) => k.sprintId === currentSprint.id);
     const completedIssues = issues.filter((k) => k.stage === 'done');
-    const totalPts = issues.reduce((acc, c) => acc + (c.storyPoints || 1), 0);
-    const completedPts = completedIssues.reduce((acc, c) => acc + (c.storyPoints || 1), 0);
+    const remainingIssues = issues.filter((k) => k.stage !== 'done');
+    const inProgressIssues = issues.filter((k) => k.stage === 'in_progress' || k.stage === 'review');
+
+    const totalPts = issues.reduce((acc, c) => acc + (c.storyPoints != null ? c.storyPoints : 1), 0);
+    const completedPts = completedIssues.reduce((acc, c) => acc + (c.storyPoints != null ? c.storyPoints : 1), 0);
     const remainingPts = Math.max(0, totalPts - completedPts);
     const burnPercent = totalPts > 0 ? Math.round((completedPts / totalPts) * 100) : 0;
-    const blockersCount = issues.filter((k) => k.isBlocked).length;
+
+    // Blockers
+    const blockedIssues = issues.filter((k) => k.isBlocked);
+    const blockersCount = blockedIssues.length;
+    const blockedPts = blockedIssues.reduce((acc, c) => acc + (c.storyPoints != null ? c.storyPoints : 1), 0);
+    const healthPercent = totalPts > 0 ? Math.max(0, Math.round(((totalPts - blockedPts) / totalPts) * 100)) : 100;
 
     // Dates
     const start = new Date(currentSprint.startDate || new Date().toISOString().slice(0, 10));
@@ -95,14 +143,39 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
     const dayCurrent = Math.min(daysTotal, Math.max(1, Math.ceil(diffCurrentTime / (1000 * 60 * 60 * 24))));
     const daysLeft = Math.max(0, daysTotal - dayCurrent);
 
-    // Scope change: e.g. deliverables added with notes or target capacity
-    const scopeChangePts = Math.max(0, totalPts > 30 ? 3 : 1);
+    // Scope change: deliverables created after sprint start date
+    const sprintStartTime = start.getTime();
+    const addedMidSprint = issues.filter((k) => {
+      if (!k.createdAt) return false;
+      return new Date(k.createdAt).getTime() > sprintStartTime + 86400000;
+    });
+    const scopeChangePts = addedMidSprint.reduce((acc, c) => acc + (c.storyPoints != null ? c.storyPoints : 1), 0);
+    const scopeChangeCount = addedMidSprint.length;
+
+    // Daily burn velocity
+    const dailyBurnRate = dayCurrent > 0 ? completedPts / dayCurrent : 0;
+    const daysNeeded = dailyBurnRate > 0 ? Math.ceil(remainingPts / dailyBurnRate) : daysLeft;
+
+    let predictionText = 'On Track';
+    if (remainingPts === 0 && totalPts > 0) {
+      predictionText = 'Completed';
+    } else if (dailyBurnRate > 0 && daysNeeded <= daysLeft) {
+      predictionText = daysNeeded < daysLeft ? 'Ahead of Pace' : 'On Track';
+    } else if (dailyBurnRate > 0 && daysNeeded > daysLeft) {
+      predictionText = 'Pace Up Needed';
+    } else if (completedPts === 0 && dayCurrent > 3) {
+      predictionText = 'Needs Focus';
+    }
+
+    const confidenceScore = totalPts > 0
+      ? Math.min(99, Math.max(50, Math.round((completedPts / totalPts) * 60 + (daysLeft > 0 ? 35 : 0))))
+      : 100;
 
     // Distribution by Type
     const typeMap: Partial<Record<KanbanIssueType, number>> = {};
     issues.forEach((item) => {
       const t = item.issueType || 'experiment';
-      typeMap[t] = (typeMap[t] || 0) + (item.storyPoints || 1);
+      typeMap[t] = (typeMap[t] || 0) + (item.storyPoints != null ? item.storyPoints : 1);
     });
 
     const typeDistribution = Object.entries(typeMap).map(([typeKey, pts]) => {
@@ -120,6 +193,28 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
       };
     });
 
+    // Distribution by Project
+    const projMap: Record<string, { total: number; done: number; count: number }> = {};
+    issues.forEach((item) => {
+      const p = item.project || 'General Deliverables';
+      const pts = item.storyPoints != null ? item.storyPoints : 1;
+      if (!projMap[p]) projMap[p] = { total: 0, done: 0, count: 0 };
+      projMap[p].total += pts;
+      projMap[p].count += 1;
+      if (item.stage === 'done') {
+        projMap[p].done += pts;
+      }
+    });
+
+    const projectDistribution = Object.entries(projMap).map(([name, data]) => ({
+      name,
+      totalPts: data.total,
+      donePts: data.done,
+      remainingPts: Math.max(0, data.total - data.done),
+      deliverableCount: data.count,
+      percent: data.total > 0 ? Math.round((data.done / data.total) * 100) : 0,
+    }));
+
     return {
       totalPts,
       completedPts,
@@ -129,50 +224,76 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
       dayCurrent,
       daysLeft,
       blockersCount,
+      blockedPts,
+      healthPercent,
       scopeChangePts,
+      scopeChangeCount,
       issues,
       completedIssues,
+      remainingIssues,
+      inProgressIssues,
       typeDistribution,
+      projectDistribution,
+      dailyBurnRate,
+      daysNeeded,
+      predictionText,
+      confidenceScore,
     };
   }, [currentSprint, kanban]);
 
-  // Burndown points calculation for SVG
+  // Burndown chart data calculation for SVG
   const chartData = useMemo(() => {
-    const { totalPts, completedPts, daysTotal, dayCurrent, remainingPts } = metrics;
-    const maxPts = Math.max(35, totalPts);
+    const { totalPts, completedPts, daysTotal, dayCurrent, remainingPts, dailyBurnRate, daysLeft } = metrics;
+    const maxPts = Math.max(totalPts > 0 ? totalPts : 10, 10);
 
     // Chart dimensions
-    const xMin = 24;
-    const xMax = 330;
+    const xMin = 28;
+    const xMax = 328;
     const yTop = 20;
     const yBottom = 140;
 
-    // Today's X coordinate
-    const todayFraction = daysTotal > 0 ? Math.min(1, dayCurrent / daysTotal) : 0.7;
+    // Today's X coordinate proportional to daysTotal
+    const todayFraction = daysTotal > 0 ? Math.min(1, dayCurrent / daysTotal) : 0.5;
     const todayX = Math.round(xMin + todayFraction * (xMax - xMin));
 
     // Today's Y coordinate (remaining points)
-    const todayRemainingFraction = maxPts > 0 ? (maxPts - remainingPts) / maxPts : 0.6;
     const todayY = Math.round(yBottom - (remainingPts / maxPts) * (yBottom - yTop));
 
-    // Generate actual path points
-    const stepCount = Math.max(2, Math.min(10, dayCurrent));
+    // Generate actual burndown path points up to today
+    const stepCount = Math.max(2, Math.min(daysTotal, dayCurrent));
     const actualPoints: [number, number][] = [];
-    actualPoints.push([xMin, yTop]); // Start of sprint at 100% load
+    actualPoints.push([xMin, yTop]); // Day 0 start at 100% capacity
 
     for (let i = 1; i < stepCount; i++) {
       const frac = i / stepCount;
       const x = Math.round(xMin + frac * (todayX - xMin));
-      // Gradual burn with minor variance
-      const progressFrac = frac * (completedPts / maxPts);
-      const ptsLeftAtStep = totalPts - progressFrac * totalPts;
-      const y = Math.round(yBottom - (ptsLeftAtStep / maxPts) * (yBottom - yTop));
+      // Progressive burn curve reflecting actual completed points
+      const ptsLeftAtStep = totalPts - (frac * completedPts);
+      const y = Math.round(yBottom - (Math.max(0, ptsLeftAtStep) / maxPts) * (yBottom - yTop));
       actualPoints.push([x, y]);
     }
     actualPoints.push([todayX, todayY]);
 
     const actualPathStr = actualPoints.map((pt, idx) => `${idx === 0 ? 'M' : 'L'} ${pt[0]} ${pt[1]}`).join(' ');
     const actualAreaStr = `${actualPathStr} L ${todayX} ${yBottom} L ${xMin} ${yBottom} Z`;
+
+    // Projected end point at xMax
+    const expectedRemainingAtEnd = Math.max(0, remainingPts - Math.round(dailyBurnRate * daysLeft));
+    const projectedEndY = Math.round(yBottom - (expectedRemainingAtEnd / maxPts) * (yBottom - yTop));
+
+    // Optimistic & conservative projection cone bounds
+    const optimisticRemaining = Math.max(0, remainingPts - Math.round(dailyBurnRate * 1.3 * daysLeft));
+    const optimisticEndY = Math.round(yBottom - (optimisticRemaining / maxPts) * (yBottom - yTop));
+
+    const conservativeRemaining = Math.max(0, remainingPts - Math.round(dailyBurnRate * 0.7 * daysLeft));
+    const conservativeEndY = Math.round(yBottom - (conservativeRemaining / maxPts) * (yBottom - yTop));
+
+    const conePointsStr = `${todayX},${todayY} ${xMax},${optimisticEndY} ${xMax},${conservativeEndY} ${todayX},${todayY}`;
+
+    // Dynamic X-axis intermediate ticks
+    const tickD1 = 1;
+    const tickMidDay = Math.max(2, Math.round(daysTotal * 0.5));
+    const tickMidX = Math.round(xMin + 0.5 * (xMax - xMin));
 
     return {
       maxPts,
@@ -184,6 +305,11 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
       todayY,
       actualPathStr,
       actualAreaStr,
+      projectedEndY,
+      conePointsStr,
+      tickD1,
+      tickMidDay,
+      tickMidX,
     };
   }, [metrics]);
 
@@ -191,9 +317,9 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
     return (
       <div className="p-8 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-2">
         <Activity className="w-8 h-8 mx-auto text-slate-400" />
-        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">No Sprints Tracked Yet</h3>
+        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">No Sprints Found in Database</h3>
         <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
-          Create and start a sprint in the Backlog view to generate real-time burndown charts and velocity analytics.
+          Create and activate a sprint from the Backlog to begin tracking real burndown velocity and deliverable progress.
         </p>
       </div>
     );
@@ -235,12 +361,12 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
             onClick={() => setShowSprintMenu(!showSprintMenu)}
             className="h-7 px-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium flex items-center gap-1 active:bg-slate-100 transition-colors shadow-2xs"
           >
-            <span className="truncate max-w-[100px]">{currentSprint.name}</span>
+            <span className="truncate max-w-[110px]">{currentSprint.name}</span>
             <UnfoldVertical className="w-3 h-3 text-slate-400 shrink-0" />
           </button>
 
           {showSprintMenu && (
-            <div className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1 z-30 text-xs">
+            <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1 z-30 text-xs">
               {sprints.map((sp) => (
                 <button
                   key={sp.id}
@@ -263,7 +389,7 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Sprint Health Banner (Reassurance / Blocker Status) */}
+      {/* 2. Sprint Health Banner (Real Database Blocker Auditing) */}
       <div
         className={`flex items-center gap-2.5 p-3 rounded-xl border shadow-2xs ${
           metrics.blockersCount === 0
@@ -302,8 +428,8 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
             }`}
           >
             {metrics.blockersCount === 0
-              ? 'Pacing steady with historical research velocity. Excellent focus!'
-              : 'Attention needed on blocked deliverable items before cycle end.'}
+              ? `${metrics.completedPts} pts burned with steady pacing. No blockers hindering progress.`
+              : `${metrics.blockedPts} pts blocked. Open the blocked deliverables to resolve dependencies.`}
           </p>
         </div>
         <span
@@ -313,11 +439,11 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
               : 'bg-rose-100/80 dark:bg-rose-900/80 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-700'
           }`}
         >
-          {metrics.blockersCount === 0 ? '98% HEALTH' : 'ATTENTION'}
+          {metrics.healthPercent}% HEALTH
         </span>
       </div>
 
-      {/* 3. 2x2 KPI Grid */}
+      {/* 3. 2x2 Real KPI Grid */}
       <div className="grid grid-cols-2 gap-2">
         {/* Remaining Points */}
         <div className="flex flex-col p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
@@ -331,9 +457,8 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
             </span>
             <span className="font-mono text-[11px] text-slate-400">pts</span>
           </div>
-          <div className="flex items-center gap-1 mt-1 text-emerald-600 dark:text-emerald-400 font-mono text-[10px]">
-            <TrendingDown className="w-3 h-3" />
-            <span>-4 pts completed recently</span>
+          <div className="flex items-center gap-1 mt-1 text-slate-500 dark:text-slate-400 font-mono text-[10px]">
+            <span>{metrics.remainingIssues.length} deliverable{metrics.remainingIssues.length !== 1 ? 's' : ''} to go</span>
           </div>
         </div>
 
@@ -349,7 +474,8 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
             </span>
             <span className="font-mono text-[11px] text-slate-400">pts</span>
           </div>
-          <div className="flex items-center gap-1 mt-1 font-mono text-[10px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-1 mt-1 font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
+            <TrendingDown className="w-3 h-3" />
             <span>{metrics.burnPercent}% total burn</span>
           </div>
         </div>
@@ -362,12 +488,16 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              +{metrics.scopeChangePts}
+              {metrics.scopeChangePts > 0 ? `+${metrics.scopeChangePts}` : '0'}
             </span>
             <span className="font-mono text-[11px] text-slate-400">pts</span>
           </div>
           <div className="flex items-center gap-1 mt-1 font-mono text-[10px] text-slate-500 dark:text-slate-400">
-            <span>1 deliverable added mid-sprint</span>
+            <span>
+              {metrics.scopeChangeCount > 0
+                ? `${metrics.scopeChangeCount} deliverable added mid-sprint`
+                : 'Scope locked & steady'}
+            </span>
           </div>
         </div>
 
@@ -378,10 +508,10 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
           </div>
           <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 truncate mt-1">
-            On Track
+            {metrics.predictionText}
           </span>
           <div className="flex items-center gap-1 mt-1 font-mono text-[10px] text-slate-500 dark:text-slate-400">
-            <span>96% confidence score</span>
+            <span>{metrics.confidenceScore}% confidence score</span>
           </div>
         </div>
       </div>
@@ -420,41 +550,45 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
             </defs>
 
             {/* Horizontal Guide Grids */}
-            <line stroke="#94a3b8" strokeOpacity="0.25" strokeDasharray="3 3" strokeWidth="1" x1="24" x2="330" y1="20" y2="20" />
-            <line stroke="#94a3b8" strokeOpacity="0.25" strokeDasharray="3 3" strokeWidth="1" x1="24" x2="330" y1="60" y2="60" />
-            <line stroke="#94a3b8" strokeOpacity="0.25" strokeDasharray="3 3" strokeWidth="1" x1="24" x2="330" y1="100" y2="100" />
-            <line stroke="#94a3b8" strokeOpacity="0.35" strokeWidth="1" x1="24" x2="330" y1="140" y2="140" />
+            <line stroke="#94a3b8" strokeOpacity="0.25" strokeDasharray="3 3" strokeWidth="1" x1={chartData.xMin} x2={chartData.xMax} y1="20" y2="20" />
+            <line stroke="#94a3b8" strokeOpacity="0.25" strokeDasharray="3 3" strokeWidth="1" x1={chartData.xMin} x2={chartData.xMax} y1="60" y2="60" />
+            <line stroke="#94a3b8" strokeOpacity="0.25" strokeDasharray="3 3" strokeWidth="1" x1={chartData.xMin} x2={chartData.xMax} y1="100" y2="100" />
+            <line stroke="#94a3b8" strokeOpacity="0.35" strokeWidth="1" x1={chartData.xMin} x2={chartData.xMax} y1="140" y2="140" />
 
             {/* Y Axis Numbers */}
-            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="end" x="18" y="24">
+            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="end" x="22" y="24">
               {chartData.maxPts}
             </text>
-            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="end" x="18" y="64">
+            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="end" x="22" y="64">
               {Math.round(chartData.maxPts * 0.66)}
             </text>
-            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="end" x="18" y="104">
+            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="end" x="22" y="104">
               {Math.round(chartData.maxPts * 0.33)}
             </text>
-            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="end" x="18" y="144">
+            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="end" x="22" y="144">
               0
             </text>
 
-            {/* Projection Safe Cone (From today to sprint end) */}
-            <polygon
-              fill="url(#coneGradient)"
-              points={`${chartData.todayX},${chartData.todayY} 330,132 330,146 ${chartData.todayX},${chartData.todayY}`}
-            />
+            {/* Projection Safe Cone */}
+            {metrics.daysLeft > 0 && metrics.remainingPts > 0 && (
+              <polygon
+                fill="url(#coneGradient)"
+                points={chartData.conePointsStr}
+              />
+            )}
 
             {/* Projected Path (Dashed Emerald Line) */}
-            <line
-              stroke="#10b981"
-              strokeDasharray="4 4"
-              strokeWidth="2"
-              x1={chartData.todayX}
-              x2="330"
-              y1={chartData.todayY}
-              y2="138"
-            />
+            {metrics.daysLeft > 0 && metrics.remainingPts > 0 && (
+              <line
+                stroke="#10b981"
+                strokeDasharray="4 4"
+                strokeWidth="2"
+                x1={chartData.todayX}
+                x2={chartData.xMax}
+                y1={chartData.todayY}
+                y2={chartData.projectedEndY}
+              />
+            )}
 
             {/* Ideal Guideline (Grey Dashed) */}
             <line
@@ -462,10 +596,10 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
               strokeDasharray="4 4"
               strokeOpacity="0.7"
               strokeWidth="1.5"
-              x1="24"
-              x2="330"
-              y1="20"
-              y2="140"
+              x1={chartData.xMin}
+              x2={chartData.xMax}
+              y1={chartData.yTop}
+              y2={chartData.yBottom}
             />
 
             {/* Actual Burn Area Gradient */}
@@ -481,8 +615,17 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
               strokeWidth="2.5"
             />
 
-            {/* Scope injection bump dot at Day 6 */}
-            <circle cx="144" cy="62" fill="#f43f5e" r="3.5" stroke="#ffffff" strokeWidth="1.5" />
+            {/* Scope injection bump dot if scope was added */}
+            {metrics.scopeChangeCount > 0 && (
+              <circle
+                cx={Math.round(chartData.xMin + 0.45 * (chartData.todayX - chartData.xMin))}
+                cy={Math.round(chartData.yTop + 0.35 * (chartData.todayY - chartData.yTop))}
+                fill="#f43f5e"
+                r="3.5"
+                stroke="#ffffff"
+                strokeWidth="1.5"
+              />
+            )}
 
             {/* Today Indicator Line */}
             <line
@@ -515,19 +658,16 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
             />
 
             {/* Day Labels X Axis */}
-            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="middle" x="24" y="160">
+            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="middle" x={chartData.xMin} y="160">
               D1
             </text>
-            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="middle" x="96" y="160">
-              D4
-            </text>
-            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="middle" x="168" y="160">
-              D7
+            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="middle" x={chartData.tickMidX} y="160">
+              D{chartData.tickMidDay}
             </text>
             <text fill="#2563eb" fontFamily="JetBrains Mono" fontSize="9" fontWeight="700" textAnchor="middle" x={chartData.todayX} y="160">
               TODAY
             </text>
-            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="middle" x="330" y="160">
+            <text fill="#64748b" fontFamily="JetBrains Mono" fontSize="9" textAnchor="middle" x={chartData.xMax} y="160">
               D{metrics.daysTotal}
             </text>
           </svg>
@@ -536,8 +676,17 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
         {/* Chart Context Footer */}
         <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-1.5 font-mono text-[10px]">
-            <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-            <span>+{metrics.scopeChangePts} pt Scope added Day 6</span>
+            {metrics.scopeChangeCount > 0 ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                <span>+{metrics.scopeChangePts} pts Scope added mid-sprint</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Initial scope preserved ({metrics.totalPts} pts)</span>
+              </>
+            )}
           </div>
           <span className="font-mono text-[10px] font-semibold text-blue-600 dark:text-blue-400">
             {metrics.remainingPts} pts left · {metrics.daysLeft} days to go
@@ -545,24 +694,28 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
         </div>
       </div>
 
-      {/* 5. Issue Type Distribution / Work Breakdown */}
+      {/* 5. Real Issue Type Distribution / Work Breakdown */}
       <div className="flex flex-col p-3 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs gap-2.5">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-900 dark:text-white">Deliverable Work Breakdown</span>
-          <span className="font-mono text-[10px] text-slate-400">{metrics.totalPts} total pts</span>
+          <span className="font-mono text-[10px] text-slate-400">{metrics.totalPts} total pts ({metrics.issues.length} deliverables)</span>
         </div>
 
         {/* Multi-segment Progress Bar */}
-        <div className="flex w-full h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 gap-0.5">
-          {metrics.typeDistribution.map((item) => (
-            <div
-              key={item.type}
-              className={`h-full ${item.bg} transition-all duration-300`}
-              style={{ width: `${item.pct}%` }}
-              title={`${item.label}: ${item.pct}%`}
-            ></div>
-          ))}
-        </div>
+        {metrics.typeDistribution.length > 0 ? (
+          <div className="flex w-full h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 gap-0.5">
+            {metrics.typeDistribution.map((item) => (
+              <div
+                key={item.type}
+                className={`h-full ${item.bg} transition-all duration-300`}
+                style={{ width: `${item.pct}%` }}
+                title={`${item.label}: ${item.pct}%`}
+              ></div>
+            ))}
+          </div>
+        ) : (
+          <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800"></div>
+        )}
 
         {/* Legend */}
         <div className="grid grid-cols-2 gap-y-2 gap-x-3 pt-1">
@@ -580,65 +733,52 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
         </div>
       </div>
 
-      {/* 6. Academic Productivity & Research Milestones */}
+      {/* 6. Real Academic Focus Progress: Project Streams */}
       <div className="flex flex-col p-3 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs gap-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-900 dark:text-white">Academic Focus Progress</span>
+          <span className="text-xs font-bold text-slate-900 dark:text-white">Academic Focus Streams</span>
           <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase font-semibold">
             {metrics.completedIssues.length} of {metrics.issues.length} Deliverables Done
           </span>
         </div>
 
         <div className="space-y-1.5">
-          {/* Research & Experiments Focus */}
-          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                <Twemoji emoji="🧪" className="w-3.5 h-3.5" />
+          {metrics.projectDistribution.length > 0 ? (
+            metrics.projectDistribution.map((proj) => (
+              <div
+                key={proj.name}
+                className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 font-bold text-[10px] uppercase font-mono">
+                    {proj.name.slice(0, 2)}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                      {proj.name}
+                    </span>
+                    <span className="text-[10px] text-slate-400 truncate font-mono">
+                      {proj.deliverableCount} deliverable{proj.deliverableCount !== 1 ? 's' : ''} · {proj.percent}% complete
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end shrink-0 font-mono text-[10px]">
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    {proj.donePts}/{proj.totalPts} pts
+                  </span>
+                  <span className="text-slate-400">{proj.remainingPts} pts left</span>
+                </div>
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                  Research & Experiments
-                </span>
-                <span className="text-[10px] text-slate-400 truncate">
-                  Evaluations, baseline benchmarks & code
-                </span>
-              </div>
+            ))
+          ) : (
+            <div className="p-3 text-center text-slate-400 text-xs">
+              No project deliverables assigned to this sprint yet.
             </div>
-            <div className="flex flex-col items-end shrink-0 font-mono text-[10px]">
-              <span className="font-bold text-blue-600 dark:text-blue-400">
-                {metrics.completedPts} pts delivered
-              </span>
-              <span className="text-emerald-600">{metrics.burnPercent}% complete</span>
-            </div>
-          </div>
-
-          {/* Paper Writing & Lit Review Focus */}
-          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                <Twemoji emoji="📝" className="w-3.5 h-3.5" />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                  Writing & Literature
-                </span>
-                <span className="text-[10px] text-slate-400 truncate">
-                  Drafting methodology, reading & synth notes
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col items-end shrink-0 font-mono text-[10px]">
-              <span className="font-bold text-slate-900 dark:text-white">
-                {metrics.remainingPts} pts remaining
-              </span>
-              <span className="text-slate-400">{metrics.daysLeft} days left</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* 7. Micro-Action Cheer / Kudos Card */}
+      {/* 7. Milestone Cheer & Kudos Card */}
       <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white dark:from-slate-800/80 dark:via-slate-800/50 dark:to-slate-900 border border-blue-100 dark:border-slate-700 shadow-2xs">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0">
@@ -646,18 +786,18 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-bold text-slate-900 dark:text-white">
-              {clapCount > 0 ? 'Milestone Progress Celebrated!' : 'Sprint Momentum'}
+              {clapCount > 0 ? 'Sprint Momentum Celebrated!' : 'Sprint Cadence'}
             </span>
             <span className="text-[11px] text-slate-600 dark:text-slate-400">
               {clapCount > 0
-                ? `Crushed ${metrics.completedPts} pts so far! Keep the cadence going.`
+                ? `Delivered ${metrics.completedPts} pts so far! Excellent research cadence.`
                 : 'Celebrate pushing forward your research deliverables.'}
             </span>
           </div>
         </div>
 
         <button
-          onClick={() => setClapCount((c) => c + 1)}
+          onClick={handleClap}
           className="h-7 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 font-semibold text-xs active:scale-95 transition-transform flex items-center gap-1.5 shadow-2xs cursor-pointer"
         >
           <Twemoji emoji="👏" className="w-3.5 h-3.5 inline-block" />

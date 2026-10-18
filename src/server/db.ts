@@ -145,6 +145,18 @@ async function ensureSprintSchema(d1?: D1Database) {
   try {
     await d1.prepare("ALTER TABLE kanban_milestones ADD COLUMN subtasks_json TEXT DEFAULT '[]'").run();
   } catch {}
+  try {
+    await d1.prepare('ALTER TABLE kanban_milestones ADD COLUMN issue_key TEXT').run();
+  } catch {}
+  try {
+    await d1.prepare("ALTER TABLE kanban_milestones ADD COLUMN connected_artifacts_json TEXT DEFAULT '[]'").run();
+  } catch {}
+  try {
+    await d1.prepare("ALTER TABLE kanban_milestones ADD COLUMN comments_json TEXT DEFAULT '[]'").run();
+  } catch {}
+  try {
+    await d1.prepare('ALTER TABLE kanban_milestones ADD COLUMN completed_at DATETIME').run();
+  } catch {}
   checkedSprintSchema = true;
 }
 
@@ -803,6 +815,7 @@ export class WorkspaceDatabase {
       const { results } = await this.d1.prepare(query).bind(...params).all();
       return (results || []).map((r: any) => ({
         id: r.id,
+        issueKey: r.issue_key || undefined,
         semesterId: r.semester_id || undefined,
         sprintId: r.sprint_id || undefined,
         title: r.title,
@@ -816,9 +829,25 @@ export class WorkspaceDatabase {
         storyPoints: r.story_points != null ? Number(r.story_points) : 1,
         isBlocked: Boolean(r.is_blocked),
         blockedReason: r.blocked_reason || undefined,
+        completedAt: r.completed_at || undefined,
+        createdAt: r.created_at || undefined,
         subtasks: (() => {
           try {
             return r.subtasks_json ? JSON.parse(r.subtasks_json) : [];
+          } catch {
+            return [];
+          }
+        })(),
+        connectedArtifacts: (() => {
+          try {
+            return r.connected_artifacts_json ? JSON.parse(r.connected_artifacts_json) : [];
+          } catch {
+            return [];
+          }
+        })(),
+        comments: (() => {
+          try {
+            return r.comments_json ? JSON.parse(r.comments_json) : [];
           } catch {
             return [];
           }
@@ -833,17 +862,22 @@ export class WorkspaceDatabase {
       if (!this.userId) throw new Error('Unauthorized');
       await ensureSprintSchema(this.d1);
       const subtasksJson = JSON.stringify(item.subtasks || []);
+      const artifactsJson = JSON.stringify(item.connectedArtifacts || []);
+      const commentsJson = JSON.stringify(item.comments || []);
+      const completedAt = item.stage === 'done' ? (item.completedAt || new Date().toISOString()) : (item.completedAt || null);
+
       await this.d1
         .prepare(`
           INSERT INTO kanban_milestones (
-            id, user_id, semester_id, sprint_id, title, stage, target_week, project, notes, sort_order,
-            priority, issue_type, story_points, is_blocked, blocked_reason, subtasks_json
+            id, user_id, semester_id, sprint_id, issue_key, title, stage, target_week, project, notes, sort_order,
+            priority, issue_type, story_points, is_blocked, blocked_reason, subtasks_json, connected_artifacts_json, comments_json, completed_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             user_id = excluded.user_id,
             semester_id = excluded.semester_id,
             sprint_id = excluded.sprint_id,
+            issue_key = excluded.issue_key,
             title = excluded.title,
             stage = excluded.stage,
             target_week = excluded.target_week,
@@ -855,13 +889,17 @@ export class WorkspaceDatabase {
             story_points = excluded.story_points,
             is_blocked = excluded.is_blocked,
             blocked_reason = excluded.blocked_reason,
-            subtasks_json = excluded.subtasks_json
+            subtasks_json = excluded.subtasks_json,
+            connected_artifacts_json = excluded.connected_artifacts_json,
+            comments_json = excluded.comments_json,
+            completed_at = excluded.completed_at
         `)
         .bind(
           item.id,
           this.userId,
           item.semesterId || null,
           item.sprintId || null,
+          item.issueKey || null,
           item.title,
           item.stage,
           item.targetWeek || 'W1',
@@ -873,7 +911,10 @@ export class WorkspaceDatabase {
           item.storyPoints != null ? item.storyPoints : 1,
           item.isBlocked ? 1 : 0,
           item.blockedReason || null,
-          subtasksJson
+          subtasksJson,
+          artifactsJson,
+          commentsJson,
+          completedAt
         )
         .run();
       return item;
@@ -1433,17 +1474,23 @@ export class WorkspaceDatabase {
       }
     });
 
+    const sprintIdMap = new Map<string, string>();
+    sample.sprints?.forEach((sp) => {
+      const oldId = sp.id;
+      sp.id = `${sp.id}_${userSuffix}`;
+      sprintIdMap.set(oldId, sp.id);
+      if (sp.semesterId && semIdMap.has(sp.semesterId)) {
+        sp.semesterId = semIdMap.get(sp.semesterId)!;
+      }
+    });
+
     sample.kanban.forEach((k) => {
       k.id = `${k.id}_${userSuffix}`;
       if (k.semesterId && semIdMap.has(k.semesterId)) {
         k.semesterId = semIdMap.get(k.semesterId)!;
       }
-    });
-
-    sample.sprints?.forEach((sp) => {
-      sp.id = `${sp.id}_${userSuffix}`;
-      if (sp.semesterId && semIdMap.has(sp.semesterId)) {
-        sp.semesterId = semIdMap.get(sp.semesterId)!;
+      if (k.sprintId && sprintIdMap.has(k.sprintId)) {
+        k.sprintId = sprintIdMap.get(k.sprintId)!;
       }
     });
 
