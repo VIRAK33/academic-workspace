@@ -33,6 +33,7 @@ import { KanbanModal } from '../modals/KanbanModal';
 import { SprintModal } from '../modals/SprintModal';
 import { CompleteSprintModal } from '../modals/CompleteSprintModal';
 import { IssueDetailModal } from '../modals/IssueDetailModal';
+import { SprintInsightsView } from './SprintInsightsView';
 
 interface ResearchKanbanViewProps {
   ws: ReturnType<typeof useWorkspace>;
@@ -349,8 +350,8 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                 : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
             }`}
           >
-            <BarChart3 className="w-3 h-3" />
-            <span>Velocity</span>
+            <TrendingUp className="w-3 h-3" />
+            <span>Insights</span>
           </button>
 
           {/* Quick Filter: Urgent P0 */}
@@ -1022,92 +1023,17 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
       )}
 
       {/* ======================================================== */}
-      {/* 3. VELOCITY & SPRINT RETROSPECTIVES                      */}
+      {/* 3. SPRINT INSIGHTS & BURNDOWN VELOCITY VIEW              */}
       {/* ======================================================== */}
       {activeViewTab === 'analytics' && (
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5 shadow-2xs">
-              <span className="font-mono text-[9px] text-slate-400 uppercase tracking-wider">
-                COMPLETED SPRINTS
-              </span>
-              <div className="text-base font-bold text-slate-900 dark:text-white">
-                {sprints.filter((s) => s.status === 'completed').length}
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5 shadow-2xs">
-              <span className="font-mono text-[9px] text-slate-400 uppercase tracking-wider">
-                TOTAL EFFORT DELIVERED
-              </span>
-              <div className="text-base font-bold text-blue-600 dark:text-blue-400">
-                {sprints
-                  .filter((s) => s.status === 'completed')
-                  .reduce((acc, s) => acc + (s.velocityPoints || 0), 0)}{' '}
-                <span className="font-mono text-[10px] font-normal text-slate-400">pts</span>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5 shadow-2xs">
-              <span className="font-mono text-[9px] text-slate-400 uppercase tracking-wider">
-                AVG VELOCITY
-              </span>
-              <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">
-                {overallStats.avgVelocity}{' '}
-                <span className="font-mono text-[10px] font-normal text-slate-400">pts/s</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2 pt-1">
-            <h3 className="font-mono text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-              Sprint History & Retrospectives
-            </h3>
-
-            {sprints.filter((s) => s.status === 'completed').length === 0 ? (
-              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-slate-400 text-xs">
-                No completed sprints yet. Completed sprint metrics and retrospect notes will appear here.
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {sprints
-                  .filter((s) => s.status === 'completed')
-                  .map((sp) => {
-                    const finishedCards = kanban.filter((k) => k.sprintId === sp.id);
-
-                    return (
-                      <div
-                        key={sp.id}
-                        className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-1.5 shadow-2xs"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-slate-900 dark:text-white">
-                              {sp.name}
-                            </span>
-                            <span className="font-mono text-[10px] text-slate-400">
-                              ({sp.startDate} – {sp.endDate})
-                            </span>
-                          </div>
-
-                          <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                            {sp.velocityPoints || 0} pts ({finishedCards.length} issues)
-                          </span>
-                        </div>
-
-                        {sp.retrospective && (
-                          <p className="text-xs text-slate-600 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800">
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">Retro:</span>{' '}
-                            {sp.retrospective}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
-        </div>
+        <SprintInsightsView
+          ws={ws}
+          onCardClick={handleCardClick}
+          onEditSprint={(sp) => {
+            setEditingSprint(sp);
+            setIsSprintModalOpen(true);
+          }}
+        />
       )}
 
       {/* Floating Action Button (FAB) + New Issue */}
