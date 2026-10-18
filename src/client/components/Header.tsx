@@ -337,7 +337,7 @@ export const Header: React.FC<HeaderProps> = ({
                           <span>Customize Views</span>
                           <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">{enabledTabs.length}/8</span>
                         </div>
-                        <div className="text-[10px] text-slate-400">Toggle tabs, order & presets</div>
+                        <div className="text-[10px] text-slate-400">Toggle views, order & presets</div>
                       </div>
                     </button>
 
@@ -358,7 +358,7 @@ export const Header: React.FC<HeaderProps> = ({
                               Look Back
                             </span>
                           </div>
-                          <div className="text-[10px] text-slate-400">Class presence, habits & missed catch-up</div>
+                          <div className="text-[10px] text-slate-400">Presence history, habits & consistency</div>
                         </div>
                       </button>
                     )}
@@ -382,72 +382,29 @@ export const Header: React.FC<HeaderProps> = ({
                       type="button"
                       onClick={() => {
                         setIsToolsMenuOpen(false);
+                        onOpenRemindersModal();
+                      }}
+                      className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
+                    >
+                      <BellRing className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
+                      <div>
+                        <div className="font-medium text-xs">Class Reminders & Alarms</div>
+                        <div className="text-[10px] text-slate-400">Upcoming class alerts & notifications</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
                         onOpenAiImportModal();
                       }}
                       className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
                     >
                       <Sparkles className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                       <div>
-                        <div className="font-medium text-xs">AI Schedule Import</div>
+                        <div className="font-medium text-xs">Import Schedule with AI</div>
                         <div className="text-[10px] text-slate-400">Import timetable from text or syllabus</div>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsToolsMenuOpen(false);
-                        onOpenTimeSlotsModal();
-                      }}
-                      className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
-                    >
-                      <Clock className="w-4 h-4 text-slate-500 shrink-0" />
-                      <div>
-                        <div className="font-medium text-xs">Configure Session Slots</div>
-                        <div className="text-[10px] text-slate-400">Set period time bounds (S1–S12)</div>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsToolsMenuOpen(false);
-                        onOpenGuideModal();
-                      }}
-                      className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
-                    >
-                      <Compass className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
-                      <div>
-                        <div className="font-medium text-xs">Getting Started Guide</div>
-                        <div className="text-[10px] text-slate-400">View features & quick tour</div>
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* Power Tools Section */}
-                  <div className="border-t border-slate-100 dark:border-slate-800 py-1">
-                    <div className="px-3 py-1 text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                      <span>Power Tools</span>
-                      {workspaceMode === 'basic' && (
-                        <span className="text-[9px] text-slate-500 dark:text-slate-400 font-semibold font-sans">Advanced</span>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsToolsMenuOpen(false);
-                        onOpenCliModal();
-                      }}
-                      className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition text-slate-700 dark:text-slate-200"
-                    >
-                      <Terminal className="w-4 h-4 text-slate-500 shrink-0" />
-                      <div>
-                        <div className="font-medium text-xs flex items-center gap-1.5">
-                          <span>Terminal 'aw' CLI</span>
-                          <span className="text-[9px] font-mono px-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">v1.0</span>
-                        </div>
-                        <div className="text-[10px] text-slate-400">Terminal commands & shortcuts</div>
                       </div>
                     </button>
 
@@ -461,28 +418,35 @@ export const Header: React.FC<HeaderProps> = ({
                     >
                       <Database className="w-4 h-4 text-slate-500 shrink-0" />
                       <div>
-                        <div className="font-medium text-xs">Backup & Cloudflare D1</div>
-                        <div className="text-[10px] text-slate-400">Export JSON & cloud sync</div>
+                        <div className="font-medium text-xs">Backup & Data Settings</div>
+                        <div className="text-[10px] text-slate-400">Export backup, sample data & reset</div>
                       </div>
                     </button>
                   </div>
 
-                  {/* Mode Switcher */}
-                  <div className="border-t border-slate-100 dark:border-slate-800 pt-1.5 px-3 pb-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-slate-400 uppercase">Mode</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = workspaceMode === 'basic' ? 'research' : 'basic';
-                          setWorkspaceMode(next);
-                          showToast(`Switched to ${next === 'basic' ? 'Student Essentials' : 'Advanced Research Suite'}`);
-                        }}
-                        className="text-[11px] font-medium text-slate-900 dark:text-white hover:underline"
-                      >
-                        {workspaceMode === 'basic' ? 'Enable Advanced Mode' : 'Switch to Student Mode'}
-                      </button>
-                    </div>
+                  {/* Mode & Tour Footer */}
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-1.5 px-3 pb-1 flex items-center justify-between text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        onOpenGuideModal();
+                      }}
+                      className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
+                    >
+                      Guide & Tour
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = workspaceMode === 'basic' ? 'research' : 'basic';
+                        setWorkspaceMode(next);
+                        showToast(`Switched to ${next === 'basic' ? 'Student Essentials' : 'Advanced Research Suite'}`);
+                      }}
+                      className="font-medium text-slate-900 dark:text-white hover:underline"
+                    >
+                      {workspaceMode === 'basic' ? 'Enable Advanced Mode' : 'Switch to Student Mode'}
+                    </button>
                   </div>
                 </div>
               )}
@@ -557,15 +521,6 @@ export const Header: React.FC<HeaderProps> = ({
               title="Search workspace"
             >
               <Search className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsMobileDrawerOpen(true)}
-              className="p-1.5 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs flex items-center gap-1 text-xs font-medium transition"
-              title="Open Navigation Menu"
-            >
-              <Menu className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -737,75 +692,23 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
 
-              {/* Clock Mode Toggle Card */}
-              <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${isLiveClock ? 'bg-rose-600 animate-pulse' : 'bg-slate-400'}`} />
-                    <span>Clock: {isLiveClock ? 'Live Real-Time' : 'Simulated Time'}</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                    Current: <span className="font-semibold text-slate-700 dark:text-slate-300">{format12HourTime(simulatedMinutes)}</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsLiveClock(!isLiveClock)}
-                  className={`px-2.5 py-1 rounded text-xs font-mono font-medium border transition ${
-                    isLiveClock
-                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
-                      : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600'
-                  }`}
-                >
-                  {isLiveClock ? 'Switch to Sim' : 'Switch to Live'}
-                </button>
-              </div>
-
-              {/* Date & Week Section */}
-              <div className="space-y-2">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold px-1">
-                  Calendar & Week
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleJumpToday();
-                    setIsMobileDrawerOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition"
-                >
-                  <span className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${selectedDate === getTodayIsoDate() ? 'bg-emerald-500 shadow-xs shadow-emerald-400' : 'bg-slate-400 dark:bg-slate-500'}`} />
-                    <span>Jump to Today</span>
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400">
-                    {formatHumanDate(getTodayIsoDate()).split(',')[1]?.trim() || 'Today'}
-                  </span>
-                </button>
-
-                <div className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1 bg-slate-50/40 dark:bg-slate-800/40">
-                  <label className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">
-                    Jump to Academic Week:
-                  </label>
-                  <select
-                    value={currentAcademicWeek}
-                    onChange={(e) => {
-                      const targetWeek = parseInt(e.target.value, 10);
-                      const dow = selUtc.getUTCDay() === 0 ? 7 : selUtc.getUTCDay();
-                      const offset = (targetWeek - 1) * 7 + (dow - 1);
-                      setSelectedDate(addDays(viewedSemester.startDate, offset));
-                      setIsMobileDrawerOpen(false);
-                    }}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-1.5 text-xs font-mono font-medium text-slate-800 dark:text-slate-200"
-                  >
-                    {Array.from({ length: viewedSemester.totalWeeks }, (_, i) => i + 1).map((w) => (
-                      <option key={w} value={w}>
-                        Week {w} {w === currentAcademicWeek ? '(Current)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              {/* Quick Jump Today */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleJumpToday();
+                  setIsMobileDrawerOpen(false);
+                }}
+                className="w-full flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition"
+              >
+                <span className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${selectedDate === getTodayIsoDate() ? 'bg-emerald-500 shadow-xs shadow-emerald-400' : 'bg-slate-400 dark:bg-slate-500'}`} />
+                  <span>Jump to Today</span>
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  {formatHumanDate(getTodayIsoDate()).split(',')[1]?.trim() || 'Today'}
+                </span>
+              </button>
 
               {/* Workspace Tools Section */}
               <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
@@ -865,12 +768,12 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   onClick={() => {
                     setIsMobileDrawerOpen(false);
-                    onOpenGuideModal();
+                    onOpenRemindersModal();
                   }}
                   className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
                 >
-                  <Compass className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
-                  <span>Getting Started Guide</span>
+                  <BellRing className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                  <span>Class Reminders & Calendar Alarms</span>
                 </button>
 
                 <button
@@ -889,48 +792,12 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   onClick={() => {
                     setIsMobileDrawerOpen(false);
-                    onOpenRemindersModal();
-                  }}
-                  className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
-                >
-                  <BellRing className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                  <span>Class Reminders & Calendar Alarms</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileDrawerOpen(false);
-                    onOpenTimeSlotsModal();
-                  }}
-                  className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
-                >
-                  <Clock className="w-4 h-4 text-slate-500" />
-                  <span>Configure Session Slots</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileDrawerOpen(false);
-                    onOpenCliModal();
-                  }}
-                  className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
-                >
-                  <Terminal className="w-4 h-4 text-slate-500" />
-                  <span>Terminal 'aw' CLI Guide</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileDrawerOpen(false);
                     onOpenBackupModal();
                   }}
                   className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 transition"
                 >
                   <Database className="w-4 h-4 text-slate-500" />
-                  <span>Database Backup / Cloudflare D1</span>
+                  <span>Backup & Data Settings</span>
                 </button>
               </div>
 
@@ -955,8 +822,18 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Drawer Footer */}
             <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-[10px] text-slate-400 font-mono flex items-center justify-between shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  onOpenGuideModal();
+                }}
+                className="hover:underline flex items-center gap-1.5 text-slate-500 dark:text-slate-400 transition cursor-pointer"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Guide & Tour</span>
+              </button>
               <span>Term: {viewedSemester.name}</span>
-              <span>v1.0</span>
             </div>
           </div>
         </div>,
