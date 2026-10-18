@@ -119,8 +119,31 @@ export interface Sprint {
   retrospective?: string;
 }
 
+export interface IssueUser {
+  name: string;
+  avatar?: string;
+  role?: string;
+}
+
+export interface ConnectedArtifact {
+  title: string;
+  url?: string;
+  type: 'figma' | 'pr' | 'paper' | 'link';
+  status?: string;
+}
+
+export interface IssueComment {
+  id: string;
+  author: string;
+  avatar?: string;
+  createdAt: string;
+  text: string;
+  reactions?: Record<string, number>;
+}
+
 export interface KanbanMilestone {
   id: string;
+  issueKey?: string; // e.g. 'SPR-104' or auto-assigned
   semesterId?: string;
   sprintId?: string; // undefined or '' or 'backlog' = Backlog
   title: string;
@@ -135,6 +158,11 @@ export interface KanbanMilestone {
   isBlocked?: boolean;
   blockedReason?: string;
   subtasks?: SubtaskItem[];
+  assignee?: IssueUser;
+  reporter?: IssueUser;
+  connectedArtifacts?: ConnectedArtifact[];
+  comments?: IssueComment[];
+  completedNote?: string;
 }
 
 export interface Paper {
