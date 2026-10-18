@@ -359,11 +359,24 @@ export function App() {
         <span>New Task</span>
       </button>
 
-      {/* Toast Notification */}
+      {/* Dynamic Island Style Mobile & Desktop Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+68px)] md:bottom-5 left-1/2 -translate-x-1/2 z-50 px-3.5 py-2 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium shadow-md flex items-center gap-2 animate-bounce">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 dark:bg-emerald-600" />
-          <span>{toastMsg}</span>
+        <div
+          role="status"
+          aria-live="polite"
+          onClick={() => ws.showToast('')}
+          className="fixed top-[calc(env(safe-area-inset-top,0px)+12px)] sm:top-5 left-1/2 -translate-x-1/2 z-[99999] max-w-[92vw] sm:max-w-md w-max px-4 py-2.5 rounded-full bg-slate-900/95 dark:bg-slate-800/95 text-white shadow-2xl backdrop-blur-md border border-slate-700/60 dark:border-slate-600/60 flex items-center gap-2.5 text-xs font-medium tracking-tight animate-in fade-in slide-in-from-top-3 duration-200 select-none cursor-pointer active:scale-95 transition-transform"
+        >
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              toastMsg.toLowerCase().includes('error') || toastMsg.toLowerCase().includes('failed') || toastMsg.toLowerCase().includes('denied')
+                ? 'bg-rose-400 shadow-xs shadow-rose-500 animate-pulse'
+                : toastMsg.toLowerCase().includes('notice') || toastMsg.toLowerCase().includes('requires')
+                ? 'bg-amber-400 shadow-xs shadow-amber-500'
+                : 'bg-emerald-400 shadow-xs shadow-emerald-500'
+            }`}
+          />
+          <span className="leading-snug break-words line-clamp-2">{toastMsg}</span>
         </div>
       )}
 

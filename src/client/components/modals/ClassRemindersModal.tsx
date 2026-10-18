@@ -152,11 +152,16 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
       if (res.success) {
         setTestStatus('Cloud Web Push delivered! Check your notification center.');
         setIsPushActive(true);
+        showToast('Cloud Web Push delivered! Check your notification center.');
       } else {
-        setTestStatus(`Push test: ${res.error || 'Failed to dispatch cloud push'}`);
+        const errorMsg = res.error || 'Failed to dispatch cloud push';
+        setTestStatus(`Push test: ${errorMsg}`);
+        showToast(`Push test: ${errorMsg}`);
       }
     } catch (err: any) {
-      setTestStatus(`Error: ${err?.message || 'Failed to test push'}`);
+      const errorMsg = err?.message || 'Failed to test push';
+      setTestStatus(`Error: ${errorMsg}`);
+      showToast(`Error: ${errorMsg}`);
     } finally {
       setIsTesting(false);
     }

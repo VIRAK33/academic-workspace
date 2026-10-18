@@ -581,7 +581,14 @@ export async function subscribeToPushNotifications(): Promise<{ success: boolean
 
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Failed to subscribe to Web Push' };
+    const msg = err?.message || String(err);
+    if (msg.toLowerCase().includes('load failed')) {
+      return {
+        success: false,
+        error: 'Web Push connection failed. On iPhone/iPad, Web Push requires the app to be added to your Home Screen (Share -> "Add to Home Screen").',
+      };
+    }
+    return { success: false, error: msg || 'Failed to subscribe to Web Push' };
   }
 }
 
@@ -608,7 +615,10 @@ export async function unsubscribeFromPushNotifications(): Promise<boolean> {
  */
 export async function sendTestPushNotification(): Promise<{ success: boolean; sentCount?: number; error?: string }> {
   if (!isPushSupported()) {
-    return { success: false, error: 'Web Push is not supported in this browser' };
+    return {
+      success: false,
+      error: 'Web Push is not supported in this browser. On iPhone, open in Safari and choose "Add to Home Screen".',
+    };
   }
 
   try {
@@ -628,7 +638,14 @@ export async function sendTestPushNotification(): Promise<{ success: boolean; se
     }
     return await api.sendTestPush();
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Failed to trigger test push' };
+    const msg = err?.message || String(err);
+    if (msg.toLowerCase().includes('load failed')) {
+      return {
+        success: false,
+        error: 'Push test connection failed. On iPhone/iPad, please run from your Home Screen (Share -> "Add to Home Screen").',
+      };
+    }
+    return { success: false, error: msg || 'Failed to trigger test push' };
   }
 }
 

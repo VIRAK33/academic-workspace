@@ -187,6 +187,20 @@ export class WorkspaceDatabase {
     userAgent?: string;
   }): Promise<boolean> {
     if (this.d1) {
+      // Ensure user record exists in users table to satisfy foreign key constraint
+      await this.d1
+        .prepare(`
+          INSERT OR IGNORE INTO users (id, google_sub, email, name)
+          VALUES (?, ?, ?, ?)
+        `)
+        .bind(
+          sub.userId,
+          `sub_${sub.userId}`,
+          `${sub.userId}@local.academic`,
+          sub.userId === 'guest_user' ? 'Guest Device' : 'Subscribed User'
+        )
+        .run();
+
       const id = `sub_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       await this.d1
         .prepare(`

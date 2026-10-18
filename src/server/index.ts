@@ -239,9 +239,22 @@ app.post('/api/notifications/test', async (c) => {
     };
 
     let sent = 0;
+    let lastErr = '';
     for (const sub of subs) {
       const res = await sendWebPush(sub, payload, c.env);
-      if (res.success) sent++;
+      if (res.success) {
+        sent++;
+      } else if (res.error) {
+        lastErr = res.error;
+      }
+    }
+
+    if (sent === 0 && subs.length > 0) {
+      return c.json({
+        success: false,
+        error: lastErr || 'Device push endpoint rejected the notification payload',
+        totalSubs: subs.length,
+      }, 400);
     }
 
     return c.json({ success: true, sentCount: sent, totalSubs: subs.length });

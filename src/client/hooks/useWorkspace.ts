@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Semester,
   TimeSlot,
@@ -221,10 +221,18 @@ export function useWorkspace(currentUserId?: string) {
 
   // Toast messaging
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const toastTimerRef = useRef<any>(null);
 
   const showToast = useCallback((msg: string) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 2500);
+    if (!msg) return;
+    const duration = msg.length > 50 ? 4500 : 3200;
+    toastTimerRef.current = setTimeout(() => {
+      setToastMsg(null);
+    }, duration);
   }, []);
 
   // Workspace Mode (basic vs research vs custom) & Enabled Tabs
