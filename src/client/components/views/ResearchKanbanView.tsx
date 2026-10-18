@@ -30,6 +30,7 @@ import {
   Tag,
   ChevronDown,
   ChevronUp,
+  Settings,
 } from 'lucide-react';
 import { Twemoji, renderWithTwemoji } from '../common/Twemoji';
 import { KanbanModal } from '../modals/KanbanModal';
@@ -561,17 +562,31 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                   </p>
                 </div>
 
-                {/* Quick Sprint Health Badge */}
-                <div className="flex flex-col items-end shrink-0 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 px-2.5 py-1.5 rounded-lg">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">
-                      {activeSprintStats.percent}%
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingSprint(activeSprint);
+                      setIsSprintModalOpen(true);
+                    }}
+                    className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
+                    title="Manage Sprint Settings"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Quick Sprint Health Badge */}
+                  <div className="flex flex-col items-end shrink-0 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 px-2.5 py-1.5 rounded-lg">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-sm font-bold text-slate-900 dark:text-white">
+                        {activeSprintStats.percent}%
+                      </span>
+                      <span className="font-mono text-[9px] text-slate-400 font-medium">BURN</span>
+                    </div>
+                    <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                      {activeSprintStats.completedPts}/{activeSprintStats.totalPts} pts
                     </span>
-                    <span className="font-mono text-[9px] text-slate-400 font-medium">BURN</span>
                   </div>
-                  <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
-                    {activeSprintStats.completedPts}/{activeSprintStats.totalPts} pts
-                  </span>
                 </div>
               </div>
 

@@ -840,7 +840,20 @@ export class WorkspaceDatabase {
         })(),
         connectedArtifacts: (() => {
           try {
-            return r.connected_artifacts_json ? JSON.parse(r.connected_artifacts_json) : [];
+            if (!r.connected_artifacts_json) return [];
+            const parsed = JSON.parse(r.connected_artifacts_json);
+            if (Array.isArray(parsed)) return parsed;
+            return parsed.artifacts || [];
+          } catch {
+            return [];
+          }
+        })(),
+        attachments: (() => {
+          try {
+            if (!r.connected_artifacts_json) return [];
+            const parsed = JSON.parse(r.connected_artifacts_json);
+            if (!Array.isArray(parsed) && parsed.attachments) return parsed.attachments;
+            return [];
           } catch {
             return [];
           }
@@ -862,7 +875,10 @@ export class WorkspaceDatabase {
       if (!this.userId) throw new Error('Unauthorized');
       await ensureSprintSchema(this.d1);
       const subtasksJson = JSON.stringify(item.subtasks || []);
-      const artifactsJson = JSON.stringify(item.connectedArtifacts || []);
+      const artifactsJson = JSON.stringify({
+        artifacts: item.connectedArtifacts || [],
+        attachments: item.attachments || [],
+      });
       const commentsJson = JSON.stringify(item.comments || []);
       const completedAt = item.stage === 'done' ? (item.completedAt || new Date().toISOString()) : (item.completedAt || null);
 
@@ -951,18 +967,41 @@ export class WorkspaceDatabase {
       query += ' ORDER BY start_date DESC';
 
       const { results } = await this.d1.prepare(query).bind(...params).all();
-      return (results || []).map((r: any) => ({
-        id: r.id,
-        semesterId: r.semester_id || undefined,
-        name: r.name,
-        goal: r.goal || undefined,
-        startDate: r.start_date,
-        endDate: r.end_date,
-        status: r.status,
-        completedAt: r.completed_at || undefined,
-        velocityPoints: r.velocity_points || 0,
-        retrospective: r.retrospective || undefined,
-      }));
+      return (results || []).map((r: any) => {
+        let retro = r.retrospective || undefined;
+        let maxCapacity: number | undefined;
+        let isPaused: boolean | undefined;
+        let policies: any;
+        let streamAllocations: any;
+
+        if (retro && typeof retro === 'string' && retro.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(retro);
+            retro = parsed.retro || undefined;
+            maxCapacity = parsed.maxCapacity;
+            isPaused = parsed.isPaused;
+            policies = parsed.policies;
+            streamAllocations = parsed.streamAllocations;
+          } catch {}
+        }
+
+        return {
+          id: r.id,
+          semesterId: r.semester_id || undefined,
+          name: r.name,
+          goal: r.goal || undefined,
+          startDate: r.start_date,
+          endDate: r.end_date,
+          status: r.status,
+          completedAt: r.completed_at || undefined,
+          velocityPoints: r.velocity_points || 0,
+          retrospective: retro,
+          maxCapacity,
+          isPaused,
+          policies,
+          streamAllocations,
+        };
+      });
     }
     return (memoryStore.sprints || []).filter((s) => !semesterId || s.semesterId === semesterId || !s.semesterId);
   }
@@ -971,6 +1010,17 @@ export class WorkspaceDatabase {
     if (this.d1) {
       if (!this.userId) throw new Error('Unauthorized');
       await ensureSprintSchema(this.d1);
+      const retroPayload =
+        sprint.policies || sprint.maxCapacity != null || sprint.isPaused != null || sprint.streamAllocations
+          ? JSON.stringify({
+              retro: sprint.retrospective || null,
+              maxCapacity: sprint.maxCapacity,
+              isPaused: sprint.isPaused,
+              policies: sprint.policies,
+              streamAllocations: sprint.streamAllocations,
+            })
+          : sprint.retrospective || null;
+
       await this.d1
         .prepare(`
           INSERT INTO sprints (id, user_id, semester_id, name, goal, start_date, end_date, status, completed_at, velocity_points, retrospective)
@@ -998,7 +1048,7 @@ export class WorkspaceDatabase {
           sprint.status,
           sprint.completedAt || null,
           sprint.velocityPoints || 0,
-          sprint.retrospective || null
+          retroPayload
         )
         .run();
       return sprint;

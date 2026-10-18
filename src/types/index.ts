@@ -106,6 +106,19 @@ export interface SubtaskItem {
 
 export type SprintStatus = 'planned' | 'active' | 'completed';
 
+export interface SprintAutomationPolicies {
+  autoCloseOnEndDate?: boolean;
+  carryOverUnfinished?: boolean;
+  requireArtifactForDone?: boolean;
+}
+
+export interface SprintStreamAllocation {
+  id: string;
+  stream: string;
+  name?: string;
+  points: number;
+}
+
 export interface Sprint {
   id: string;
   semesterId?: string;
@@ -117,6 +130,10 @@ export interface Sprint {
   completedAt?: string;
   velocityPoints?: number;
   retrospective?: string;
+  maxCapacity?: number; // Target capacity ceiling in SP (e.g. 45)
+  isPaused?: boolean;
+  policies?: SprintAutomationPolicies;
+  streamAllocations?: SprintStreamAllocation[];
 }
 
 export interface IssueUser {
@@ -130,6 +147,19 @@ export interface ConnectedArtifact {
   url?: string;
   type: 'figma' | 'pr' | 'paper' | 'link';
   status?: string;
+}
+
+export interface IssueAttachment {
+  id: string;
+  name: string;
+  sizeBytes: number;
+  category: 'image' | 'data' | 'design' | 'doc';
+  mimeType?: string;
+  url?: string;
+  dataUrl?: string;
+  uploadedAt: string;
+  tag?: string;
+  verified?: boolean;
 }
 
 export interface IssueComment {
@@ -161,6 +191,7 @@ export interface KanbanMilestone {
   assignee?: IssueUser;
   reporter?: IssueUser;
   connectedArtifacts?: ConnectedArtifact[];
+  attachments?: IssueAttachment[];
   comments?: IssueComment[];
   completedNote?: string;
   completedAt?: string; // ISO string when marked done

@@ -8,6 +8,7 @@ import {
   IssueComment,
   ConnectedArtifact,
   SubtaskItem,
+  IssueAttachment,
 } from '../../../types';
 import { ModalSheet } from '../common/ModalSheet';
 import { Twemoji, renderWithTwemoji } from '../common/Twemoji';
@@ -31,6 +32,20 @@ import {
   Sparkles,
   Calendar,
   Tag,
+  UploadCloud,
+  FileCode,
+  FolderArchive,
+  Camera,
+  Download,
+  Terminal,
+  MoreVertical,
+  Pause,
+  RefreshCw,
+  Eye,
+  CheckCheck,
+  ArrowLeft,
+  AlignLeft,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface IssueDetailModalProps {
@@ -65,6 +80,25 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState('');
 
+  // Active Tab: details vs attachments
+  const [activeTab, setActiveTab] = useState<'details' | 'attachments'>('details');
+
+  // Attachments Filter
+  const [attachmentFilter, setAttachmentFilter] = useState<'all' | 'image' | 'data' | 'design' | 'doc'>('all');
+
+  // Active Upload Progress state
+  const [activeUpload, setActiveUpload] = useState<{
+    fileName: string;
+    totalBytes: number;
+    currentBytes: number;
+    speed: string;
+    progressPercent: number;
+    isPaused: boolean;
+  } | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
   // Dropdown states
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showPriorityMenu, setShowPriorityMenu] = useState(false);
@@ -85,9 +119,72 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
   const [newArtifactUrl, setNewArtifactUrl] = useState('');
   const [newArtifactType, setNewArtifactType] = useState<'figma' | 'pr' | 'paper' | 'link'>('pr');
 
+  // Default sample attachments if newly initialized
+  const DEFAULT_SAMPLE_ATTACHMENTS: IssueAttachment[] = [
+    {
+      id: 'att_1',
+      name: 'biometric_modal_v2.png',
+      sizeBytes: 2400000,
+      category: 'image',
+      mimeType: 'image/png',
+      uploadedAt: '2h ago',
+      tag: '#spec',
+      verified: true,
+    },
+    {
+      id: 'att_2',
+      name: 'pkce_handshake_dump.json',
+      sizeBytes: 419840,
+      category: 'data',
+      mimeType: 'application/json',
+      uploadedAt: 'Yesterday',
+      tag: '#network',
+      verified: true,
+    },
+    {
+      id: 'att_3',
+      name: 'OAuth2_Security_Review_Report.pdf',
+      sizeBytes: 1887436,
+      category: 'doc',
+      mimeType: 'application/pdf',
+      uploadedAt: 'Oct 18',
+      tag: 'Signed & Passed',
+      verified: true,
+    },
+    {
+      id: 'att_4',
+      name: 'figma_tokens_export.zip',
+      sizeBytes: 870400,
+      category: 'design',
+      mimeType: 'application/zip',
+      uploadedAt: 'Oct 16',
+      tag: '#tokens',
+      verified: false,
+    },
+    {
+      id: 'att_5',
+      name: 'keyframe_biometric_scan.png',
+      sizeBytes: 3250585,
+      category: 'image',
+      mimeType: 'image/png',
+      uploadedAt: 'Oct 15',
+      tag: '#animation',
+      verified: true,
+    },
+  ];
+
   useEffect(() => {
     if (milestone) {
-      setCurrentMilestone(milestone);
+      // Ensure attachments list exists with sample if none yet
+      const initialAttachments =
+        milestone.attachments && milestone.attachments.length > 0
+          ? milestone.attachments
+          : DEFAULT_SAMPLE_ATTACHMENTS;
+
+      setCurrentMilestone({
+        ...milestone,
+        attachments: initialAttachments,
+      });
       setTitleDraft(milestone.title);
       setNotesDraft(milestone.notes || '');
     }
@@ -98,6 +195,26 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
   const currentSprint = sprints.find((s) => s.id === currentMilestone.sprintId);
   const issueKey = currentMilestone.issueKey || `SPR-${currentMilestone.id.slice(0, 4).toUpperCase()}`;
 
+  const attachmentsList = currentMilestone.attachments || [];
+  const totalAttachmentBytes = attachmentsList.reduce((acc, a) => acc + (a.sizeBytes || 0), 0);
+  const totalMB = (totalAttachmentBytes / (1024 * 1024)).toFixed(1);
+  const quotaMB = 100;
+  const percentUsed = Math.min(100, Math.max(1, Math.round((parseFloat(totalMB) / quotaMB) * 100)));
+  const remainingMB = (quotaMB - parseFloat(totalMB)).toFixed(1);
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const filteredAttachments = attachmentsList.filter((att) => {
+    if (attachmentFilter === 'all') return true;
+    return att.category === attachmentFilter;
+  });
+
   // Helper to persist updates
   const updateAndSave = (partial: Partial<KanbanMilestone>) => {
     const updated: KanbanMilestone = {
@@ -106,6 +223,62 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
     };
     setCurrentMilestone(updated);
     saveKanban(updated);
+  };
+
+  // Attachments handlers
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const category: 'image' | 'data' | 'design' | 'doc' =
+      file.type.startsWith('image/')
+        ? 'image'
+        : file.name.endsWith('.json') || file.name.endsWith('.har') || file.name.endsWith('.csv')
+        ? 'data'
+        : file.name.endsWith('.zip') || file.name.endsWith('.fig')
+        ? 'design'
+        : 'doc';
+
+    setActiveUpload({
+      fileName: file.name,
+      totalBytes: file.size,
+      currentBytes: Math.round(file.size * 0.25),
+      speed: '1.4 MB/s',
+      progressPercent: 25,
+      isPaused: false,
+    });
+
+    const finishUpload = (dataUrl?: string) => {
+      const newAttachment: IssueAttachment = {
+        id: 'att_' + Date.now().toString(36),
+        name: file.name,
+        sizeBytes: file.size,
+        category,
+        mimeType: file.type || undefined,
+        dataUrl,
+        uploadedAt: 'Just now',
+        tag: category === 'image' ? '#spec' : category === 'data' ? '#trace' : category === 'design' ? '#tokens' : '#doc',
+        verified: true,
+      };
+
+      const currentList = currentMilestone.attachments || [];
+      updateAndSave({ attachments: [newAttachment, ...currentList] });
+      setActiveUpload(null);
+    };
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setTimeout(() => finishUpload(e.target?.result as string), 700);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setTimeout(() => finishUpload(), 700);
+    }
+  };
+
+  const handleDeleteAttachment = (attId: string) => {
+    const nextList = (currentMilestone.attachments || []).filter((a) => a.id !== attId);
+    updateAndSave({ attachments: nextList });
   };
 
   // Status cycling / selection
@@ -330,11 +503,53 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
           </div>
         </div>
 
+        {/* Navigation Subtabs: Details vs Attachments */}
+        <div className="flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 shrink-0 gap-2 pt-1">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('details')}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all ${
+                activeTab === 'details'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-800/80 rounded-t-lg'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <AlignLeft className="w-3.5 h-3.5" />
+              <span>Details & Notes</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('attachments')}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all ${
+                activeTab === 'attachments'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-slate-800/80 rounded-t-lg'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <Paperclip className="w-3.5 h-3.5" />
+              <span>Attachments & Artifacts</span>
+              <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
+                {attachmentsList.length}
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 dark:text-slate-400 pr-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Quota:</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">
+              {totalMB} / {quotaMB} MB
+            </span>
+          </div>
+        </div>
+
         {/* Scrollable Body Content */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 text-xs text-slate-700 dark:text-slate-300">
           
-          {/* Issue Main Title */}
-          <div className="flex flex-col gap-1">
+          {activeTab === 'details' && (
+            <>
+              {/* Issue Main Title */}
+              <div className="flex flex-col gap-1">
             {isEditingTitle ? (
               <div className="flex items-center gap-2">
                 <input
@@ -861,38 +1076,333 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
               <div ref={threadEndRef} />
             </div>
           </div>
+            </>
+          )}
+
+          {activeTab === 'attachments' && (
+            <div className="space-y-3 pb-2">
+              {/* Hidden file & camera inputs */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={(e) => handleFilesSelected(e.target.files)}
+                className="hidden"
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => handleFilesSelected(e.target.files)}
+                className="hidden"
+              />
+
+              {/* Context Summary Header */}
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 shrink-0">
+                    #{issueKey}
+                  </span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                    {currentMilestone.title}
+                  </span>
+                </div>
+                <span className="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400 shrink-0 ml-2">
+                  {totalMB} / {quotaMB} MB
+                </span>
+              </div>
+
+              {/* Storage Quota Allocation Gauge Strip */}
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Storage Quota</span>
+                  <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                    <strong className="text-slate-800 dark:text-white font-bold">{percentUsed}%</strong> utilized
+                  </span>
+                </div>
+
+                {/* Progress Gauge */}
+                <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex">
+                  <div
+                    className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                    style={{ width: `${percentUsed}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                  <span>Single file limit: 25 MB</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-semibold">{remainingMB} MB remaining</span>
+                </div>
+              </div>
+
+              {/* Dropzone Card */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="group border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 rounded-2xl p-5 text-center cursor-pointer bg-slate-50/50 hover:bg-blue-50/20 dark:bg-slate-800/20 dark:hover:bg-blue-950/20 transition-all flex flex-col items-center justify-center gap-2"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
+                  <UploadCloud className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-white">
+                    Tap or drop files here
+                  </h4>
+                  <p className="text-[11px] text-slate-400 max-w-xs mt-0.5">
+                    Upload benchmark datasets, telemetry JSON, log traces, or test screenshots
+                  </p>
+                </div>
+
+                {/* Format Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+                  {['PDF', 'PNG / JPG', 'ZIP', 'HAR / JSON'].map((fmt) => (
+                    <span
+                      key={fmt}
+                      className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                    >
+                      {fmt}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Active Upload Card (Simulated/Live) */}
+              {activeUpload && (
+                <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/80 space-y-2 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin shrink-0" />
+                      <span className="font-semibold text-xs text-blue-900 dark:text-blue-200 truncate">
+                        {activeUpload.fileName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveUpload((prev) => prev ? { ...prev, isPaused: !prev.isPaused } : null);
+                        }}
+                        className="p-1 hover:bg-blue-200/60 dark:hover:bg-blue-900/60 rounded text-blue-700 dark:text-blue-300"
+                        title={activeUpload.isPaused ? "Resume" : "Pause"}
+                      >
+                        <Pause className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveUpload(null);
+                        }}
+                        className="p-1 hover:bg-blue-200/60 dark:hover:bg-blue-900/60 rounded text-blue-700 dark:text-blue-300"
+                        title="Cancel"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="w-full h-1.5 bg-blue-200 dark:bg-blue-900 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                      style={{ width: `${activeUpload.progressPercent}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] font-mono text-blue-700 dark:text-blue-300">
+                    <span>
+                      {formatFileSize(activeUpload.currentBytes)} / {formatFileSize(activeUpload.totalBytes)}
+                    </span>
+                    <span>{activeUpload.speed} • 5s remaining</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 font-medium text-xs transition-colors shadow-2xs"
+                >
+                  <Camera className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Snap / Photo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 font-medium text-xs transition-colors shadow-2xs"
+                >
+                  <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Add Files</span>
+                </button>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                {[
+                  { id: 'all', label: `All (${attachmentsList.length})` },
+                  { id: 'image', label: 'Images' },
+                  { id: 'data', label: 'Logs & Data' },
+                  { id: 'design', label: 'Design Specs' },
+                  { id: 'doc', label: 'Docs & Papers' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setAttachmentFilter(tab.id as any)}
+                    className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${
+                      attachmentFilter === tab.id
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold shadow-2xs'
+                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Attached Files List */}
+              <div className="space-y-2">
+                {filteredAttachments.length === 0 ? (
+                  <div className="p-6 text-center rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                    <Paperclip className="w-6 h-6 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      No attachments found in this filter
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Drop files above or tap '+ Add Files'
+                    </p>
+                  </div>
+                ) : (
+                  filteredAttachments.map((att) => (
+                    <div
+                      key={att.id}
+                      className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center justify-between gap-3 group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Thumbnail or Category Icon */}
+                        <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                          {att.dataUrl ? (
+                            <img src={att.dataUrl} alt={att.name} className="w-full h-full object-cover" />
+                          ) : att.category === 'image' ? (
+                            <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          ) : att.category === 'data' ? (
+                            <FileCode className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          ) : att.category === 'design' ? (
+                            <FolderArchive className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          ) : (
+                            <FileText className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                          )}
+                        </div>
+
+                        {/* Title & Metadata */}
+                        <div className="min-w-0">
+                          <h5 className="font-semibold text-slate-800 dark:text-slate-100 truncate text-xs">
+                            {att.name}
+                          </h5>
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-0.5">
+                            <span>{formatFileSize(att.sizeBytes)}</span>
+                            <span>•</span>
+                            <span>{att.uploadedAt}</span>
+                            {att.tag && (
+                              <>
+                                <span>•</span>
+                                <span className="px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                                  {att.tag}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right actions & status */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {att.verified && (
+                          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                            <span>Signed & Passed</span>
+                          </span>
+                        )}
+
+                        {att.dataUrl && (
+                          <a
+                            href={att.dataUrl}
+                            download={att.name}
+                            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            title="Download file"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAttachment(att.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors"
+                          title="Delete attachment"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Sticky Bottom Reply Bar */}
-        <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky bottom-0 z-20">
-          <form onSubmit={handleAddComment} className="flex items-center gap-1.5">
-            <button
-              type="button"
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
-              title="Attach artifact"
-              onClick={() => setIsAddingArtifact(true)}
-            >
-              <Paperclip className="w-4 h-4" />
-            </button>
-            <div className="flex-1 min-w-0">
-              <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Add work log note or update..."
-                className="w-full h-8 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
-              />
+        {/* Sticky Bottom Bar */}
+        {activeTab === 'details' ? (
+          <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky bottom-0 z-20">
+            <form onSubmit={handleAddComment} className="flex items-center gap-1.5">
+              <button
+                type="button"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+                title="Attach artifact"
+                onClick={() => setIsAddingArtifact(true)}
+              >
+                <Paperclip className="w-4 h-4" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Add work log note or update..."
+                  className="w-full h-8 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!replyText.trim()}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 active:scale-95 transition-transform shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                title="Add note"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="p-2.5 px-4 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky bottom-0 z-20 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{totalMB} MB</span>
+              <span>of {quotaMB} MB used</span>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
+              <span className="text-[11px] text-slate-400">{filteredAttachments.length} file{filteredAttachments.length !== 1 ? 's' : ''} shown</span>
             </div>
             <button
-              type="submit"
-              disabled={!replyText.trim()}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 active:scale-95 transition-transform shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
-              title="Add note"
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs active:scale-95 transition-all"
             >
-              <Send className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add More Files</span>
             </button>
-          </form>
-        </div>
+          </div>
+        )}
 
       </div>
     </ModalSheet>
