@@ -23,8 +23,6 @@ import {
   Square,
   BarChart3,
   Clock,
-  Sparkles,
-  MoveRight,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -43,7 +41,7 @@ type ColumnWorkflow = 'agile' | 'academic';
 const AGILE_COLUMNS: { id: KanbanStage; title: string }[] = [
   { id: 'todo', title: 'To Do' },
   { id: 'in_progress', title: 'In Progress' },
-  { id: 'review', title: 'Under Review / Testing' },
+  { id: 'review', title: 'In Review' },
   { id: 'done', title: 'Done' },
 ];
 
@@ -54,7 +52,6 @@ const ACADEMIC_COLUMNS: { id: KanbanStage; title: string }[] = [
   { id: 'under_review', title: 'Under Review' },
 ];
 
-// Helper to normalize card stage across both agile and academic workflows
 function matchColumnStage(cardStage: string, colId: KanbanStage, workflow: ColumnWorkflow): boolean {
   if (cardStage === colId) return true;
   if (workflow === 'agile') {
@@ -69,19 +66,19 @@ function matchColumnStage(cardStage: string, colId: KanbanStage, workflow: Colum
   return false;
 }
 
-const ISSUE_TYPE_META: Record<KanbanIssueType, { label: string; icon: string; badgeClass: string }> = {
-  experiment: { label: 'Experiment', icon: '🧪', badgeClass: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
-  writing: { label: 'Writing', icon: '📝', badgeClass: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
-  reading: { label: 'Lit Review', icon: '📖', badgeClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800' },
-  code: { label: 'Code', icon: '💻', badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
-  coursework: { label: 'Course', icon: '📚', badgeClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800' },
+const ISSUE_TYPE_META: Record<KanbanIssueType, { label: string; icon: string }> = {
+  experiment: { label: 'Exp', icon: '🧪' },
+  writing: { label: 'Draft', icon: '📝' },
+  reading: { label: 'Paper', icon: '📖' },
+  code: { label: 'Dev', icon: '💻' },
+  coursework: { label: 'Class', icon: '📚' },
 };
 
 const PRIORITY_META: Record<KanbanPriority, { label: string; colorClass: string; dotClass: string }> = {
   urgent: { label: 'Urgent', colorClass: 'border-l-rose-500', dotClass: 'bg-rose-500' },
   high: { label: 'High', colorClass: 'border-l-amber-500', dotClass: 'bg-amber-500' },
-  medium: { label: 'Medium', colorClass: 'border-l-indigo-400', dotClass: 'bg-indigo-400' },
-  low: { label: 'Low', colorClass: 'border-l-slate-300 dark:border-l-slate-700', dotClass: 'bg-slate-400' },
+  medium: { label: 'Medium', colorClass: 'border-l-slate-400 dark:border-l-slate-600', dotClass: 'bg-slate-400' },
+  low: { label: 'Low', colorClass: 'border-l-slate-200 dark:border-l-slate-800', dotClass: 'bg-slate-300' },
 };
 
 export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) => {
@@ -90,7 +87,6 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
     saveKanban,
     deleteKanban,
     sprints,
-    saveSprint,
     deleteSprint,
     startSprint,
     toggleSubtask,
@@ -236,135 +232,121 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
   const columns = columnWorkflow === 'agile' ? AGILE_COLUMNS : ACADEMIC_COLUMNS;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 text-xs">
       {/* Top Header & View Mode Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Sprints & Research Pipeline
-            </h2>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-              Agile Sprint
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage agile research sprints, backlogs, deliverables, and publication stages
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 dark:border-slate-800/80 pb-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs font-semibold tracking-tight text-slate-900 dark:text-white uppercase">
+            Sprints & Pipeline
+          </h2>
+          <span className="text-[10px] font-mono text-slate-400">
+            ({kanban.length} issues)
+          </span>
         </div>
 
-        {/* View Tabs */}
-        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
+        {/* Minimal View Tabs */}
+        <div className="flex items-center gap-1 self-start sm:self-auto bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-md border border-slate-200/80 dark:border-slate-700/80 text-[11px]">
           <button
             type="button"
             onClick={() => setActiveViewTab('active_sprint')}
-            className={`px-3 py-1 rounded-md font-medium transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2 py-0.5 rounded font-medium transition cursor-pointer flex items-center gap-1 ${
               activeViewTab === 'active_sprint'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
+                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <Target className="w-3.5 h-3.5 text-indigo-500" />
+            <Target className="w-3 h-3 text-indigo-500" />
             <span>Active Sprint</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveViewTab('backlog')}
-            className={`px-3 py-1 rounded-md font-medium transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2 py-0.5 rounded font-medium transition cursor-pointer flex items-center gap-1 ${
               activeViewTab === 'backlog'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
+                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <Layers className="w-3.5 h-3.5 text-amber-500" />
+            <Layers className="w-3 h-3 text-amber-500" />
             <span>Backlog</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveViewTab('analytics')}
-            className={`px-3 py-1 rounded-md font-medium transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2 py-0.5 rounded font-medium transition cursor-pointer flex items-center gap-1 ${
               activeViewTab === 'analytics'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
+                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <BarChart3 className="w-3.5 h-3.5 text-emerald-500" />
+            <BarChart3 className="w-3 h-3 text-emerald-500" />
             <span>Velocity</span>
           </button>
         </div>
       </div>
 
       {/* Filter and Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
           {/* Project Filter */}
-          <div className="flex items-center gap-1">
-            <span className="text-[11px] text-slate-400">Project:</span>
-            <select
-              value={selectedProject}
-              onChange={(e) => setSelectedProject(e.target.value)}
-              className="px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs focus:outline-none"
-            >
-              <option value="all">All Projects ({kanban.length})</option>
-              {projectList.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={selectedProject}
+            onChange={(e) => setSelectedProject(e.target.value)}
+            className="px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none"
+          >
+            <option value="all">Project: All</option>
+            {projectList.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
 
           {/* Priority Filter */}
-          <div className="flex items-center gap-1">
-            <span className="text-[11px] text-slate-400">Priority:</span>
-            <select
-              value={selectedPriority}
-              onChange={(e) => setSelectedPriority(e.target.value)}
-              className="px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs focus:outline-none"
-            >
-              <option value="all">All Priorities</option>
-              <option value="urgent">🔴 Urgent</option>
-              <option value="high">🟠 High</option>
-              <option value="medium">🟡 Medium</option>
-              <option value="low">⚪ Low</option>
-            </select>
-          </div>
+          <select
+            value={selectedPriority}
+            onChange={(e) => setSelectedPriority(e.target.value)}
+            className="px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none"
+          >
+            <option value="all">Priority: All</option>
+            <option value="urgent">🔴 Urgent</option>
+            <option value="high">🟠 High</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="low">⚪ Low</option>
+          </select>
 
-          {/* Column Workflow Switcher (Only on Active Sprint) */}
+          {/* Column Workflow Switcher */}
           {activeViewTab === 'active_sprint' && (
-            <div className="flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-slate-700">
-              <span className="text-[11px] text-slate-400">Columns:</span>
-              <button
-                type="button"
-                onClick={() => setColumnWorkflow(columnWorkflow === 'agile' ? 'academic' : 'agile')}
-                className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 transition"
-              >
-                {columnWorkflow === 'agile' ? '⚡ Agile Stages' : '📚 Academic Stages'}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setColumnWorkflow(columnWorkflow === 'agile' ? 'academic' : 'agile')}
+              className="px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 text-[10px] font-mono text-slate-600 dark:text-slate-400 transition"
+            >
+              {columnWorkflow === 'agile' ? '⚡ Agile Board' : '📚 Academic Pipeline'}
+            </button>
           )}
         </div>
 
-        {/* Global Action Buttons */}
-        <div className="flex items-center gap-2">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-1.5 text-[11px]">
           <button
             type="button"
             onClick={handleCreateSprint}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold transition shadow-2xs flex items-center gap-1 cursor-pointer"
+            className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium transition flex items-center gap-1 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-indigo-500" />
-            <span>New Sprint</span>
+            <Plus className="w-3 h-3 text-indigo-500" />
+            <span>Sprint</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleOpenAddCard(activeSprint?.id)}
-            className="px-3 py-1.5 rounded-md bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold transition shadow-xs flex items-center gap-1 cursor-pointer"
+            className="px-2.5 py-1 rounded bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium transition shadow-2xs flex items-center gap-1 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Deliverable</span>
+            <Plus className="w-3 h-3" />
+            <span>Deliverable</span>
           </button>
         </div>
       </div>
@@ -373,121 +355,93 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
       {/* 1. ACTIVE SPRINT TAB                                    */}
       {/* ======================================================== */}
       {activeViewTab === 'active_sprint' && (
-        <div className="space-y-4">
-          {/* Active Sprint Header Banner */}
+        <div className="space-y-3">
+          {/* Minimal Sprint Header Strip */}
           {activeSprint ? (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-md border border-indigo-900/60 relative overflow-hidden">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-10">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-indigo-500/30 text-indigo-300 border border-indigo-400/30">
-                      Active Sprint
-                    </span>
-                    <h3 className="text-base font-bold text-white flex items-center gap-1.5">
-                      <span>{activeSprint.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleEditSprint(activeSprint)}
-                        className="text-slate-400 hover:text-white transition p-0.5"
-                        title="Edit Sprint Settings"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                    </h3>
-                  </div>
+            <div className="p-2.5 sm:p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs space-y-1.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span className="font-semibold text-slate-900 dark:text-white text-xs">
+                    {activeSprint.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleEditSprint(activeSprint)}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded transition"
+                    title="Edit Sprint Settings"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                  </button>
 
-                  {activeSprint.goal && (
-                    <p className="text-xs text-indigo-200/90 leading-relaxed font-normal">
-                      🎯 <strong className="font-semibold text-white">Goal:</strong> {activeSprint.goal}
-                    </p>
-                  )}
+                  <span className="text-[10px] text-slate-400">•</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-mono">
+                    <Calendar className="w-3 h-3 text-slate-400" />
+                    {activeSprint.startDate} – {activeSprint.endDate}
+                  </span>
 
-                  <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-300">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-indigo-400" />
-                      {activeSprint.startDate} to {activeSprint.endDate}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-amber-400" />
-                      {sprintStats.daysLeft > 0 ? (
-                        <span>
-                          <strong className="text-white">{sprintStats.daysLeft}</strong> days left
-                        </span>
-                      ) : (
-                        <span className="text-amber-400 font-semibold">Sprint cycle ended</span>
-                      )}
-                    </span>
-                    <span>•</span>
-                    <span>
-                      <strong className="text-white">{sprintStats.completedPts}</strong> of{' '}
-                      <strong className="text-white">{sprintStats.totalPts}</strong> story points completed
-                    </span>
-                  </div>
+                  <span className="text-[10px] text-slate-400">•</span>
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                    {sprintStats.daysLeft > 0 ? (
+                      <span>{sprintStats.daysLeft}d left</span>
+                    ) : (
+                      <span className="text-amber-500 font-medium">Cycle ended</span>
+                    )}
+                  </span>
+
+                  <span className="text-[10px] text-slate-400">•</span>
+                  <span className="text-[11px] font-mono text-slate-600 dark:text-slate-300 font-medium">
+                    {sprintStats.completedPts}/{sprintStats.totalPts} pts ({sprintStats.percent}%)
+                  </span>
                 </div>
 
-                {/* Progress bar & Complete Sprint Button */}
-                <div className="flex md:flex-col items-center md:items-end justify-between gap-2.5 shrink-0">
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                  <div className="w-20 sm:w-28 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-300"
+                      style={{ width: `${sprintStats.percent}%` }}
+                    />
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => {
                       setSprintToComplete(activeSprint);
                       setIsCompleteModalOpen(true);
                     }}
-                    className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    className="px-2 py-0.5 rounded text-[11px] font-medium border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition cursor-pointer flex items-center gap-1"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Complete Sprint</span>
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span>Complete</span>
                   </button>
-
-                  <div className="w-36 md:w-44 space-y-1 text-right">
-                    <div className="flex justify-between text-[10px] text-indigo-200 font-mono">
-                      <span>Progress</span>
-                      <span>{sprintStats.percent}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-800 border border-indigo-900/80 overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-300"
-                        style={{ width: `${sprintStats.percent}%` }}
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
+
+              {activeSprint.goal && (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  <span className="text-slate-400 font-medium">Goal:</span> {activeSprint.goal}
+                </p>
+              )}
             </div>
           ) : (
-            <div className="p-6 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-center space-y-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
-                <Target className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  No Active Sprint In Progress
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-0.5">
-                  Start an existing sprint from your Backlog, or create Sprint 1 to begin time-boxed weekly iterations!
-                </p>
-              </div>
-              <div className="flex items-center justify-center gap-2 pt-1">
+            <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center space-y-1.5">
+              <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                No active sprint running
+              </p>
+              <div className="flex items-center justify-center gap-2 pt-1 text-[11px]">
                 <button
                   type="button"
                   onClick={() => setActiveViewTab('backlog')}
-                  className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition cursor-pointer"
+                  className="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition cursor-pointer"
                 >
-                  Go to Backlog & Start Sprint
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCreateSprint}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
-                >
-                  Create New Sprint
+                  Start Sprint from Backlog
                 </button>
               </div>
             </div>
           )}
 
           {/* Kanban Board Columns */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3 items-start">
             {columns.map((col, colIdx) => {
               const cards = activeSprintCards.filter((item) =>
                 matchColumnStage(item.stage, col.id, columnWorkflow)
@@ -499,34 +453,25 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                   key={col.id}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => handleDrop(e, col.id)}
-                  className="bg-slate-100/70 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-800 p-3 space-y-2.5 transition-colors"
+                  className="bg-slate-50/80 dark:bg-slate-900/40 rounded-lg border border-slate-200/70 dark:border-slate-800 p-2 sm:p-2.5 space-y-2 transition-colors"
                 >
                   {/* Column Header */}
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <span>{col.title}</span>
+                  <div className="flex items-center justify-between px-0.5">
+                    <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                      {col.title}
                     </span>
-                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
-                      <span className="px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 font-medium">
-                        {cards.length}
-                      </span>
+                    <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400">
+                      <span>{cards.length}</span>
                       <span>•</span>
                       <span>{colPoints} pts</span>
                     </div>
                   </div>
 
                   {/* Cards Container */}
-                  <div className="space-y-2.5 min-h-[140px]">
+                  <div className="space-y-2 min-h-[100px]">
                     {cards.length === 0 ? (
-                      <div className="h-28 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-[11px] text-slate-400 gap-1 select-none">
-                        <span>Drop deliverables here</span>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenAddCard(activeSprint?.id, col.id)}
-                          className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                        >
-                          + Add card
-                        </button>
+                      <div className="h-20 rounded border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center text-[10px] text-slate-400 select-none">
+                        Empty
                       </div>
                     ) : (
                       cards.map((card) => {
@@ -541,82 +486,72 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                             key={card.id}
                             draggable
                             onDragStart={(e) => handleDragStart(e, card.id)}
-                            className={`p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 border-l-4 ${prio.colorClass} space-y-2 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-xs cursor-grab active:cursor-grabbing select-none`}
+                            className={`p-2.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 border-l-2 ${prio.colorClass} space-y-1.5 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-2xs cursor-grab active:cursor-grabbing select-none`}
                           >
                             {/* Card Top: Issue Type, Points & Target Week */}
-                            <div className="flex items-center justify-between gap-2">
-                              <span
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-medium border flex items-center gap-1 ${issue.badgeClass}`}
-                              >
+                            <div className="flex items-center justify-between gap-1.5 text-[10px]">
+                              <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 truncate max-w-[120px]">
                                 <span>{issue.icon}</span>
                                 <span>{issue.label}</span>
+                                <span className="text-slate-300 dark:text-slate-600">•</span>
+                                <span className="font-mono text-slate-400 truncate">{card.project}</span>
                               </span>
 
-                              <div className="flex items-center gap-1.5 text-[10px] font-mono">
-                                <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
-                                  ⚡ {card.storyPoints || 1} pt
+                              <div className="flex items-center gap-1 font-mono text-slate-400 shrink-0">
+                                <span className="px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] font-medium">
+                                  {card.storyPoints || 1}p
                                 </span>
-                                <span className="text-slate-400">{card.targetWeek || 'W1'}</span>
+                                <span>{card.targetWeek || 'W1'}</span>
                               </div>
-                            </div>
-
-                            {/* Project Tag */}
-                            <div>
-                              <span className="text-[10px] font-mono uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-                                {card.project}
-                              </span>
                             </div>
 
                             {/* Title */}
                             <h4
                               onClick={() => handleEditCard(card)}
-                              className="text-xs font-semibold text-slate-900 dark:text-white leading-snug cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+                              className="text-xs font-medium text-slate-800 dark:text-slate-100 leading-snug cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition"
                             >
                               {card.title}
                             </h4>
 
-                            {/* Blocked Banner */}
+                            {/* Blocked Alert */}
                             {card.isBlocked && (
-                              <div className="px-2 py-1 rounded bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-[11px] text-rose-700 dark:text-rose-300 flex items-start gap-1">
-                                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-500" />
-                                <span className="leading-tight font-medium">
-                                  {card.blockedReason || 'Deliverable Blocked'}
-                                </span>
+                              <div className="px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/40 text-[10px] text-rose-600 dark:text-rose-400 flex items-center gap-1 font-medium">
+                                <AlertTriangle className="w-3 h-3 shrink-0 text-rose-500" />
+                                <span className="truncate">{card.blockedReason || 'Blocked'}</span>
                               </div>
                             )}
 
                             {/* Notes Snippet */}
                             {card.notes && (
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
                                 {card.notes}
                               </p>
                             )}
 
-                            {/* Subtasks Progress & Expandable Checklist */}
+                            {/* Subtasks Progress */}
                             {subtasks.length > 0 && (
-                              <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                              <div className="space-y-0.5 pt-1 border-t border-slate-100 dark:border-slate-800/60 text-[10px]">
                                 <button
                                   type="button"
                                   onClick={() =>
                                     setExpandedSubtasksCardId(isExpandedSubtasks ? null : card.id)
                                   }
-                                  className="w-full flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition"
+                                  className="w-full flex items-center justify-between text-slate-500 dark:text-slate-400 hover:text-slate-800 transition"
                                 >
-                                  <span className="flex items-center gap-1 font-medium">
-                                    <CheckSquare className="w-3 h-3 text-emerald-500" />
+                                  <span className="flex items-center gap-1">
+                                    <CheckSquare className="w-2.5 h-2.5 text-emerald-500" />
                                     <span>
-                                      Checklist {completedSubtasks}/{subtasks.length}
+                                      {completedSubtasks}/{subtasks.length}
                                     </span>
                                   </span>
                                   {isExpandedSubtasks ? (
-                                    <ChevronUp className="w-3 h-3 text-slate-400" />
+                                    <ChevronUp className="w-2.5 h-2.5 text-slate-400" />
                                   ) : (
-                                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                                    <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
                                   )}
                                 </button>
 
-                                {/* Micro Progress Bar */}
-                                <div className="h-1 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                <div className="h-0.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                   <div
                                     className="h-full bg-emerald-500"
                                     style={{
@@ -625,9 +560,8 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                                   />
                                 </div>
 
-                                {/* Expanded interactive checklist */}
                                 {isExpandedSubtasks && (
-                                  <div className="space-y-1 pt-1">
+                                  <div className="space-y-0.5 pt-1">
                                     {subtasks.map((st) => (
                                       <div
                                         key={st.id}
@@ -635,17 +569,17 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                                           e.stopPropagation();
                                           toggleSubtask(card.id, st.id);
                                         }}
-                                        className="flex items-center gap-1.5 p-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer text-[11px]"
+                                        className="flex items-center gap-1 p-0.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-[10px]"
                                       >
                                         {st.completed ? (
-                                          <CheckSquare className="w-3 h-3 text-emerald-600 shrink-0" />
+                                          <CheckSquare className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
                                         ) : (
-                                          <Square className="w-3 h-3 text-slate-400 shrink-0" />
+                                          <Square className="w-2.5 h-2.5 text-slate-400 shrink-0" />
                                         )}
                                         <span
                                           className={`truncate ${
                                             st.completed
-                                              ? 'line-through text-slate-400 dark:text-slate-500'
+                                              ? 'line-through text-slate-400'
                                               : 'text-slate-700 dark:text-slate-300'
                                           }`}
                                         >
@@ -658,9 +592,9 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                               </div>
                             )}
 
-                            {/* Card Footer Actions */}
-                            <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800">
-                              <div className="flex items-center gap-1">
+                            {/* Card Actions Footer */}
+                            <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                              <div className="flex items-center gap-0.5">
                                 {colIdx > 0 && (
                                   <button
                                     type="button"
@@ -668,10 +602,10 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                                       const prevCol = columns[colIdx - 1].id;
                                       saveKanban({ ...card, stage: prevCol }, true);
                                     }}
-                                    className="p-1 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                                    title="Move column left"
+                                    className="p-0.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                                    title="Move left"
                                   >
-                                    <ArrowLeft className="w-3 h-3" />
+                                    <ArrowLeft className="w-2.5 h-2.5" />
                                   </button>
                                 )}
                                 {colIdx < columns.length - 1 && (
@@ -681,10 +615,10 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                                       const nextCol = columns[colIdx + 1].id;
                                       saveKanban({ ...card, stage: nextCol }, true);
                                     }}
-                                    className="p-1 rounded text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
-                                    title="Advance column right"
+                                    className="p-0.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                                    title="Move right"
                                   >
-                                    <ArrowRight className="w-3 h-3" />
+                                    <ArrowRight className="w-2.5 h-2.5" />
                                   </button>
                                 )}
                               </div>
@@ -693,18 +627,18 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                                 <button
                                   type="button"
                                   onClick={() => handleEditCard(card)}
-                                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded transition cursor-pointer"
-                                  title="Edit card"
+                                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded transition"
+                                  title="Edit"
                                 >
-                                  <Edit2 className="w-3 h-3" />
+                                  <Edit2 className="w-2.5 h-2.5" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => deleteKanban(card.id)}
-                                  className="text-slate-400 hover:text-rose-600 p-1 rounded transition cursor-pointer"
-                                  title="Delete card"
+                                  className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition"
+                                  title="Delete"
                                 >
-                                  <Trash2 className="w-3 h-3" />
+                                  <Trash2 className="w-2.5 h-2.5" />
                                 </button>
                               </div>
                             </div>
@@ -724,30 +658,29 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
       {/* 2. BACKLOG VIEW TAB (Grooming & Planned Sprints)        */}
       {/* ======================================================== */}
       {activeViewTab === 'backlog' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Sprints Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <Target className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Sprint Cycles ({sprints.length})</span>
-              </h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <span className="flex items-center gap-1">
+                <Target className="w-3 h-3 text-indigo-500" />
+                <span>Sprint Cycles</span>
+              </span>
               <button
                 type="button"
                 onClick={handleCreateSprint}
-                className="px-2.5 py-1 rounded bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-medium transition flex items-center gap-1 cursor-pointer"
+                className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
               >
-                <Plus className="w-3 h-3" />
-                <span>Create Sprint</span>
+                + New Sprint
               </button>
             </div>
 
             {sprints.length === 0 ? (
-              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
-                No sprints created yet. Create a sprint to group backlog items into focused cycles.
+              <div className="p-3 rounded border border-dashed border-slate-200 dark:border-slate-800 text-center text-[11px] text-slate-400">
+                No sprints yet. Create a sprint to group backlog deliverables.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {sprints.map((sp) => {
                   const sprintItems = kanban.filter((k) => k.sprintId === sp.id);
                   const totalPts = sprintItems.reduce((acc, c) => acc + (c.storyPoints || 1), 0);
@@ -755,52 +688,43 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                   return (
                     <div
                       key={sp.id}
-                      className={`p-3.5 rounded-xl border transition ${
+                      className={`p-2.5 rounded-lg border transition ${
                         sp.status === 'active'
-                          ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/60'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                          ? 'bg-slate-50 dark:bg-slate-900 border-indigo-200 dark:border-indigo-900/50'
+                          : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800'
                       }`}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
-                                sp.status === 'active'
-                                  ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
-                                  : sp.status === 'completed'
-                                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                  : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
-                              }`}
-                            >
-                              {sp.status}
-                            </span>
-                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                              {sp.name}
-                            </h4>
-                            <span className="text-xs font-mono text-slate-400">
-                              ({sprintItems.length} issues • {totalPts} pts)
-                            </span>
-                          </div>
-                          {sp.goal && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-                              Goal: {sp.goal}
-                            </p>
-                          )}
-                          <div className="text-[11px] text-slate-400 flex items-center gap-2">
-                            <span>📅 {sp.startDate} to {sp.endDate}</span>
-                          </div>
+                      <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-100 dark:border-slate-800 text-[11px]">
+                        <div className="flex items-center gap-2 truncate">
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                              sp.status === 'active'
+                                ? 'bg-emerald-500'
+                                : sp.status === 'completed'
+                                ? 'bg-slate-400'
+                                : 'bg-amber-400'
+                            }`}
+                          />
+                          <span className="font-semibold text-slate-900 dark:text-white truncate">
+                            {sp.name}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                            ({sprintItems.length} issues • {totalPts}p)
+                          </span>
+                          <span className="text-[10px] text-slate-400 shrink-0 hidden sm:inline">
+                            {sp.startDate} to {sp.endDate}
+                          </span>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           {sp.status === 'planned' && (
                             <button
                               type="button"
                               onClick={() => startSprint(sp.id)}
-                              className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-medium transition cursor-pointer flex items-center gap-1"
                             >
-                              <Play className="w-3 h-3" />
-                              <span>Start Sprint</span>
+                              <Play className="w-2.5 h-2.5" />
+                              <span>Start</span>
                             </button>
                           )}
                           {sp.status === 'active' && (
@@ -810,79 +734,73 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                                 setSprintToComplete(sp);
                                 setIsCompleteModalOpen(true);
                               }}
-                              className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-medium transition cursor-pointer flex items-center gap-1"
                             >
-                              <CheckCircle2 className="w-3 h-3" />
+                              <CheckCircle2 className="w-2.5 h-2.5" />
                               <span>Complete</span>
                             </button>
                           )}
                           <button
                             type="button"
                             onClick={() => handleEditSprint(sp)}
-                            className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
-                            title="Edit Sprint"
+                            className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-2.5 h-2.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => deleteSprint(sp.id)}
-                            className="p-1 rounded text-slate-400 hover:text-rose-600 transition"
-                            title="Delete Sprint"
+                            className="p-0.5 text-slate-400 hover:text-rose-500"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-2.5 h-2.5" />
                           </button>
                         </div>
                       </div>
 
                       {/* Items in this sprint */}
-                      <div className="space-y-1.5 pt-2.5">
+                      <div className="space-y-1 pt-1.5">
                         {sprintItems.length === 0 ? (
-                          <div className="py-2 text-center text-[11px] text-slate-400">
-                            No issues assigned to this sprint yet. Move items here from the backlog below!
+                          <div className="py-1 text-center text-[10px] text-slate-400">
+                            No issues assigned. Move items from backlog below.
                           </div>
                         ) : (
                           sprintItems.map((item) => {
-                            const issue = ISSUE_TYPE_META[item.issueType || 'experiment'];
                             const prio = PRIORITY_META[item.priority || 'medium'];
 
                             return (
                               <div
                                 key={item.id}
-                                className="flex items-center justify-between gap-3 p-2 rounded-lg bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 text-xs hover:border-slate-300 dark:hover:border-slate-700 transition"
+                                className="flex items-center justify-between gap-2 py-1 px-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50 text-[11px] transition"
                               >
-                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                  <span className={`w-2 h-2 rounded-full shrink-0 ${prio.dotClass}`} />
-                                  <span className="text-[11px] shrink-0">{issue.icon}</span>
-                                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${prio.dotClass}`} />
+                                  <span className="text-[10px] font-mono text-slate-400 shrink-0">
                                     {item.project}
                                   </span>
                                   <span
                                     onClick={() => handleEditCard(item)}
-                                    className="font-medium text-slate-900 dark:text-white truncate cursor-pointer hover:underline"
+                                    className="text-slate-800 dark:text-slate-200 truncate cursor-pointer hover:underline"
                                   >
                                     {item.title}
                                   </span>
                                 </div>
 
-                                <div className="flex items-center gap-2 shrink-0 text-slate-400">
-                                  <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-200/60 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300">
-                                    ⚡ {item.storyPoints || 1} pt
-                                  </span>
+                                <div className="flex items-center gap-1.5 shrink-0 text-slate-400 text-[10px]">
+                                  <span className="font-mono">{item.storyPoints || 1}p</span>
                                   <button
                                     type="button"
                                     onClick={() => saveKanban({ ...item, sprintId: undefined })}
-                                    className="px-2 py-0.5 rounded text-[11px] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-                                    title="Send back to Backlog"
+                                    className="hover:text-slate-700 dark:hover:text-slate-200"
+                                    title="Move to Backlog"
                                   >
                                     To Backlog
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleEditCard(item)}
-                                    className="p-1 hover:text-slate-700 dark:hover:text-slate-200"
+                                    className="p-0.5 hover:text-slate-700"
                                   >
-                                    <Edit2 className="w-3 h-3" />
+                                    <Edit2 className="w-2.5 h-2.5" />
                                   </button>
                                 </div>
                               </div>
@@ -898,78 +816,67 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
           </div>
 
           {/* Unassigned Backlog Section */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Backlog (Unassigned Ideas & Deliverables)</span>
-                </h3>
-                <p className="text-[11px] text-slate-400">
-                  Deliverables not yet scheduled into an active or planned sprint
-                </p>
-              </div>
-
-              <span className="text-xs font-mono text-slate-400 font-medium">
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <span className="flex items-center gap-1">
+                <Layers className="w-3 h-3 text-amber-500" />
+                <span>Backlog (Unassigned)</span>
+              </span>
+              <span className="text-[10px] font-mono text-slate-400 font-normal">
                 {kanban.filter((k) => !k.sprintId).length} items
               </span>
             </div>
 
             {/* Quick Backlog Add Input */}
-            <form onSubmit={handleQuickAddBacklog} className="flex items-center gap-2">
+            <form onSubmit={handleQuickAddBacklog} className="flex items-center gap-1.5">
               <input
                 type="text"
                 value={quickBacklogTitle}
                 onChange={(e) => setQuickBacklogTitle(e.target.value)}
-                placeholder="+ Add deliverable or experiment idea to backlog (Hit Enter to save)..."
-                className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                placeholder="+ Add deliverable to backlog (Hit Enter to save)..."
+                className="flex-1 px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none"
               />
               <button
                 type="submit"
-                className="px-3 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium transition cursor-pointer shrink-0"
+                className="px-2.5 py-1 rounded bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-medium transition cursor-pointer shrink-0"
               >
-                Add to Backlog
+                Add
               </button>
             </form>
 
-            {/* Backlog Items List */}
-            <div className="space-y-1.5">
+            {/* Backlog List Rows */}
+            <div className="space-y-1">
               {kanban.filter((k) => !k.sprintId && filterCard(k)).length === 0 ? (
-                <div className="p-8 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
-                  Backlog is clean! All deliverables are assigned to sprints or completed.
+                <div className="p-4 rounded border border-dashed border-slate-200 dark:border-slate-800 text-center text-[11px] text-slate-400">
+                  Backlog is clean!
                 </div>
               ) : (
                 kanban
                   .filter((k) => !k.sprintId && filterCard(k))
                   .map((item) => {
-                    const issue = ISSUE_TYPE_META[item.issueType || 'experiment'];
                     const prio = PRIORITY_META[item.priority || 'medium'];
 
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-xs hover:border-slate-300 dark:hover:border-slate-700 transition shadow-2xs"
+                        className="flex items-center justify-between gap-2 py-1 px-2 rounded hover:bg-slate-50 dark:hover:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 text-[11px]"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <span className={`w-2 h-2 rounded-full shrink-0 ${prio.dotClass}`} />
-                          <span className="text-[11px] shrink-0">{issue.icon}</span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${prio.dotClass}`} />
+                          <span className="text-[10px] font-mono text-slate-400 shrink-0">
                             {item.project}
                           </span>
                           <span
                             onClick={() => handleEditCard(item)}
-                            className="font-medium text-slate-900 dark:text-white truncate cursor-pointer hover:underline"
+                            className="font-medium text-slate-800 dark:text-slate-200 truncate cursor-pointer hover:underline"
                           >
                             {item.title}
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                            ⚡ {item.storyPoints || 1} pt
-                          </span>
+                        <div className="flex items-center gap-1.5 shrink-0 text-slate-400 text-[10px]">
+                          <span className="font-mono">{item.storyPoints || 1}p</span>
 
-                          {/* Quick assign to sprint dropdown */}
                           <select
                             value=""
                             onChange={(e) => {
@@ -977,9 +884,9 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                                 saveKanban({ ...item, sprintId: e.target.value });
                               }
                             }}
-                            className="px-2 py-0.5 rounded text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none"
+                            className="px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 focus:outline-none"
                           >
-                            <option value="">Move to Sprint...</option>
+                            <option value="">Move to...</option>
                             {sprints.map((sp) => (
                               <option key={sp.id} value={sp.id}>
                                 {sp.status === 'active' ? '🏃 Active: ' : '⏳ '} {sp.name}
@@ -990,16 +897,16 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                           <button
                             type="button"
                             onClick={() => handleEditCard(item)}
-                            className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                            className="p-0.5 hover:text-slate-700"
                           >
-                            <Edit2 className="w-3 h-3" />
+                            <Edit2 className="w-2.5 h-2.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => deleteKanban(item.id)}
-                            className="p-1 text-slate-400 hover:text-rose-600"
+                            className="p-0.5 hover:text-rose-500"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-2.5 h-2.5" />
                           </button>
                         </div>
                       </div>
@@ -1015,52 +922,52 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
       {/* 3. SPRINT ANALYTICS & VELOCITY TAB                      */}
       {/* ======================================================== */}
       {activeViewTab === 'analytics' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Velocity Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs text-slate-400 font-medium">Completed Sprints</span>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5">
+              <span className="text-[10px] text-slate-400 font-medium uppercase">Completed Sprints</span>
+              <div className="text-base font-bold text-slate-900 dark:text-white">
                 {sprints.filter((s) => s.status === 'completed').length}
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs text-slate-400 font-medium">Total Velocity Delivered</span>
-              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+            <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5">
+              <span className="text-[10px] text-slate-400 font-medium uppercase">Total Points Delivered</span>
+              <div className="text-base font-bold text-indigo-600 dark:text-indigo-400">
                 {sprints
                   .filter((s) => s.status === 'completed')
                   .reduce((acc, s) => acc + (s.velocityPoints || 0), 0)}{' '}
-                <span className="text-xs font-normal text-slate-400">story points</span>
+                <span className="text-[11px] font-normal text-slate-400">pts</span>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs text-slate-400 font-medium">Avg Sprint Velocity</span>
-              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5">
+              <span className="text-[10px] text-slate-400 font-medium uppercase">Avg Sprint Velocity</span>
+              <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                 {(() => {
                   const completed = sprints.filter((s) => s.status === 'completed');
                   if (completed.length === 0) return '0';
                   const sum = completed.reduce((acc, s) => acc + (s.velocityPoints || 0), 0);
                   return Math.round(sum / completed.length);
                 })()}{' '}
-                <span className="text-xs font-normal text-slate-400">pts / sprint</span>
+                <span className="text-[11px] font-normal text-slate-400">pts / sprint</span>
               </div>
             </div>
           </div>
 
-          {/* Past Completed Sprints History */}
-          <div className="space-y-3 pt-2">
-            <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+          {/* Past Sprints List */}
+          <div className="space-y-2 pt-1">
+            <h3 className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Sprint History & Retrospectives
             </h3>
 
             {sprints.filter((s) => s.status === 'completed').length === 0 ? (
-              <div className="p-8 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
-                No sprints completed yet. When you complete an active sprint, velocity metrics and retrospectives will appear here!
+              <div className="p-4 rounded border border-dashed border-slate-200 dark:border-slate-800 text-center text-[11px] text-slate-400">
+                No sprints completed yet. Completed sprints and velocity points will be tracked here.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 {sprints
                   .filter((s) => s.status === 'completed')
                   .map((sp) => {
@@ -1069,38 +976,27 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                     return (
                       <div
                         key={sp.id}
-                        className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2.5"
+                        className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-1 text-xs"
                       >
                         <div className="flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                                Completed
-                              </span>
-                              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                                {sp.name}
-                              </h4>
-                            </div>
-                            <span className="text-[11px] text-slate-400">
-                              📅 {sp.startDate} to {sp.endDate} • Completed on{' '}
-                              {sp.completedAt ? sp.completedAt.split('T')[0] : 'N/A'}
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-slate-900 dark:text-white">
+                              {sp.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              ({sp.startDate} – {sp.endDate})
                             </span>
                           </div>
 
-                          <div className="text-right">
-                            <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                              {sp.velocityPoints || 0} pts
-                            </span>
-                            <div className="text-[10px] text-slate-400">
-                              {finishedCards.length} deliverables
-                            </div>
+                          <div className="text-right text-[11px] font-mono text-indigo-600 dark:text-indigo-400 font-semibold">
+                            {sp.velocityPoints || 0} pts ({finishedCards.length} issues)
                           </div>
                         </div>
 
                         {sp.retrospective && (
-                          <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-800">
-                            <strong>Retrospective:</strong> {sp.retrospective}
-                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 pt-0.5 border-t border-slate-100 dark:border-slate-800">
+                            <strong>Note:</strong> {sp.retrospective}
+                          </p>
                         )}
                       </div>
                     );
