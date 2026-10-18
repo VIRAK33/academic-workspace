@@ -15,28 +15,20 @@ import {
   Calendar,
   Layers,
   ArrowLeft,
-  ArrowRight,
   ArrowUp,
   Trash2,
   Edit2,
   AlertTriangle,
   CheckSquare,
-  Square,
   BarChart3,
-  Clock,
-  ChevronDown,
-  ChevronUp,
   Search,
   MessageSquare,
-  Sparkles,
   Inbox,
-  Flame,
   Check,
   TrendingUp,
-  User,
-  GitPullRequest,
   Tag,
 } from 'lucide-react';
+import { Twemoji, renderWithTwemoji } from '../common/Twemoji';
 import { KanbanModal } from '../modals/KanbanModal';
 import { SprintModal } from '../modals/SprintModal';
 import { CompleteSprintModal } from '../modals/CompleteSprintModal';
@@ -57,19 +49,12 @@ const AGILE_COLUMNS: { id: KanbanStage; title: string; colorDot: string }[] = [
   { id: 'done', title: 'Done', colorDot: 'bg-emerald-500' },
 ];
 
-const DEFAULT_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces',
-];
-
-const ISSUE_TYPE_META: Record<KanbanIssueType, { label: string; icon: string }> = {
-  experiment: { label: 'Exp', icon: '🧪' },
-  writing: { label: 'Draft', icon: '📝' },
-  reading: { label: 'Paper', icon: '📖' },
-  code: { label: 'Dev', icon: '💻' },
-  coursework: { label: 'Class', icon: '📚' },
+const ISSUE_TYPE_META: Record<KanbanIssueType, { label: string; emoji: string }> = {
+  experiment: { label: 'Exp', emoji: '🧪' },
+  writing: { label: 'Draft', emoji: '📝' },
+  reading: { label: 'Paper', emoji: '📖' },
+  code: { label: 'Dev', emoji: '💻' },
+  coursework: { label: 'Class', emoji: '📚' },
 };
 
 export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) => {
@@ -87,7 +72,6 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
   const [activeViewTab, setActiveViewTab] = useState<KanbanViewTab>('active_sprint');
   const [activeSwimlane, setActiveSwimlane] = useState<SwimlaneLane>('all');
   const [searchFilter, setSearchFilter] = useState('');
-  const [filterOnlyMyIssues, setFilterOnlyMyIssues] = useState(false);
   const [filterUrgentOnly, setFilterUrgentOnly] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -138,7 +122,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
             completedSprints.reduce((acc, s) => acc + (s.velocityPoints || 0), 0) /
               completedSprints.length
           )
-        : 34; // default baseline
+        : 34;
 
     return { totalIssues, totalEffort, avgVelocity };
   }, [kanban, sprints]);
@@ -148,9 +132,6 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
     if (selectedProject !== 'all' && card.project !== selectedProject) return false;
     if (selectedType !== 'all' && card.issueType !== selectedType) return false;
     if (filterUrgentOnly && card.priority !== 'urgent') return false;
-    if (filterOnlyMyIssues && card.assignee?.name && !card.assignee.name.includes('Elena')) {
-      // Mock 'my issues' check
-    }
     if (searchFilter.trim()) {
       const q = searchFilter.toLowerCase().trim();
       const matchKey = card.issueKey?.toLowerCase().includes(q) || false;
@@ -166,7 +147,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
   const activeSprintCards = useMemo(() => {
     if (!activeSprint) return [];
     return kanban.filter((k) => k.sprintId === activeSprint.id && filterCard(k));
-  }, [kanban, activeSprint, selectedProject, selectedType, filterUrgentOnly, filterOnlyMyIssues, searchFilter]);
+  }, [kanban, activeSprint, selectedProject, selectedType, filterUrgentOnly, searchFilter]);
 
   // Active Sprint Stats
   const activeSprintStats = useMemo(() => {
@@ -193,7 +174,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
   // Backlog cards
   const backlogCards = useMemo(() => {
     return kanban.filter((k) => !k.sprintId && filterCard(k));
-  }, [kanban, selectedProject, selectedType, filterUrgentOnly, filterOnlyMyIssues, searchFilter]);
+  }, [kanban, selectedProject, selectedType, filterUrgentOnly, searchFilter]);
 
   // Card click: opens Issue Detail Modal
   const handleCardClick = (card: KanbanMilestone) => {
@@ -207,7 +188,6 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
     if (targetSprint) {
       saveKanban({ ...card, sprintId: targetSprint.id }, true);
     } else {
-      // If no sprint exists, open sprint creation modal
       setIsSprintModalOpen(true);
     }
   };
@@ -228,19 +208,11 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
       issueKey: `SPR-${newKeyNum}`,
       title: quickBacklogTitle.trim(),
       stage: 'todo',
-      project: selectedProject !== 'all' ? selectedProject : 'Core Experience',
+      project: selectedProject !== 'all' ? selectedProject : 'Core Deliverables',
       targetWeek: 'Backlog',
       priority: isUrgentDraft ? 'urgent' : 'medium',
       issueType: isUrgentDraft ? 'code' : 'writing',
       storyPoints: quickBacklogPoints,
-      assignee: {
-        name: 'Elena Rostova',
-        avatar: DEFAULT_AVATARS[0],
-      },
-      reporter: {
-        name: 'Marcus Chen',
-        avatar: DEFAULT_AVATARS[1],
-      },
     };
 
     saveKanban(newCard);
@@ -330,7 +302,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
             type="text"
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            placeholder="Filter backlog (keys, labels, @assignee)..."
+            placeholder="Filter backlog (keys, labels, title)..."
             className="w-full h-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-xs pl-8 pr-12 rounded-lg border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all shadow-2xs"
           />
           <div className="absolute right-2 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 font-mono text-[9px] pointer-events-none">
@@ -384,13 +356,13 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
           {/* Quick Filter: Urgent P0 */}
           <button
             onClick={() => setFilterUrgentOnly(!filterUrgentOnly)}
-            className={`shrink-0 h-7 px-2.5 rounded-full border transition-all flex items-center gap-1.5 shadow-2xs ${
+            className={`shrink-0 h-7 px-2.5 rounded-full border transition-all flex items-center gap-1 shadow-2xs ${
               filterUrgentOnly
                 ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800 font-bold'
                 : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
             }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            <Twemoji emoji="🚨" className="w-3 h-3 inline-block" />
             <span>Urgent P0</span>
           </button>
 
@@ -398,7 +370,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
           <select
             value={selectedProject}
             onChange={(e) => setSelectedProject(e.target.value)}
-            className="shrink-0 h-7 px-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] focus:outline-none"
+            className="shrink-0 h-7 px-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs focus:outline-none"
           >
             <option value="all">Epics: All</option>
             {projectList.map((p) => (
@@ -412,13 +384,13 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="shrink-0 h-7 px-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] focus:outline-none"
+            className="shrink-0 h-7 px-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs focus:outline-none"
           >
             <option value="all">Type: All</option>
-            <option value="experiment">🧪 Experiment</option>
-            <option value="writing">📝 Writing</option>
+            <option value="experiment">🧪 Exp</option>
+            <option value="writing">📝 Draft</option>
             <option value="reading">📖 Paper</option>
-            <option value="code">💻 Dev / Code</option>
+            <option value="code">💻 Dev</option>
             <option value="coursework">📚 Course</option>
           </select>
         </div>
@@ -579,6 +551,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                           const isClosed = col.id === 'done';
                           const subtasks = card.subtasks || [];
                           const completedSubs = subtasks.filter((s) => s.completed).length;
+                          const issueMeta = ISSUE_TYPE_META[card.issueType || 'experiment'];
 
                           return (
                             <article
@@ -646,19 +619,22 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                                     : 'text-slate-900 dark:text-white'
                                 }`}
                               >
-                                {card.title}
+                                {renderWithTwemoji(card.title, 'w-3 h-3 inline-block')}
                               </p>
 
-                              {/* Card Footer: Assignee, Comments/Subtasks, Points */}
+                              {/* Card Footer: Deliverable Type, Target Week, Subtasks, Points */}
                               <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/80 text-[10px]">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-4 h-4 rounded-full overflow-hidden bg-slate-100 ring-1 ring-slate-200 shrink-0">
-                                    <img
-                                      className="w-full h-full object-cover"
-                                      src={card.assignee?.avatar || DEFAULT_AVATARS[0]}
-                                      alt="avatar"
-                                    />
-                                  </div>
+                                  {issueMeta && (
+                                    <span className="flex items-center gap-1 font-mono text-[9px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 px-1.5 py-0.2 rounded border border-slate-200/60 dark:border-slate-700/60">
+                                      <Twemoji emoji={issueMeta.emoji} className="w-3 h-3 inline-block" />
+                                      <span>{issueMeta.label}</span>
+                                    </span>
+                                  )}
+
+                                  <span className="font-mono text-[9px] text-slate-400">
+                                    {card.targetWeek || 'W1'}
+                                  </span>
 
                                   {subtasks.length > 0 && (
                                     <div className="flex items-center gap-0.5 text-slate-500 dark:text-slate-400 font-mono text-[9px]">
@@ -719,7 +695,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                   setEditingSprint(null);
                   setIsSprintModalOpen(true);
                 }}
-                className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
               >
                 + Create Sprint
               </button>
@@ -841,7 +817,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                   {/* Issues assigned to this sprint */}
                   <div className="space-y-1.5 pt-1">
                     {sprintIssues.length === 0 ? (
-                      <div className="p-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-center text-slate-400 text-[11px]">
+                      <div className="p-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-center text-slate-400 text-xs">
                         No issues assigned yet. Click the upward arrow on backlog items below to promote them.
                       </div>
                     ) : (
@@ -856,7 +832,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                               {item.issueKey || `SPR-${item.id.slice(0, 4).toUpperCase()}`}
                             </span>
                             <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
-                              {item.title}
+                              {renderWithTwemoji(item.title, 'w-3 h-3 inline-block')}
                             </span>
                           </div>
 
@@ -900,7 +876,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setIsCardModalOpen(true)}
-                  className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1 shadow-2xs hover:border-slate-300"
+                  className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1 shadow-2xs hover:border-slate-300 cursor-pointer"
                 >
                   <Plus className="w-3 h-3 text-slate-500" />
                   <span>Issue</span>
@@ -915,24 +891,25 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                   type="text"
                   value={quickBacklogTitle}
                   onChange={(e) => setQuickBacklogTitle(e.target.value)}
-                  placeholder="Draft item: e.g. Real-time cursor presence on canvas..."
-                  className="flex-1 h-7 px-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  placeholder="Draft deliverable: e.g. Baseline benchmark evaluation..."
+                  className="flex-1 h-8 px-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
                 <button
                   type="button"
                   onClick={() => setIsUrgentDraft(!isUrgentDraft)}
-                  className={`px-2 h-7 rounded-lg border text-[10px] font-bold transition-colors ${
+                  className={`px-2 h-8 rounded-lg border text-xs font-bold transition-colors flex items-center gap-1 ${
                     isUrgentDraft
                       ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300'
                       : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400'
                   }`}
                 >
-                  P0 Bug
+                  <Twemoji emoji="🚨" className="w-3 h-3 inline-block" />
+                  <span>P0 Bug</span>
                 </button>
                 <select
                   value={quickBacklogPoints}
                   onChange={(e) => setQuickBacklogPoints(Number(e.target.value))}
-                  className="h-7 px-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[10px] font-mono"
+                  className="h-8 px-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono text-slate-700 dark:text-slate-300"
                 >
                   <option value={1}>1 pt</option>
                   <option value={2}>2 pts</option>
@@ -944,7 +921,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                 <button
                   type="submit"
                   disabled={!quickBacklogTitle.trim()}
-                  className="px-3 h-7 rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-bold disabled:opacity-40 shadow-2xs"
+                  className="px-3 h-8 rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-bold disabled:opacity-40 shadow-2xs"
                 >
                   Add
                 </button>
@@ -961,22 +938,23 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                 backlogCards.map((card) => {
                   const keyTag = card.issueKey || `SPR-${card.id.slice(0, 4).toUpperCase()}`;
                   const isUrgent = card.priority === 'urgent';
+                  const issueMeta = ISSUE_TYPE_META[card.issueType || 'experiment'];
 
                   return (
                     <div
                       key={card.id}
                       onClick={() => handleCardClick(card)}
-                      className={`rounded-xl p-3 border shadow-2xs active:bg-slate-50 dark:active:bg-slate-800 transition-colors flex items-center justify-between gap-2 cursor-pointer ${
+                      className={`rounded-xl p-2.5 sm:p-3 border shadow-2xs active:bg-slate-50 dark:active:bg-slate-800 transition-colors flex items-center justify-between gap-2 cursor-pointer ${
                         isUrgent
                           ? 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60'
                           : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
                         {isUrgent ? (
-                          <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+                          <Twemoji emoji="🚨" className="w-4 h-4 shrink-0 inline-block" />
                         ) : (
-                          <Tag className="w-4 h-4 text-slate-400 shrink-0" />
+                          <Twemoji emoji={issueMeta?.emoji || '📋'} className="w-3.5 h-3.5 shrink-0 inline-block" />
                         )}
 
                         <div className="flex flex-col min-w-0">
@@ -995,13 +973,13 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                                 URGENT P0
                               </span>
                             ) : (
-                              <span className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] font-medium">
+                              <span className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] font-medium truncate max-w-[120px]">
                                 #{card.project}
                               </span>
                             )}
                           </div>
                           <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate mt-0.5">
-                            {card.title}
+                            {renderWithTwemoji(card.title, 'w-3 h-3 inline-block')}
                           </span>
                         </div>
                       </div>
@@ -1019,7 +997,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                               ? 'bg-rose-100 hover:bg-rose-200 border-rose-200 text-rose-800'
                               : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                           }`}
-                          title="Move to current sprint"
+                          title="Move directly to active sprint"
                         >
                           <ArrowUp className="w-3.5 h-3.5" />
                         </button>
@@ -1140,9 +1118,9 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
             setCardModalSprintId(activeSprint?.id);
             setIsCardModalOpen(true);
           }}
-          className="h-10 px-4 rounded-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xl flex items-center gap-1.5 font-bold text-xs active:scale-95 transition-all"
+          className="h-9 px-3.5 rounded-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xl flex items-center gap-1.5 font-bold text-xs active:scale-95 transition-all"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           <span>New Issue</span>
         </button>
       </aside>

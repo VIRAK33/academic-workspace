@@ -75,12 +75,5 @@ input[type="range"]::-webkit-slider-thumb {
   );
 }
 
-/* Prevent iOS Safari auto-zoom on mobile when focusing inputs */
-@media screen and (max-width: 640px) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
-}
+
 

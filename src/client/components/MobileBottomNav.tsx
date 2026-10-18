@@ -44,7 +44,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ ws, onOpenMobi
   }, [isResearchMenuOpen]);
 
   const researchTabs: Array<{ key: TabKey; label: string; icon: React.ReactNode; count?: number }> = [
-    { key: 'kanban' as TabKey, label: 'Kanban', icon: <GitPullRequest className="w-3.5 h-3.5" />, count: kanban.length },
+    { key: 'kanban' as TabKey, label: 'Sprints & Pipeline', icon: <GitPullRequest className="w-3.5 h-3.5" />, count: kanban.length },
     { key: 'papers' as TabKey, label: 'Papers', icon: <BookOpen className="w-3.5 h-3.5" />, count: papers.length },
     { key: 'advisor' as TabKey, label: 'Advisor', icon: <Users className="w-3.5 h-3.5" /> },
     { key: 'conferences' as TabKey, label: 'Conferences', icon: <Trophy className="w-3.5 h-3.5" />, count: conferences.length },
