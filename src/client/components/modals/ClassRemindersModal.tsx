@@ -196,10 +196,10 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
               </div>
               <div>
                 <h2 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
-                  Class Reminders & Calendar Alarms
+                  Reminders & Push Notifications
                 </h2>
                 <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  PWA notifications 30 min before class & native phone calendar sync
+                  PWA alerts 30m before classes, routines & events with 1-click preview
                 </p>
               </div>
             </div>
@@ -342,10 +342,10 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       <Clock className="w-3.5 h-3.5 text-slate-500" />
                       <div>
                         <div className="font-medium text-slate-800 dark:text-slate-200">
-                          30 Minutes Before Class
+                          30 Minutes Before Start
                         </div>
                         <div className="text-[11px] text-slate-500">
-                          Gives you advance notice to pack books and head to the classroom
+                          Advance notice before upcoming classes, routines, and events
                         </div>
                       </div>
                     </div>
@@ -362,10 +362,10 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       <Clock className="w-3.5 h-3.5 text-slate-500" />
                       <div>
                         <div className="font-medium text-slate-800 dark:text-slate-200">
-                          10 Minutes Before Class
+                          10 Minutes Before Start
                         </div>
                         <div className="text-[11px] text-slate-500">
-                          Final heads-up to find your seat and prepare lecture notes
+                          Final reminder to prepare lecture notes or routine materials
                         </div>
                       </div>
                     </div>
@@ -382,10 +382,10 @@ export const ClassRemindersModal: React.FC<ClassRemindersModalProps> = ({
                       <Clock className="w-3.5 h-3.5 text-slate-500" />
                       <div>
                         <div className="font-medium text-slate-800 dark:text-slate-200">
-                          At Class Start Time
+                          At Exact Start Time
                         </div>
                         <div className="text-[11px] text-slate-500">
-                          Alerts you right as the lecture officially begins
+                          Alerts you right as the class, routine, or event officially begins
                         </div>
                       </div>
                     </div>

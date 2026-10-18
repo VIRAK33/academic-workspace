@@ -567,19 +567,34 @@ app.post('/api/backup/restore', async (c) => {
   return c.json({ success: true });
 });
 
+// Helper to compute academic week in server cron
+function getAcademicWeek(todayIso: string, startIso: string): number {
+  try {
+    const [ty, tm, td] = todayIso.split('-').map(Number);
+    const [sy, sm, sd] = startIso.split('-').map(Number);
+    const t = Date.UTC(ty, tm - 1, td);
+    const s = Date.UTC(sy, sm - 1, sd);
+    const diffDays = Math.floor((t - s) / 86400000);
+    return Math.floor(diffDays / 7) + 1;
+  } catch {
+    return 1;
+  }
+}
+
 // --- CLOUDFLARE WORKER DISPATCHER (FETCH + SCHEDULED CRON) ---
 export default {
   fetch: app.fetch,
 
   /**
-   * Cloudflare Scheduled Handler: Runs every 15 minutes to evaluate upcoming classes
-   * and dispatch Web Push notifications to subscribed devices even when closed.
+   * Cloudflare Scheduled Handler: Runs every 15 minutes to evaluate upcoming classes,
+   * routines, and events, and dispatch Web Push notifications to subscribed devices even when closed.
    */
   async scheduled(event: any, env: ServerBindings, ctx: any) {
     try {
       const now = new Date();
       const currentDayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
       const db = new WorkspaceDatabase(env);
       const allSubs = await db.getAllPushSubscriptions();
@@ -593,15 +608,24 @@ export default {
         userSubsMap.set(sub.userId, list);
       }
 
-      // Check upcoming classes for each subscribed user
+      // Check upcoming classes, routines, and events for each subscribed user
       for (const [userId, subs] of userSubsMap.entries()) {
         const userDb = new WorkspaceDatabase(env, userId);
         const semesters = await userDb.getSemesters();
         const activeSem = semesters.find((s) => s.isActive) || semesters[0];
         if (!activeSem) continue;
 
+        const currentAcademicWeek = activeSem.startDate ? getAcademicWeek(todayIso, activeSem.startDate) : 1;
+
+        // 1. Evaluate Courses
         const courses = await userDb.getCourses(activeSem.id);
         for (const course of courses) {
+          const isActiveThisWeek =
+            !course.activeWeeks ||
+            course.activeWeeks.length === 0 ||
+            course.activeWeeks.includes(currentAcademicWeek);
+          if (!isActiveThisWeek) continue;
+
           for (const sched of course.schedules || []) {
             if (sched.dayOfWeek !== currentDayOfWeek) continue;
             const [h, m] = sched.startTime.split(':').map(Number);
@@ -622,6 +646,46 @@ export default {
               for (const s of subs) {
                 await sendWebPush(s, payload, env);
               }
+            }
+          }
+        }
+
+        // 2. Evaluate Routines and Scheduled Events
+        const events = await userDb.getEvents(activeSem.id);
+        for (const ev of events) {
+          let isActiveToday = false;
+          if (ev.type === 'routine') {
+            const activeWeeksOk =
+              !ev.activeWeeks ||
+              ev.activeWeeks.length === 0 ||
+              ev.activeWeeks.includes(currentAcademicWeek);
+            const dayOk = ev.daysOfWeek?.includes(currentDayOfWeek);
+            isActiveToday = activeWeeksOk && dayOk;
+          } else if (ev.type === 'event') {
+            const evStart = ev.specificDate || '';
+            const evEnd = ev.endDate || evStart;
+            isActiveToday = evStart ? (todayIso >= evStart && todayIso <= evEnd) : false;
+          }
+
+          if (!isActiveToday || ev.isAllDay) continue;
+
+          const [h, m] = ev.startTime.split(':').map(Number);
+          if (isNaN(h) || isNaN(m)) continue;
+          const evMins = h * 60 + m;
+          const diff = evMins - currentMinutes;
+
+          if (diff >= 15 && diff <= 30) {
+            const typeLabel = ev.type === 'routine' ? 'Routine' : 'Event';
+            const payload = {
+              title: `🔔 ${typeLabel} in ${diff}m: ${ev.title}`,
+              body: `${ev.category ? `[${ev.category}] ` : ''}${ev.startTime}–${ev.endTime}${ev.location ? ` · ${ev.location}` : ''}\n(Tap to preview details)`,
+              url: `/?previewType=${ev.type === 'routine' ? 'routine' : 'event'}&previewId=${ev.id}`,
+              previewType: ev.type === 'routine' ? 'routine' : 'event',
+              previewId: ev.id,
+              tag: `ev-${ev.id}-${ev.startTime}`,
+            };
+            for (const s of subs) {
+              await sendWebPush(s, payload, env);
             }
           }
         }
