@@ -317,7 +317,7 @@ export function useWorkspace() {
     }
   }, [isDarkMode]);
 
-  // Live clock interval (updates every 10 seconds to track live minutes)
+  // Live clock interval (updates every second to track accurate live minutes)
   useEffect(() => {
     if (!isLiveClock) return;
     const updateNow = () => {
@@ -325,7 +325,7 @@ export function useWorkspace() {
       setSimulatedMinutes(now.getHours() * 60 + now.getMinutes());
     };
     updateNow();
-    const interval = setInterval(updateNow, 10000);
+    const interval = setInterval(updateNow, 1000);
     return () => clearInterval(interval);
   }, [isLiveClock]);
 
@@ -356,17 +356,6 @@ export function useWorkspace() {
     setAdvisorMeetings(mtgs);
     setEvents(evts);
     setAttendanceRecords(atts || []);
-
-    // Sync real engine time if available
-    if (engineTime?.isoDate) {
-      setSelectedDate(prev => {
-        if (prev === '2026-10-15') return engineTime.isoDate;
-        return prev;
-      });
-      if (typeof engineTime.totalMinutes === 'number') {
-        setSimulatedMinutes(engineTime.totalMinutes);
-      }
-    }
 
     const active = sems.find(s => s.isActive) || sems[0];
     if (active) setViewedSemesterId(active.id);

@@ -8,6 +8,7 @@ import {
   parseIsoDate,
   timeToMinutes,
   format24To12Range,
+  format12HourTime,
 } from '../../hooks/useWorkspace';
 import { Course, ScheduleEvent } from '../../../types';
 import { Clock, MapPin } from 'lucide-react';
@@ -134,22 +135,6 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
     }
   };
 
-  // Automatically scroll to 7:00 AM on initial mount or when entering week view
-  useEffect(() => {
-    if (subMode === 'week') {
-      const scrollTo7AM = () => {
-        if (timelineScrollRef.current) {
-          const targetHour = 7;
-          const targetY = Math.max(0, (targetHour - startDayHour) * hourHeightPx);
-          timelineScrollRef.current.scrollTop = targetY;
-        }
-      };
-      scrollTo7AM();
-      const id = setTimeout(scrollTo7AM, 30);
-      return () => clearTimeout(id);
-    }
-  }, [subMode, startDayHour, hourHeightPx]);
-
   const todayIso = getTodayIsoDate();
 
   // Active academic week calculated with weekOffset
@@ -160,44 +145,57 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
     return addDays(viewedSemester.startDate, (activeWeekNum - 1) * 7);
   }, [viewedSemester.startDate, activeWeekNum]);
 
-  // Compute days to display for Week view (Starts on Sunday if 7-day, matching Apple Calendar screenshot)
+  // Compute days to display for Week view (Mon..Sun, matching Table matrix view & academic week)
   const weekDays = useMemo(() => {
-    if (!showWeekend) {
-      return [1, 2, 3, 4, 5].map((dayNum) => {
-        const dateIso = addDays(baseMondayIso, dayNum - 1);
-        const dt = parseIsoDate(dateIso);
-        return {
-          dayNum,
-          dateIso,
-          dayShort: DAY_NAMES_SHORT[dayNum],
-          dayOfMonth: dt.getUTCDate(),
-          isToday: dateIso === todayIso,
-        };
-      });
-    }
-
-    const days = [
-      { dayNum: 7, offset: -1, short: 'Sun' },
-      { dayNum: 1, offset: 0, short: 'Mon' },
-      { dayNum: 2, offset: 1, short: 'Tue' },
-      { dayNum: 3, offset: 2, short: 'Wed' },
-      { dayNum: 4, offset: 3, short: 'Thu' },
-      { dayNum: 5, offset: 4, short: 'Fri' },
-      { dayNum: 6, offset: 5, short: 'Sat' },
-    ];
-
-    return days.map((d) => {
-      const dateIso = addDays(baseMondayIso, d.offset);
+    const dayNumbers = showWeekend ? [1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5];
+    return dayNumbers.map((dayNum) => {
+      const dateIso = addDays(baseMondayIso, dayNum - 1);
       const dt = parseIsoDate(dateIso);
       return {
-        dayNum: d.dayNum,
+        dayNum,
         dateIso,
-        dayShort: d.short,
+        dayShort: DAY_NAMES_SHORT[dayNum],
         dayOfMonth: dt.getUTCDate(),
         isToday: dateIso === todayIso,
       };
     });
   }, [baseMondayIso, showWeekend, todayIso]);
+
+  // Check if viewing current academic week containing today
+  const isCurrentWeek = useMemo(() => {
+    return weekDays.some((wd) => wd.isToday);
+  }, [weekDays]);
+
+  // Current red line position
+  const currentIndicatorTop = Math.round((simulatedMinutes - startDayMins) * pxPerMin);
+  const showIndicator = simulatedMinutes >= startDayMins && simulatedMinutes <= endDayMins;
+
+  // Automatically scroll to current time or 7:00 AM on initial mount or when entering week view
+  const lastScrolledWeekKey = useRef<string>('');
+  useEffect(() => {
+    if (subMode === 'week') {
+      const scrollKey = `${subMode}_${activeWeekNum}`;
+      if (lastScrolledWeekKey.current !== scrollKey) {
+        lastScrolledWeekKey.current = scrollKey;
+        const scrollToInitial = () => {
+          if (timelineScrollRef.current) {
+            if (isCurrentWeek && showIndicator) {
+              timelineScrollRef.current.scrollTop = Math.max(0, currentIndicatorTop - 120);
+            } else {
+              const targetHour = 7;
+              const targetY = Math.max(0, (targetHour - startDayHour) * hourHeightPx);
+              timelineScrollRef.current.scrollTop = targetY;
+            }
+          }
+        };
+        scrollToInitial();
+        const id = setTimeout(scrollToInitial, 50);
+        return () => clearTimeout(id);
+      }
+    } else {
+      lastScrolledWeekKey.current = '';
+    }
+  }, [subMode, activeWeekNum, isCurrentWeek, showIndicator, currentIndicatorTop, startDayHour, hourHeightPx]);
 
   // Compute merged session start/end
   const computeMergedSessionBounds = (sessionLabels: string[]) => {
@@ -442,10 +440,6 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
     return Object.values(dayItemsMap).some((d) => d.allDay.length > 0);
   }, [dayItemsMap]);
 
-  // Current red line position
-  const currentIndicatorTop = Math.round((simulatedMinutes - startDayMins) * pxPerMin);
-  const showIndicator = simulatedMinutes >= startDayMins && simulatedMinutes <= endDayMins;
-
   // Month grid (35 cells)
   const monthGridDays = useMemo(() => {
     if (subMode !== 'month') return [];
@@ -560,13 +554,26 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                       onClick={() => setSelectedDate(wd.dateIso)}
                       className={`py-1.5 px-1.5 sm:px-2.5 font-medium transition cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800/60 ${
                         isWeekend ? 'bg-slate-100/40 dark:bg-slate-800/60' : ''
-                      } ${isToday ? 'text-slate-900 dark:text-white font-bold' : ''}`}
+                      } ${isToday ? 'bg-rose-50/40 dark:bg-rose-950/20' : ''}`}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between text-center sm:text-left">
-                        <span>{wd.dayShort.toUpperCase()}</span>
-                        <span className={`font-normal text-[9px] tabular-nums ${isToday ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-400'}`}>
-                          {Number(m)}/{Number(d)}
-                        </span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between text-center sm:text-left gap-1">
+                        <div className="flex items-center gap-1 justify-center sm:justify-start">
+                          {isToday && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626] shrink-0 animate-pulse" />
+                          )}
+                          <span className={isToday ? 'text-[#dc2626] font-bold' : ''}>
+                            {wd.dayShort.toUpperCase()}
+                          </span>
+                        </div>
+                        {isToday ? (
+                          <span className="w-5 h-5 rounded-full bg-[#dc2626] text-white flex items-center justify-center font-bold text-[9px] tabular-nums mx-auto sm:mx-0 shadow-2xs">
+                            {Number(d)}
+                          </span>
+                        ) : (
+                          <span className="font-normal text-[9px] tabular-nums text-slate-400">
+                            {Number(d)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -642,6 +649,17 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                     </div>
                   );
                 })}
+
+                {/* Realtime clock indicator badge in time gutter */}
+                {isCurrentWeek && showIndicator && (
+                  <div
+                    className="absolute right-1 -translate-y-1/2 z-30 pointer-events-none px-1 py-0.5 rounded bg-[#dc2626] text-white font-mono text-[9px] font-bold shadow-xs whitespace-nowrap leading-none flex items-center gap-0.5 animate-in fade-in duration-200"
+                    style={{ top: `${currentIndicatorTop}px` }}
+                    title={`Current Time: ${format12HourTime(simulatedMinutes, true)}`}
+                  >
+                    <span>{format12HourTime(simulatedMinutes, true)}</span>
+                  </div>
+                )}
               </div>
 
               {/* Columns */}
@@ -666,13 +684,13 @@ export const WeeklyAppleCalendarView: React.FC<WeeklyAppleCalendarViewProps> = (
                       key={wd.dayNum}
                       className={`relative h-full ${wd.dayNum >= 6 ? 'bg-slate-50/15 dark:bg-slate-950/15' : ''}`}
                     >
-                      {isCurrentToday && showIndicator && (
+                      {isCurrentToday && isCurrentWeek && showIndicator && (
                         <div
                           className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
                           style={{ top: `${currentIndicatorTop}px` }}
                         >
-                          <span className="w-2 h-2 rounded-full bg-[#dc2626] -ml-1 shadow-2xs shrink-0" />
-                          <div className="h-[1.5px] bg-[#dc2626] w-full" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#dc2626] border-2 border-white dark:border-slate-900 -ml-1.5 shadow-sm shrink-0 animate-pulse" />
+                          <div className="h-[2px] bg-[#dc2626] w-full shadow-2xs" />
                         </div>
                       )}
 
