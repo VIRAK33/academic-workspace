@@ -37,7 +37,6 @@ import {
 interface SprintInsightsViewProps {
   ws: ReturnType<typeof useWorkspace>;
   initialViewMode?: 'burndown' | 'history';
-  onViewModeChange?: (mode: 'burndown' | 'history') => void;
   onCardClick?: (card: KanbanMilestone) => void;
   onEditSprint?: (sprint: Sprint) => void;
 }
@@ -102,25 +101,13 @@ const SAMPLE_COMPLETED_SPRINTS = [
 export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
   ws,
   initialViewMode = 'burndown',
-  onViewModeChange,
   onCardClick,
   onEditSprint,
 }) => {
   const { sprints, kanban, restoreKanban, deleteKanban, viewedSemester } = ws;
 
-  // View Mode: 'burndown' (Active burndown cone) vs 'history' (Sprint History & Archives)
-  const [viewMode, setViewMode] = useState<'burndown' | 'history'>(initialViewMode);
-
-  useEffect(() => {
-    if (initialViewMode) {
-      setViewMode(initialViewMode);
-    }
-  }, [initialViewMode]);
-
-  const handleSwitchViewMode = (mode: 'burndown' | 'history') => {
-    setViewMode(mode);
-    onViewModeChange?.(mode);
-  };
+  // View Mode: driven directly by the top pill tab ('burndown' vs 'history')
+  const viewMode = initialViewMode;
 
   // History Sub-navigation: 'completed' | 'archived' | 'milestones'
   const [historyTab, setHistoryTab] = useState<'completed' | 'archived' | 'milestones'>('completed');
@@ -393,39 +380,6 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
 
   return (
     <div className="space-y-3.5 font-sans text-xs text-slate-800 dark:text-slate-200">
-      
-      {/* Primary Sub-Tab Switcher: Active Burndown vs Sprint History & Archives */}
-      <div className="flex items-center justify-between p-1 rounded-xl bg-slate-200/70 dark:bg-slate-800/80">
-        <button
-          type="button"
-          onClick={() => handleSwitchViewMode('burndown')}
-          className={`flex-1 py-1.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
-            viewMode === 'burndown'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          <span>Active Burndown & Radar</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleSwitchViewMode('history')}
-          className={`flex-1 py-1.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
-            viewMode === 'history'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <History className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span>Sprint History & Archives</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
-            {completedSprintsList.length}
-          </span>
-        </button>
-      </div>
-
       {/* ======================================================== */}
       {/* VIEW MODE 1: ACTIVE BURNDOWN & PREDICTION RADAR          */}
       {/* ======================================================== */}

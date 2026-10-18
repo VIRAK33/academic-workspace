@@ -1542,9 +1542,6 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
         <SprintInsightsView
           ws={ws}
           initialViewMode={activeViewTab === 'history' ? 'history' : 'burndown'}
-          onViewModeChange={(mode) => {
-            setActiveViewTab(mode === 'history' ? 'history' : 'analytics');
-          }}
           onCardClick={handleCardClick}
           onEditSprint={(sp) => {
             setEditingSprint(sp);
