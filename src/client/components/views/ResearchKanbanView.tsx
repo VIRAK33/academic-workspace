@@ -6,6 +6,7 @@ import {
   Sprint,
   KanbanPriority,
   KanbanIssueType,
+  Task,
 } from '../../../types';
 import {
   Plus,
@@ -27,6 +28,8 @@ import {
   Check,
   TrendingUp,
   Tag,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Twemoji, renderWithTwemoji } from '../common/Twemoji';
 import { KanbanModal } from '../modals/KanbanModal';
@@ -60,6 +63,7 @@ const ISSUE_TYPE_META: Record<KanbanIssueType, { label: string; emoji: string }>
 
 export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) => {
   const {
+    tasks,
     kanban,
     saveKanban,
     deleteKanban,
@@ -73,6 +77,8 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
   // View navigation
   const [activeViewTab, setActiveViewTab] = useState<KanbanViewTab>('active_sprint');
   const [activeSwimlane, setActiveSwimlane] = useState<SwimlaneLane>('all');
+  const [trayTab, setTrayTab] = useState<'backlog' | 'tasks'>('backlog');
+  const [isTrayExpanded, setIsTrayExpanded] = useState<boolean>(true);
   const [searchFilter, setSearchFilter] = useState('');
   const [filterUrgentOnly, setFilterUrgentOnly] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string>('all');
@@ -149,9 +155,28 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
     return true;
   };
 
-  // Active sprint cards
+  // Workspace Tasks not yet converted to Kanban deliverables
+  const unlinkedTasks = useMemo(() => {
+    const kanbanMilestoneIds = new Set(kanban.map((k) => k.id));
+    const kanbanTaskKeys = new Set(
+      kanban.filter((k) => k.id.startsWith('k_task_')).map((k) => k.id.replace('k_task_', ''))
+    );
+    const kanbanTitles = new Set(kanban.map((k) => k.title.toLowerCase().trim()));
+
+    return (tasks || []).filter((t) => {
+      if (t.status === 'archived') return false;
+      if (kanbanMilestoneIds.has(t.id) || kanbanTaskKeys.has(t.id)) return false;
+      if (kanbanTitles.has(t.title.toLowerCase().trim())) return false;
+      return true;
+    });
+  }, [tasks, kanban]);
+
+  // Active sprint cards: When no sprint is active, fallback to displaying backlog deliverables
+  // on the board so the 4 Kanban columns are populated and usable rather than blank!
   const activeSprintCards = useMemo(() => {
-    if (!activeSprint) return [];
+    if (!activeSprint) {
+      return kanban.filter((k) => !k.sprintId && filterCard(k));
+    }
     return kanban.filter((k) => k.sprintId === activeSprint.id && filterCard(k));
   }, [kanban, activeSprint, selectedProject, selectedType, filterUrgentOnly, searchFilter]);
 
@@ -203,6 +228,72 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
     saveKanban({ ...card, sprintId: undefined }, true);
   };
 
+  // Convert a workspace task into an active sprint issue
+  const handleAddTaskToSprint = async (task: Task, targetStage: KanbanStage = 'todo') => {
+    const targetSprint = activeSprint || sprints.find((s) => s.status === 'planned');
+    const newKeyNum = 100 + kanban.length + 1;
+    const priorityMap: Record<string, KanbanPriority> = {
+      high: 'urgent',
+      medium: 'medium',
+      low: 'low',
+    };
+    const categoryLower = (task.category || '').toLowerCase();
+    let issueType: KanbanIssueType = 'writing';
+    if (categoryLower.includes('research') || categoryLower.includes('exp')) issueType = 'experiment';
+    else if (categoryLower.includes('paper') || categoryLower.includes('read')) issueType = 'reading';
+    else if (categoryLower.includes('code') || categoryLower.includes('dev')) issueType = 'code';
+    else if (categoryLower.includes('course') || categoryLower.includes('class')) issueType = 'coursework';
+
+    const newMilestone: KanbanMilestone = {
+      id: 'k_task_' + task.id,
+      issueKey: `TSK-${newKeyNum}`,
+      title: task.title,
+      stage: targetStage,
+      project: task.category || 'Workspace Tasks',
+      targetWeek: task.dueDate ? `Due ${task.dueDate.slice(5)}` : 'Active Sprint',
+      priority: priorityMap[task.priority || 'medium'] || 'medium',
+      issueType: issueType,
+      storyPoints: task.priority === 'high' ? 5 : task.priority === 'low' ? 1 : 3,
+      sprintId: targetSprint ? targetSprint.id : undefined,
+    };
+
+    await saveKanban(newMilestone);
+    if (!targetSprint) {
+      setIsSprintModalOpen(true);
+    }
+  };
+
+  // Convert a workspace task into a Backlog issue
+  const handleAddTaskToBacklog = async (task: Task) => {
+    const newKeyNum = 100 + kanban.length + 1;
+    const priorityMap: Record<string, KanbanPriority> = {
+      high: 'urgent',
+      medium: 'medium',
+      low: 'low',
+    };
+    const categoryLower = (task.category || '').toLowerCase();
+    let issueType: KanbanIssueType = 'writing';
+    if (categoryLower.includes('research') || categoryLower.includes('exp')) issueType = 'experiment';
+    else if (categoryLower.includes('paper') || categoryLower.includes('read')) issueType = 'reading';
+    else if (categoryLower.includes('code') || categoryLower.includes('dev')) issueType = 'code';
+    else if (categoryLower.includes('course') || categoryLower.includes('class')) issueType = 'coursework';
+
+    const newMilestone: KanbanMilestone = {
+      id: 'k_task_' + task.id,
+      issueKey: `TSK-${newKeyNum}`,
+      title: task.title,
+      stage: 'todo',
+      project: task.category || 'Workspace Tasks',
+      targetWeek: task.dueDate ? `Due ${task.dueDate.slice(5)}` : 'Backlog',
+      priority: priorityMap[task.priority || 'medium'] || 'medium',
+      issueType: issueType,
+      storyPoints: task.priority === 'high' ? 5 : task.priority === 'low' ? 1 : 3,
+      sprintId: undefined, // Backlog
+    };
+
+    await saveKanban(newMilestone);
+  };
+
   // Quick Backlog Item Form
   const handleAddBacklogItem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,18 +317,35 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
     setIsUrgentDraft(false);
   };
 
-  // Drag and Drop
-  const handleDragStart = (e: React.DragEvent, cardId: string) => {
-    e.dataTransfer.setData('text/plain', cardId);
+  // Drag and Drop: Supports both Kanban issues and workspace tasks
+  const handleDragStart = (e: React.DragEvent, id: string, type: 'kanban' | 'task' = 'kanban') => {
+    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.setData('source-type', type);
   };
 
   const handleDrop = async (e: React.DragEvent, targetColId: KanbanStage) => {
     e.preventDefault();
-    const cardId = e.dataTransfer.getData('text/plain');
-    if (!cardId) return;
-    const card = kanban.find((k) => k.id === cardId);
-    if (!card || card.stage === targetColId) return;
-    await saveKanban({ ...card, stage: targetColId }, true);
+    const id = e.dataTransfer.getData('text/plain');
+    const sourceType = e.dataTransfer.getData('source-type') || 'kanban';
+    if (!id) return;
+
+    if (sourceType === 'task') {
+      const task = (tasks || []).find((t) => t.id === id);
+      if (task) {
+        await handleAddTaskToSprint(task, targetColId);
+      }
+      return;
+    }
+
+    const card = kanban.find((k) => k.id === id);
+    if (!card) return;
+
+    // If an active sprint is running and a backlog card is dropped onto the board columns,
+    // automatically link it to the active sprint!
+    const newSprintId = activeSprint ? activeSprint.id : card.sprintId;
+    if (card.stage === targetColId && card.sprintId === newSprintId) return;
+
+    await saveKanban({ ...card, stage: targetColId, sprintId: newSprintId }, true);
   };
 
   const handleClearSprintData = async () => {
@@ -484,16 +592,42 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center space-y-2">
-              <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                No active sprint running right now
-              </p>
-              <div className="flex justify-center gap-2">
+            <div className="bg-gradient-to-r from-blue-50/90 via-slate-50 to-slate-50 dark:from-slate-900/90 dark:via-slate-900 dark:to-slate-900 border border-blue-200/80 dark:border-blue-900/50 p-3 sm:p-3.5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-800">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+                      Backlog Mode Active
+                    </span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                    <span className="text-slate-400 text-[10px] font-mono">No sprint active</span>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
+                    Showing {activeSprintCards.length} Backlog Deliverables across Kanban Stages
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Drag items between columns to organize stages, or start a sprint to track sprint burndown.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
                 <button
-                  onClick={() => setActiveViewTab('backlog')}
-                  className="px-3 py-1 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 rounded-lg text-xs font-semibold"
+                  onClick={() => {
+                    const plannedSprint = sprints.find((s) => s.status === 'planned');
+                    if (plannedSprint) {
+                      startSprint(plannedSprint.id);
+                    } else {
+                      setEditingSprint(null);
+                      setIsSprintModalOpen(true);
+                    }
+                  }}
+                  className="w-full sm:w-auto px-3 py-1.5 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs hover:bg-slate-800 active:scale-95 transition-all cursor-pointer"
                 >
-                  Plan & Start Sprint
+                  <Play className="w-3 h-3 text-emerald-400 dark:text-emerald-600" />
+                  <span>{sprints.some((s) => s.status === 'planned') ? 'Start Next Sprint' : '+ New Sprint'}</span>
                 </button>
               </div>
             </div>
@@ -697,6 +831,216 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                   </div>
                 );
               }
+            )}
+          </div>
+
+          {/* ======================================================== */}
+          {/* BACKLOG & WORKSPACE TASKS PIPELINE TRAY                  */}
+          {/* ======================================================== */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-3 shadow-2xs space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTrayExpanded(!isTrayExpanded)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-colors"
+                >
+                  <Inbox className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Backlog & Task Pipeline</span>
+                  {isTrayExpanded ? (
+                    <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  )}
+                </button>
+
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTrayTab('backlog');
+                      setIsTrayExpanded(true);
+                    }}
+                    className={`px-2.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
+                      trayTab === 'backlog'
+                        ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Backlog Items ({backlogCards.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTrayTab('tasks');
+                      setIsTrayExpanded(true);
+                    }}
+                    className={`px-2.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
+                      trayTab === 'tasks'
+                        ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Workspace Tasks ({unlinkedTasks.length})
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+                  Drag cards into columns or click + to add
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingMilestone(null);
+                    setCardModalSprintId(undefined);
+                    setIsCardModalOpen(true);
+                  }}
+                  className="h-6 px-2 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3 h-3 text-slate-500" />
+                  <span>New Issue</span>
+                </button>
+              </div>
+            </div>
+
+            {isTrayExpanded && (
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                {trayTab === 'backlog' && (
+                  <div className="space-y-1.5">
+                    {backlogCards.length === 0 ? (
+                      <div className="py-4 text-center text-slate-400 text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+                        No unassigned backlog items. Click "+ New Issue" to add deliverables.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                        {backlogCards.map((card) => {
+                          const keyTag = card.issueKey || `SPR-${card.id.slice(0, 4).toUpperCase()}`;
+                          const isUrgent = card.priority === 'urgent';
+                          const issueMeta = ISSUE_TYPE_META[card.issueType || 'experiment'];
+
+                          return (
+                            <div
+                              key={card.id}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, card.id, 'kanban')}
+                              onClick={() => handleCardClick(card)}
+                              className="p-2.5 rounded-lg border border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between gap-2 cursor-pointer shadow-2xs group transition-all"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                {isUrgent ? (
+                                  <Twemoji emoji="🚨" className="w-3.5 h-3.5 shrink-0 inline-block" />
+                                ) : (
+                                  <Twemoji emoji={issueMeta?.emoji || '📋'} className="w-3.5 h-3.5 shrink-0 inline-block" />
+                                )}
+                                <div className="flex flex-col min-w-0">
+                                  <div className="flex items-center gap-1">
+                                    <span className="font-mono text-[9px] font-bold text-slate-700 dark:text-slate-300">
+                                      {keyTag}
+                                    </span>
+                                    <span className="font-mono text-[9px] text-slate-400 truncate max-w-[90px]">
+                                      #{card.project}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                    {renderWithTwemoji(card.title, 'w-3 h-3 inline-block')}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-semibold">
+                                  {card.storyPoints || 1}p
+                                </span>
+                                {activeSprint && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePromoteToSprint(card);
+                                    }}
+                                    className="h-6 px-2 rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-[10px] font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                                    title="Add to Active Sprint"
+                                  >
+                                    <Plus className="w-2.5 h-2.5" />
+                                    <span>Sprint</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {trayTab === 'tasks' && (
+                  <div className="space-y-1.5">
+                    {unlinkedTasks.length === 0 ? (
+                      <div className="py-4 text-center text-slate-400 text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+                        All workspace tasks are linked to deliverables or archived! Create new tasks in the Tasks view.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                        {unlinkedTasks.map((t) => (
+                          <div
+                            key={t.id}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, t.id, 'task')}
+                            className="p-2.5 rounded-lg border border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between gap-2 shadow-2xs group transition-all"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <CheckSquare className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <div className="flex flex-col min-w-0">
+                                <div className="flex items-center gap-1">
+                                  <span className="font-mono text-[9px] px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold truncate max-w-[90px]">
+                                    {t.category || 'Task'}
+                                  </span>
+                                  {t.dueDate && (
+                                    <span className="font-mono text-[9px] text-slate-400">
+                                      {t.dueDate.slice(5)}
+                                    </span>
+                                  )}
+                                  {t.priority === 'high' && (
+                                    <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 font-mono">
+                                      HIGH
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                  {renderWithTwemoji(t.title, 'w-3 h-3 inline-block')}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleAddTaskToBacklog(t)}
+                                className="h-6 px-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-semibold active:scale-95 transition-all cursor-pointer"
+                                title="Add to Backlog"
+                              >
+                                + Backlog
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleAddTaskToSprint(t)}
+                                className="h-6 px-2 rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-[10px] font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                                title={activeSprint ? 'Add to Active Sprint' : 'Add to Next Sprint'}
+                              >
+                                <Plus className="w-2.5 h-2.5" />
+                                <span>Sprint</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -1042,6 +1386,79 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                 })
               )}
             </div>
+          </div>
+
+          {/* SECTION 3: Workspace Tasks Pool */}
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <CheckSquare className="w-4 h-4 text-slate-500" />
+                <h2 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Workspace Tasks Pool
+                </h2>
+                <span className="px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[10px] font-semibold">
+                  {unlinkedTasks.length}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-mono">
+                Tasks from To-Do module
+              </span>
+            </div>
+
+            {unlinkedTasks.length === 0 ? (
+              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-slate-400 text-xs">
+                All workspace tasks are linked to deliverables or archived.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {unlinkedTasks.map((t) => (
+                  <div
+                    key={t.id}
+                    className="p-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-2 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition-all"
+                  >
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[9px] px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold truncate max-w-[100px]">
+                          {t.category || 'Task'}
+                        </span>
+                        {t.dueDate && (
+                          <span className="font-mono text-[9px] text-slate-400">
+                            {t.dueDate.slice(5)}
+                          </span>
+                        )}
+                        {t.priority === 'high' && (
+                          <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 font-mono">
+                            HIGH
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate mt-0.5">
+                        {renderWithTwemoji(t.title, 'w-3 h-3 inline-block')}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleAddTaskToBacklog(t)}
+                        className="px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all cursor-pointer"
+                        title="Add to Backlog"
+                      >
+                        + Backlog
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAddTaskToSprint(t)}
+                        className="px-2 py-1 rounded-md bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-[10px] font-bold active:scale-95 transition-all cursor-pointer shadow-2xs"
+                        title={activeSprint ? 'Add to Active Sprint' : 'Add to Next Sprint'}
+                      >
+                        + Sprint
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

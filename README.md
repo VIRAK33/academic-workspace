@@ -67,6 +67,14 @@ Works **100% offline-first** in the browser with localStorage persistence, and s
 - **Vector Emoji with Twemoji**: Consistent, crisp emoji rendering across all operating systems.
 - **Lab Dark Mode**: High-contrast dark theme optimized for late-night lab environments.
 
+### 10. 🔐 Accounts, Sync & Extras
+- **Google Sign-In**: Multi-user support — each user's workspace is isolated on Cloudflare D1 (demo/guest mode available without signing in).
+- **Web Push Notifications**: Scheduled class & deadline reminders sent from a 15-minute cron trigger, with configurable audio/notification preview in the Reminders modal.
+- **Attendance Tracking**: Log and review attendance for classes and advisor meetings.
+- **Research Sprints**: Timeboxed sprint planning on top of the research Kanban.
+- **Apple Calendar Export**: One-click `.ics` export for classes, routines, and events.
+- **Mobile-Friendly**: Dedicated bottom navigation for phone-sized screens.
+
 ---
 
 ## 💻 Terminal CLI (`aw` · `phd` · `acad`)
@@ -137,6 +145,9 @@ aw event list
 # List reading queue
 aw paper list
 
+# Add a paper to the reading list
+aw paper add "Attention Is All You Need" --authors "Vaswani et al." --arxiv 1706.03762
+
 # Copy BibTeX citation to clipboard
 aw paper bibtex p1 | pbcopy
 ```
@@ -174,7 +185,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Link CLI Globally
 To use the `aw` (or `phd`) command anywhere across your system:
@@ -192,7 +203,7 @@ npm run build
 
 ## ☁️ Cloudflare D1 & R2 Deployment (Optional)
 
-The application includes native bindings for Cloudflare Workers/Pages with D1 (SQLite) and R2 (PDF storage):
+The application includes native bindings for Cloudflare Workers/Pages with D1 (SQLite) and R2 (PDF storage). **See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the complete walkthrough**, including required secrets (`JWT_SECRET`, `VAPID_*`, Google OAuth):
 
 ```bash
 # 1. Create Cloudflare D1 database
@@ -217,44 +228,52 @@ npx wrangler pages deploy dist
 ```
 Academic_workspace/
 ├── bin/
-│   ├── aw.ts                         # Complete terminal CLI implementation
-│   └── aw.js                         # Node.js executable binary wrapper
+│   ├── aw.ts                         # Complete terminal CLI implementation (Commander)
+│   ├── aw.js                         # Node.js executable wrapper (aw / acad / phd)
+│   └── phd.ts                        # Alias CLI entry point
+├── docs/
+│   ├── ARCHITECTURE.md               # System design, data flow, tech decisions
+│   ├── API.md                        # Full /api endpoint reference
+│   └── DEPLOYMENT.md                 # Cloudflare / GitHub Pages deployment guide
 ├── migrations/
-│   ├── 0001_initial_schema.sql       # Relational D1 SQLite schema
-│   └── 0002_seed_data.sql            # Seed dataset with courses, tasks, papers
+│   ├── 0001_initial_schema.sql       # Relational D1 SQLite schema (core tables)
+│   ├── 0002_seed_data.sql            # Seed dataset with courses, tasks, papers
+│   ├── 0003_multi_user_and_push.sql  # Users + Web Push subscriptions
+│   ├── 0004_multiday_events.sql      # Multi-day event support
+│   ├── 0005_attendance_tracking.sql  # Attendance logging
+│   └── 0006_sprints_and_advanced_kanban.sql  # Sprints & advanced Kanban
 ├── src/
 │   ├── client/                       # Frontend application (React 18 + Vite + Tailwind)
-│   │   ├── components/
-│   │   │   ├── common/
-│   │   │   │   └── Twemoji.tsx       # Crisp SVG vector emoji renderer
-│   │   │   ├── modals/               # CourseModal, TaskModal, EventModal, CourseDetailsModal,
-│   │   │   │                         # EventDetailsModal, AiImportModal, RemindersModal, BackupModal
-│   │   │   ├── views/
-│   │   │   │   ├── ScheduleTimelineView.tsx      # Collision-aware 50%/50% daily timeline
-│   │   │   │   ├── WeeklyTimetableMatrixView.tsx # 19-Week university session timetable & routines
-│   │   │   │   ├── TasksTodoView.tsx             # Academic task board with custom tags
-│   │   │   │   ├── ResearchKanbanView.tsx        # Milestone progression pipeline
-│   │   │   │   ├── LiteraturePapersView.tsx      # Paper matrix with BibTeX & PDF viewer
-│   │   │   │   ├── AdvisorMeetingsView.tsx       # 1-on-1 agendas & weekly digest generator
-│   │   │   │   ├── ConferencesView.tsx           # D-X submission countdown cards
-│   │   │   │   └── ExperimentLogsView.tsx        # ML compute & experiment metrics tracker
-│   │   │   ├── Header.tsx            # Consolidated Tools menu, semester picker, live clock
-│   │   │   └── Navigation.tsx        # Navigation tabs with live count indicators
-│   │   ├── hooks/
-│   │   │   └── useWorkspace.ts       # Central workspace state & optimistic mutations
-│   │   ├── api.ts                    # REST & local offline API client
+│   │   ├── api.ts                    # REST client with localStorage offline fallback
 │   │   ├── App.tsx                   # Main React entry & modal coordinator
-│   │   └── index.css                 # Custom Tailwind utilities & hatch patterns
+│   │   ├── hooks/
+│   │   │   ├── useWorkspace.ts       # Central workspace state & optimistic mutations
+│   │   │   ├── useAuth.ts            # Google session state
+│   │   │   └── useBodyScrollLock.ts
+│   │   ├── utils/
+│   │   │   └── icsExport.ts          # Apple Calendar (.ics) export
+│   │   ├── components/
+│   │   │   ├── common/               # ModalSheet, TimeInput, Twemoji
+│   │   │   ├── modals/               # ~20 modals: Course, Task, Auth, Reminders,
+│   │   │   │                         #   Sprint, Backup, Welcome guide ...
+│   │   │   ├── views/                # Schedule timeline, 19-week matrix, tasks, kanban,
+│   │   │   │                         #   papers, meetings, conferences, experiment logs
+│   │   │   ├── Header.tsx            # Semester picker, Tools menu, live clock
+│   │   │   ├── Navigation.tsx        # Navigation tabs with live counts
+│   │   │   └── MobileBottomNav.tsx   # Phone bottom navigation
 │   ├── server/
+│   │   ├── index.ts                  # Hono backend API router (all /api endpoints)
+│   │   ├── auth.ts                   # Google OAuth → signed JWT cookie
+│   │   ├── push.ts                   # Web Push sender + cron handler
 │   │   ├── db.ts                     # Database layer (Cloudflare D1 + localStorage fallback)
-│   │   ├── defaultData.ts            # Realistic default academic data
-│   │   └── index.ts                  # Hono backend API router
+│   │   └── defaultData.ts            # Realistic default academic data
 │   └── types/
 │       └── index.ts                  # TypeScript data models & schemas
+├── .github/workflows/deploy.yml      # GitHub Pages CI deploy (static mode)
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
-└── wrangler.toml                     # Cloudflare bindings configuration
+└── wrangler.toml                     # Cloudflare bindings: D1, R2, cron, public vars
 ```
 
 ---
@@ -277,7 +296,18 @@ Academic_workspace/
 | `aw exp list` | List past experiment runs |
 | `aw exp log --name "Run1" --metric f1=88.5` | Log a training run with metrics |
 | `aw conf` | Display upcoming conference deadlines and $D-X$ countdowns |
+| `aw mode [preset]` | View or switch workspace mode (`basic` \| `research`) |
 | `aw digest` | Generate Markdown weekly progress digest for your supervisor |
+
+---
+
+## 📚 Documentation
+
+| Document | Contents |
+|:---|:---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design, offline-first data flow, directory layout, keyboard shortcuts |
+| [`docs/API.md`](docs/API.md) | Complete `/api` endpoint reference (auth, data, push, storage, backup) |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Deploy to GitHub Pages or Cloudflare Workers with D1 + R2, secrets setup, troubleshooting |
 
 ---
 
