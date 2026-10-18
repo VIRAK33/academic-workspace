@@ -31,6 +31,8 @@ import {
   ChevronDown,
   ChevronUp,
   Settings,
+  History,
+  Archive,
 } from 'lucide-react';
 import { Twemoji, renderWithTwemoji } from '../common/Twemoji';
 import { KanbanModal } from '../modals/KanbanModal';
@@ -45,7 +47,7 @@ interface ResearchKanbanViewProps {
   onOpenKanbanModal?: () => void;
 }
 
-type KanbanViewTab = 'active_sprint' | 'backlog' | 'analytics';
+type KanbanViewTab = 'active_sprint' | 'backlog' | 'analytics' | 'history';
 type SwimlaneLane = 'all' | 'todo' | 'in_progress' | 'review' | 'done';
 
 const AGILE_COLUMNS: { id: KanbanStage; title: string; colorDot: string }[] = [
@@ -144,6 +146,15 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
 
     return { totalIssues, totalEffort, avgVelocity };
   }, [kanban, sprints, activeSprint]);
+
+  // Count of archived cold-storage deliverables & completed sprints
+  const archivedIssuesCount = useMemo(() => {
+    return kanban.filter((k) => k.isArchived).length;
+  }, [kanban]);
+
+  const completedSprintsCount = useMemo(() => {
+    return sprints.filter((s) => s.status === 'completed').length;
+  }, [sprints]);
 
   // Filter evaluation
   const filterCard = (card: KanbanMilestone): boolean => {
@@ -490,7 +501,24 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
             }`}
           >
             <TrendingUp className="w-3 h-3" />
-            <span>Insights</span>
+            <span>Burndown</span>
+          </button>
+
+          <button
+            onClick={() => setActiveViewTab('history')}
+            className={`shrink-0 h-7 px-3 rounded-full font-semibold transition-transform active:scale-95 flex items-center gap-1 shadow-2xs ${
+              activeViewTab === 'history'
+                ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            <History className="w-3 h-3" />
+            <span>History & Archives</span>
+            {(completedSprintsCount > 0 || archivedIssuesCount > 0) && (
+              <span className="font-mono text-[10px] opacity-70">
+                ({completedSprintsCount + archivedIssuesCount})
+              </span>
+            )}
           </button>
 
           {/* Quick Filter: Urgent P0 */}
@@ -1276,6 +1304,17 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
               </div>
 
               <div className="flex items-center gap-1.5">
+                {archivedIssuesCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveViewTab('history')}
+                    className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center gap-1 shadow-2xs hover:border-slate-300 cursor-pointer"
+                    title="View archived issues in Cold Storage"
+                  >
+                    <Archive className="w-3 h-3 text-slate-400" />
+                    <span>Archived ({archivedIssuesCount})</span>
+                  </button>
+                )}
                 <button
                   onClick={() => setIsCardModalOpen(true)}
                   className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1 shadow-2xs hover:border-slate-300 cursor-pointer"
@@ -1497,11 +1536,15 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
       )}
 
       {/* ======================================================== */}
-      {/* 3. SPRINT INSIGHTS & BURNDOWN VELOCITY VIEW              */}
+      {/* 3. SPRINT INSIGHTS & SPRINT HISTORY / ARCHIVE VIEW       */}
       {/* ======================================================== */}
-      {activeViewTab === 'analytics' && (
+      {(activeViewTab === 'analytics' || activeViewTab === 'history') && (
         <SprintInsightsView
           ws={ws}
+          initialViewMode={activeViewTab === 'history' ? 'history' : 'burndown'}
+          onViewModeChange={(mode) => {
+            setActiveViewTab(mode === 'history' ? 'history' : 'analytics');
+          }}
           onCardClick={handleCardClick}
           onEditSprint={(sp) => {
             setEditingSprint(sp);

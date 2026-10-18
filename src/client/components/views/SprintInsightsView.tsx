@@ -36,6 +36,8 @@ import {
 
 interface SprintInsightsViewProps {
   ws: ReturnType<typeof useWorkspace>;
+  initialViewMode?: 'burndown' | 'history';
+  onViewModeChange?: (mode: 'burndown' | 'history') => void;
   onCardClick?: (card: KanbanMilestone) => void;
   onEditSprint?: (sprint: Sprint) => void;
 }
@@ -99,13 +101,26 @@ const SAMPLE_COMPLETED_SPRINTS = [
 
 export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
   ws,
+  initialViewMode = 'burndown',
+  onViewModeChange,
   onCardClick,
   onEditSprint,
 }) => {
   const { sprints, kanban, restoreKanban, deleteKanban, viewedSemester } = ws;
 
   // View Mode: 'burndown' (Active burndown cone) vs 'history' (Sprint History & Archives)
-  const [viewMode, setViewMode] = useState<'burndown' | 'history'>('burndown');
+  const [viewMode, setViewMode] = useState<'burndown' | 'history'>(initialViewMode);
+
+  useEffect(() => {
+    if (initialViewMode) {
+      setViewMode(initialViewMode);
+    }
+  }, [initialViewMode]);
+
+  const handleSwitchViewMode = (mode: 'burndown' | 'history') => {
+    setViewMode(mode);
+    onViewModeChange?.(mode);
+  };
 
   // History Sub-navigation: 'completed' | 'archived' | 'milestones'
   const [historyTab, setHistoryTab] = useState<'completed' | 'archived' | 'milestones'>('completed');
@@ -383,7 +398,7 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
       <div className="flex items-center justify-between p-1 rounded-xl bg-slate-200/70 dark:bg-slate-800/80">
         <button
           type="button"
-          onClick={() => setViewMode('burndown')}
+          onClick={() => handleSwitchViewMode('burndown')}
           className={`flex-1 py-1.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
             viewMode === 'burndown'
               ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
@@ -396,7 +411,7 @@ export const SprintInsightsView: React.FC<SprintInsightsViewProps> = ({
 
         <button
           type="button"
-          onClick={() => setViewMode('history')}
+          onClick={() => handleSwitchViewMode('history')}
           className={`flex-1 py-1.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
             viewMode === 'history'
               ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
