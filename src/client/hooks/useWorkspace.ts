@@ -655,6 +655,18 @@ export function useWorkspace(currentUserId?: string) {
     showToast('Card removed');
   }, [showToast]);
 
+  const clearSprintData = useCallback(async () => {
+    try {
+      await api.clearSprintsAndKanban();
+    } catch {
+      for (const s of sprints) await api.deleteSprint(s.id);
+      for (const k of kanban) await api.deleteKanban(k.id);
+    }
+    setSprints([]);
+    setKanban([]);
+    showToast('Cleared all sprint & deliverable data');
+  }, [sprints, kanban, showToast]);
+
   const toggleSubtask = useCallback(async (milestoneId: string, subtaskId: string) => {
     const card = kanban.find(k => k.id === milestoneId);
     if (!card || !card.subtasks) return;
@@ -994,6 +1006,7 @@ export function useWorkspace(currentUserId?: string) {
     deleteSprint,
     startSprint,
     completeSprint,
+    clearSprintData,
     toggleSubtask,
     saveKanban,
     deleteKanban,

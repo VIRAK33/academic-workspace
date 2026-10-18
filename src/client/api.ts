@@ -507,6 +507,23 @@ export const api = {
     return true;
   },
 
+  async clearSprintsAndKanban(): Promise<boolean> {
+    if (hasCloudSession()) {
+      try {
+        const res = await fetch('/api/sprints/clear-all', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          await localDb.clearSprintsAndKanban();
+          return true;
+        }
+      } catch (e) {}
+    }
+    await localDb.clearSprintsAndKanban();
+    return true;
+  },
+
   // Papers
   async getPapers(): Promise<Paper[]> {
     if (hasCloudSession()) {

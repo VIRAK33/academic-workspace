@@ -67,6 +67,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
     deleteSprint,
     startSprint,
     toggleSubtask,
+    clearSprintData,
   } = ws;
 
   // View navigation
@@ -239,6 +240,12 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
     await saveKanban({ ...card, stage: targetColId }, true);
   };
 
+  const handleClearSprintData = async () => {
+    if (window.confirm('Clear all sprints and deliverables? This will remove all mock or recorded sprint data from your workspace and database.')) {
+      await clearSprintData();
+    }
+  };
+
   return (
     <div className="space-y-3 font-sans text-xs text-slate-800 dark:text-slate-200">
       
@@ -253,9 +260,22 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
               PLANNING SYNCED
             </span>
           </div>
-          <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-            v3.4.1
-          </span>
+
+          <div className="flex items-center gap-1.5">
+            {(sprints.length > 0 || kanban.length > 0) && (
+              <button
+                onClick={handleClearSprintData}
+                className="h-5 px-1.5 rounded bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 font-mono text-[9px] flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+                title="Clear all sprint & deliverable data"
+              >
+                <Trash2 className="w-2.5 h-2.5" />
+                <span>Clear Sprint Data</span>
+              </button>
+            )}
+            <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+              v3.4.1
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">

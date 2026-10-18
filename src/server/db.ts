@@ -1028,6 +1028,19 @@ export class WorkspaceDatabase {
     syncMemoryStore();
   }
 
+  async clearSprintsAndKanban(): Promise<void> {
+    if (this.d1) {
+      if (!this.userId) return;
+      await ensureSprintSchema(this.d1);
+      await this.d1.prepare('DELETE FROM kanban_milestones WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM sprints WHERE user_id = ?').bind(this.userId).run();
+      return;
+    }
+    memoryStore.kanban = [];
+    memoryStore.sprints = [];
+    syncMemoryStore();
+  }
+
   // --- PAPERS (LITERATURE) ---
   async getPapers(): Promise<Paper[]> {
     if (this.d1) {

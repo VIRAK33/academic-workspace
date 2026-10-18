@@ -407,6 +407,12 @@ app.delete('/api/sprints/:id', async (c) => {
   return c.json({ success: true, id });
 });
 
+app.post('/api/sprints/clear-all', async (c) => {
+  const db = getDb(c);
+  await db.clearSprintsAndKanban();
+  return c.json({ success: true });
+});
+
 // --- PAPERS (LITERATURE) ---
 app.get('/api/papers', async (c) => {
   const db = getDb(c);
