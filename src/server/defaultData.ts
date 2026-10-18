@@ -216,49 +216,109 @@ export const defaultWorkspaceData: WorkspaceData = {
     }
   ],
 
+  sprints: [
+    {
+      id: 'sp1',
+      name: 'Sprint 1: Baseline & Lit Review',
+      goal: 'Complete Graph-RAG survey of 15 papers, implement baseline evaluation on HotpotQA, and draft Section 3.',
+      startDate: '2026-10-12',
+      endDate: '2026-10-26',
+      status: 'active',
+      velocityPoints: 13,
+    },
+    {
+      id: 'sp2',
+      name: 'Sprint 2: Method Section & Scaling Benchmark',
+      goal: 'Run scalability tests on MuSiQue dataset and draft empirical results.',
+      startDate: '2026-10-27',
+      endDate: '2026-11-10',
+      status: 'planned',
+      velocityPoints: 11,
+    }
+  ],
+
   kanban: [
     {
       id: 'k1',
+      sprintId: 'sp1',
       title: 'Taxonomy of Hybrid Vector + Graph Retrieval (2023–2026)',
-      stage: 'lit_review',
+      stage: 'done',
       targetWeek: 'W5',
       project: 'Graph-RAG Paper',
-      notes: 'Survey 15 top papers'
+      priority: 'high',
+      issueType: 'reading',
+      storyPoints: 3,
+      notes: 'Survey 15 top papers from NeurIPS/ICLR/ACL',
+      subtasks: [
+        { id: 'sb1', title: 'Compile bibtex from Semantic Scholar', completed: true },
+        { id: 'sb2', title: 'Compare index latency vs recall trade-offs', completed: true },
+        { id: 'sb3', title: 'Synthesize comparative taxonomy table', completed: true }
+      ]
     },
     {
       id: 'k2',
+      sprintId: 'sp2',
       title: 'Survey Dynamic Programming Lower Bounds for Sparse Graphs',
-      stage: 'lit_review',
+      stage: 'todo',
       targetWeek: 'W7',
-      project: 'Thesis Proposal'
+      project: 'Thesis Proposal',
+      priority: 'medium',
+      issueType: 'reading',
+      storyPoints: 5,
+      notes: 'Focus on sparse DAG traversal bounds'
     },
     {
       id: 'k3',
+      sprintId: 'sp1',
       title: 'Multi-hop QA Evaluation on HotpotQA & MuSiQue',
-      stage: 'experiments',
+      stage: 'in_progress',
       targetWeek: 'W6',
-      project: 'Graph-RAG Paper'
+      project: 'Graph-RAG Paper',
+      priority: 'urgent',
+      issueType: 'experiment',
+      storyPoints: 5,
+      subtasks: [
+        { id: 'sb4', title: 'Download & preprocess HotpotQA dev set', completed: true },
+        { id: 'sb5', title: 'Run baseline Llama-3-8B with vector retrieval', completed: true },
+        { id: 'sb6', title: 'Run Graph-RAG community retrieval', completed: false },
+        { id: 'sb7', title: 'Compute EM & F1 score metrics', completed: false }
+      ]
     },
     {
       id: 'k4',
+      sprintId: 'sp1',
       title: 'Section 3: Hierarchical Community Summarization Method',
-      stage: 'drafting',
+      stage: 'in_progress',
       targetWeek: 'W5',
-      project: 'Graph-RAG Paper'
+      project: 'Graph-RAG Paper',
+      priority: 'high',
+      issueType: 'writing',
+      storyPoints: 3,
+      notes: 'Include architecture figure and mathematical formulation'
     },
     {
       id: 'k5',
+      sprintId: 'sp1',
       title: 'Term Project Research Proposal Draft v2',
-      stage: 'drafting',
+      stage: 'review',
       targetWeek: 'W5',
-      project: 'Thesis Proposal'
+      project: 'Thesis Proposal',
+      priority: 'medium',
+      issueType: 'writing',
+      storyPoints: 2,
+      isBlocked: true,
+      blockedReason: 'Waiting for Advisor feedback on initial outline'
     },
     {
       id: 'k6',
       title: 'Workshop Paper: Low-Resource Citation Graph Alignment',
-      stage: 'under_review',
+      stage: 'todo',
       targetWeek: 'W9',
-      project: 'Workshop Track'
+      project: 'Workshop Track',
+      priority: 'low',
+      issueType: 'code',
+      storyPoints: 3,
+      notes: 'Backlog item for upcoming workshop call'
     }
   ],
 

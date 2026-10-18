@@ -5,6 +5,7 @@ import {
   Course,
   Task,
   KanbanMilestone,
+  Sprint,
   Paper,
   Conference,
   ExperimentLog,
@@ -455,6 +456,54 @@ export const api = {
       } catch (e) {}
     }
     await localDb.deleteKanban(id);
+    return true;
+  },
+
+  // Sprints
+  async getSprints(semId?: string): Promise<Sprint[]> {
+    if (hasCloudSession()) {
+      try {
+        const url = semId ? `/api/sprints?semesterId=${encodeURIComponent(semId)}` : '/api/sprints';
+        const res = await fetch(url, { headers: getAuthHeaders() });
+        const data = await parseJsonResponse<Sprint[]>(res);
+        if (data) return data;
+      } catch (e) {}
+    }
+    return localDb.getSprints(semId);
+  },
+
+  async saveSprint(sprint: Sprint): Promise<Sprint> {
+    if (hasCloudSession()) {
+      try {
+        const res = await fetch('/api/sprints', {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(sprint),
+        });
+        const data = await parseJsonResponse<Sprint>(res);
+        if (data) {
+          await localDb.saveSprint(data);
+          return data;
+        }
+      } catch (e) {}
+    }
+    return localDb.saveSprint(sprint);
+  },
+
+  async deleteSprint(id: string): Promise<boolean> {
+    if (hasCloudSession()) {
+      try {
+        const res = await fetch(`/api/sprints/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          await localDb.deleteSprint(id);
+          return true;
+        }
+      } catch (e) {}
+    }
+    await localDb.deleteSprint(id);
     return true;
   },
 

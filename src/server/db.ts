@@ -5,6 +5,7 @@ import {
   Semester,
   TimeSlot,
   KanbanMilestone,
+  Sprint,
   Paper,
   Conference,
   ExperimentLog,
@@ -32,6 +33,7 @@ export function createEmptyWorkspaceData(): WorkspaceData {
     courses: [],
     events: [],
     tasks: [],
+    sprints: [],
     kanban: [],
     papers: [],
     conferences: [],
@@ -54,6 +56,7 @@ function initMemoryStore(): WorkspaceData {
             courses: Array.isArray(parsed.courses) ? parsed.courses : [],
             events: Array.isArray(parsed.events) ? parsed.events : [],
             tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+            sprints: Array.isArray(parsed.sprints) ? parsed.sprints : [],
             kanban: Array.isArray(parsed.kanban) ? parsed.kanban : [],
             papers: Array.isArray(parsed.papers) ? parsed.papers : [],
             conferences: Array.isArray(parsed.conferences) ? parsed.conferences : [],
@@ -64,7 +67,7 @@ function initMemoryStore(): WorkspaceData {
         }
       }
     } catch (e) {
-      console.warn('Could not read offline workspace storage:', e);
+      console.warn('Could not load offline workspace storage:', e);
     }
   }
   return createEmptyWorkspaceData();
@@ -98,6 +101,51 @@ async function ensureScheduleEventsColumns(d1?: D1Database) {
     await d1.prepare('ALTER TABLE schedule_events ADD COLUMN is_all_day INTEGER DEFAULT 0').run();
   } catch {}
   checkedScheduleEventsColumns = true;
+}
+
+let checkedSprintSchema = false;
+async function ensureSprintSchema(d1?: D1Database) {
+  if (!d1 || checkedSprintSchema) return;
+  try {
+    await d1.prepare(`
+      CREATE TABLE IF NOT EXISTS sprints (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        semester_id TEXT,
+        name TEXT NOT NULL,
+        goal TEXT,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'planned',
+        completed_at DATETIME,
+        velocity_points INTEGER DEFAULT 0,
+        retrospective TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+  } catch {}
+  try {
+    await d1.prepare('ALTER TABLE kanban_milestones ADD COLUMN sprint_id TEXT').run();
+  } catch {}
+  try {
+    await d1.prepare("ALTER TABLE kanban_milestones ADD COLUMN priority TEXT DEFAULT 'medium'").run();
+  } catch {}
+  try {
+    await d1.prepare("ALTER TABLE kanban_milestones ADD COLUMN issue_type TEXT DEFAULT 'experiment'").run();
+  } catch {}
+  try {
+    await d1.prepare('ALTER TABLE kanban_milestones ADD COLUMN story_points INTEGER DEFAULT 1').run();
+  } catch {}
+  try {
+    await d1.prepare('ALTER TABLE kanban_milestones ADD COLUMN is_blocked INTEGER DEFAULT 0').run();
+  } catch {}
+  try {
+    await d1.prepare('ALTER TABLE kanban_milestones ADD COLUMN blocked_reason TEXT').run();
+  } catch {}
+  try {
+    await d1.prepare("ALTER TABLE kanban_milestones ADD COLUMN subtasks_json TEXT DEFAULT '[]'").run();
+  } catch {}
+  checkedSprintSchema = true;
 }
 
 export class WorkspaceDatabase {
@@ -739,28 +787,42 @@ export class WorkspaceDatabase {
     syncMemoryStore();
   }
 
-  // --- KANBAN ---
+  // --- KANBAN & SPRINTS ---
   async getKanban(semesterId?: string): Promise<KanbanMilestone[]> {
     if (this.d1) {
       if (!this.userId) return [];
+      await ensureSprintSchema(this.d1);
       let query = 'SELECT * FROM kanban_milestones WHERE user_id = ?';
       const params: any[] = [this.userId];
       if (semesterId) {
         query += ' AND (semester_id = ? OR semester_id IS NULL)';
         params.push(semesterId);
       }
-      query += ' ORDER BY sort_order ASC';
+      query += ' ORDER BY sort_order ASC, created_at ASC';
 
       const { results } = await this.d1.prepare(query).bind(...params).all();
       return (results || []).map((r: any) => ({
         id: r.id,
         semesterId: r.semester_id || undefined,
+        sprintId: r.sprint_id || undefined,
         title: r.title,
         stage: r.stage,
-        targetWeek: r.target_week,
-        project: r.project,
-        notes: r.notes,
-        sortOrder: r.sort_order,
+        targetWeek: r.target_week || 'W1',
+        project: r.project || 'General',
+        notes: r.notes || undefined,
+        sortOrder: r.sort_order || 0,
+        priority: (r.priority as any) || 'medium',
+        issueType: (r.issue_type as any) || 'experiment',
+        storyPoints: r.story_points != null ? Number(r.story_points) : 1,
+        isBlocked: Boolean(r.is_blocked),
+        blockedReason: r.blocked_reason || undefined,
+        subtasks: (() => {
+          try {
+            return r.subtasks_json ? JSON.parse(r.subtasks_json) : [];
+          } catch {
+            return [];
+          }
+        })(),
       }));
     }
     return memoryStore.kanban;
@@ -769,30 +831,49 @@ export class WorkspaceDatabase {
   async saveKanban(item: KanbanMilestone): Promise<KanbanMilestone> {
     if (this.d1) {
       if (!this.userId) throw new Error('Unauthorized');
+      await ensureSprintSchema(this.d1);
+      const subtasksJson = JSON.stringify(item.subtasks || []);
       await this.d1
         .prepare(`
-          INSERT INTO kanban_milestones (id, user_id, semester_id, title, stage, target_week, project, notes, sort_order)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO kanban_milestones (
+            id, user_id, semester_id, sprint_id, title, stage, target_week, project, notes, sort_order,
+            priority, issue_type, story_points, is_blocked, blocked_reason, subtasks_json
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             user_id = excluded.user_id,
             semester_id = excluded.semester_id,
+            sprint_id = excluded.sprint_id,
             title = excluded.title,
             stage = excluded.stage,
             target_week = excluded.target_week,
             project = excluded.project,
             notes = excluded.notes,
-            sort_order = excluded.sort_order
+            sort_order = excluded.sort_order,
+            priority = excluded.priority,
+            issue_type = excluded.issue_type,
+            story_points = excluded.story_points,
+            is_blocked = excluded.is_blocked,
+            blocked_reason = excluded.blocked_reason,
+            subtasks_json = excluded.subtasks_json
         `)
         .bind(
           item.id,
           this.userId,
           item.semesterId || null,
+          item.sprintId || null,
           item.title,
           item.stage,
-          item.targetWeek,
-          item.project,
+          item.targetWeek || 'W1',
+          item.project || 'General',
           item.notes || null,
-          item.sortOrder || 0
+          item.sortOrder || 0,
+          item.priority || 'medium',
+          item.issueType || 'experiment',
+          item.storyPoints != null ? item.storyPoints : 1,
+          item.isBlocked ? 1 : 0,
+          item.blockedReason || null,
+          subtasksJson
         )
         .run();
       return item;
@@ -807,10 +888,102 @@ export class WorkspaceDatabase {
   async deleteKanban(id: string): Promise<void> {
     if (this.d1) {
       if (!this.userId) return;
+      await ensureSprintSchema(this.d1);
       await this.d1.prepare('DELETE FROM kanban_milestones WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
       return;
     }
     memoryStore.kanban = memoryStore.kanban.filter((k) => k.id !== id);
+    syncMemoryStore();
+  }
+
+  // --- SPRINTS ---
+  async getSprints(semesterId?: string): Promise<Sprint[]> {
+    if (this.d1) {
+      if (!this.userId) return [];
+      await ensureSprintSchema(this.d1);
+      let query = 'SELECT * FROM sprints WHERE user_id = ?';
+      const params: any[] = [this.userId];
+      if (semesterId) {
+        query += ' AND (semester_id = ? OR semester_id IS NULL)';
+        params.push(semesterId);
+      }
+      query += ' ORDER BY start_date DESC';
+
+      const { results } = await this.d1.prepare(query).bind(...params).all();
+      return (results || []).map((r: any) => ({
+        id: r.id,
+        semesterId: r.semester_id || undefined,
+        name: r.name,
+        goal: r.goal || undefined,
+        startDate: r.start_date,
+        endDate: r.end_date,
+        status: r.status,
+        completedAt: r.completed_at || undefined,
+        velocityPoints: r.velocity_points || 0,
+        retrospective: r.retrospective || undefined,
+      }));
+    }
+    return (memoryStore.sprints || []).filter((s) => !semesterId || s.semesterId === semesterId || !s.semesterId);
+  }
+
+  async saveSprint(sprint: Sprint): Promise<Sprint> {
+    if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
+      await ensureSprintSchema(this.d1);
+      await this.d1
+        .prepare(`
+          INSERT INTO sprints (id, user_id, semester_id, name, goal, start_date, end_date, status, completed_at, velocity_points, retrospective)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            user_id = excluded.user_id,
+            semester_id = excluded.semester_id,
+            name = excluded.name,
+            goal = excluded.goal,
+            start_date = excluded.start_date,
+            end_date = excluded.end_date,
+            status = excluded.status,
+            completed_at = excluded.completed_at,
+            velocity_points = excluded.velocity_points,
+            retrospective = excluded.retrospective
+        `)
+        .bind(
+          sprint.id,
+          this.userId,
+          sprint.semesterId || null,
+          sprint.name,
+          sprint.goal || null,
+          sprint.startDate,
+          sprint.endDate,
+          sprint.status,
+          sprint.completedAt || null,
+          sprint.velocityPoints || 0,
+          sprint.retrospective || null
+        )
+        .run();
+      return sprint;
+    }
+    if (!memoryStore.sprints) memoryStore.sprints = [];
+    const idx = memoryStore.sprints.findIndex((s) => s.id === sprint.id);
+    if (idx >= 0) memoryStore.sprints[idx] = sprint;
+    else memoryStore.sprints.push(sprint);
+    syncMemoryStore();
+    return sprint;
+  }
+
+  async deleteSprint(id: string): Promise<void> {
+    if (this.d1) {
+      if (!this.userId) return;
+      await ensureSprintSchema(this.d1);
+      await this.d1.prepare('UPDATE kanban_milestones SET sprint_id = NULL WHERE sprint_id = ? AND user_id = ?').bind(id, this.userId).run();
+      await this.d1.prepare('DELETE FROM sprints WHERE id = ? AND user_id = ?').bind(id, this.userId).run();
+      return;
+    }
+    if (memoryStore.sprints) {
+      memoryStore.sprints = memoryStore.sprints.filter((s) => s.id !== id);
+    }
+    if (memoryStore.kanban) {
+      memoryStore.kanban = memoryStore.kanban.map((k) => (k.sprintId === id ? { ...k, sprintId: undefined } : k));
+    }
     syncMemoryStore();
   }
 
@@ -1267,6 +1440,13 @@ export class WorkspaceDatabase {
       }
     });
 
+    sample.sprints?.forEach((sp) => {
+      sp.id = `${sp.id}_${userSuffix}`;
+      if (sp.semesterId && semIdMap.has(sp.semesterId)) {
+        sp.semesterId = semIdMap.get(sp.semesterId)!;
+      }
+    });
+
     sample.papers.forEach((p) => {
       p.id = `${p.id}_${userSuffix}`;
     });
@@ -1293,10 +1473,12 @@ export class WorkspaceDatabase {
   async clearUserData(): Promise<void> {
     if (this.d1) {
       if (!this.userId) throw new Error('Unauthorized');
+      await ensureSprintSchema(this.d1);
       await this.d1.prepare('DELETE FROM course_schedules WHERE course_id IN (SELECT id FROM courses WHERE user_id = ?)').bind(this.userId).run();
       await this.d1.prepare('DELETE FROM courses WHERE user_id = ?').bind(this.userId).run();
       await this.d1.prepare('DELETE FROM schedule_events WHERE user_id = ?').bind(this.userId).run();
       await this.d1.prepare('DELETE FROM tasks WHERE user_id = ?').bind(this.userId).run();
+      await this.d1.prepare('DELETE FROM sprints WHERE user_id = ?').bind(this.userId).run();
       await this.d1.prepare('DELETE FROM kanban_milestones WHERE user_id = ?').bind(this.userId).run();
       await this.d1.prepare('DELETE FROM papers WHERE user_id = ?').bind(this.userId).run();
       await this.d1.prepare('DELETE FROM conferences WHERE user_id = ?').bind(this.userId).run();
@@ -1320,6 +1502,7 @@ export class WorkspaceDatabase {
       courses: await this.getCourses(),
       events: await this.getEvents(),
       tasks: await this.getTasks(),
+      sprints: await this.getSprints(),
       kanban: await this.getKanban(),
       papers: await this.getPapers(),
       conferences: await this.getConferences(),
@@ -1337,6 +1520,7 @@ export class WorkspaceDatabase {
       for (const e of data.events) await this.saveEvent(e);
     }
     if (data.tasks) for (const t of data.tasks) await this.saveTask(t);
+    if (data.sprints) for (const sp of data.sprints) await this.saveSprint(sp);
     if (data.kanban) for (const k of data.kanban) await this.saveKanban(k);
     if (data.papers) for (const p of data.papers) await this.savePaper(p);
     if (data.conferences) for (const c of data.conferences) await this.saveConference(c);

@@ -5,6 +5,8 @@ import {
   Course,
   Task,
   KanbanMilestone,
+  Sprint,
+  SubtaskItem,
   Paper,
   Conference,
   ExperimentLog,
@@ -37,7 +39,7 @@ export const TAB_METADATA: Record<TabKey, { label: string; group: 'essentials' |
   timeline: { label: 'Schedule', group: 'essentials', description: 'Daily class timeline & hourly grid' },
   courses: { label: 'Timetable & Matrix', group: 'essentials', description: 'Weekly class schedule & semester week matrix' },
   todo: { label: 'Tasks', group: 'essentials', description: 'Action items, deadlines & task archive' },
-  kanban: { label: 'Pipeline', group: 'research', description: 'Milestones, projects & assignment stages' },
+  kanban: { label: 'Sprints & Pipeline', group: 'research', description: 'Agile sprints, backlog, deliverables & stages' },
   papers: { label: 'Literature Matrix', group: 'research', description: 'Reading notes, syntheses & paper summaries' },
   advisor: { label: 'Advisor Meetings', group: 'research', description: 'Agendas, action items & weekly digests' },
   conferences: { label: 'Conferences', group: 'research', description: 'Call-for-papers deadlines, tiers & submissions' },
@@ -162,6 +164,7 @@ export function useWorkspace(currentUserId?: string) {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [sprints, setSprints] = useState<Sprint[]>([]);
   const [kanban, setKanban] = useState<KanbanMilestone[]>([]);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [conferences, setConferences] = useState<Conference[]>([]);
@@ -339,11 +342,12 @@ export function useWorkspace(currentUserId?: string) {
 
   // Initial load
   const loadData = useCallback(async () => {
-    const [sems, slots, crs, tks, kb, pps, confs, exps, mtgs, evts, engineTime, atts] = await Promise.all([
+    const [sems, slots, crs, tks, sps, kb, pps, confs, exps, mtgs, evts, engineTime, atts] = await Promise.all([
       api.getSemesters(),
       api.getTimeSlots(),
       api.getCourses(),
       api.getTasks(),
+      api.getSprints(),
       api.getKanban(),
       api.getPapers(),
       api.getConferences(),
@@ -357,6 +361,7 @@ export function useWorkspace(currentUserId?: string) {
     setTimeSlots(deduplicateTimeSlots(slots || []));
     setCourses(crs || []);
     setTasks(tks || []);
+    setSprints(sps || []);
     setKanban(kb || []);
     setPapers(pps || []);
     setConferences(confs || []);
@@ -558,8 +563,78 @@ export function useWorkspace(currentUserId?: string) {
     showToast(`Archived ${completedList.length} completed task${completedList.length > 1 ? 's' : ''}`);
   }, [tasks, showToast]);
 
+  // Sprints & Kanban actions
+  const saveSprint = useCallback(async (sprint: Sprint) => {
+    const saved = await api.saveSprint(sprint);
+    setSprints(prev => {
+      const idx = prev.findIndex(s => s.id === saved.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = saved;
+        return next;
+      }
+      return [saved, ...prev];
+    });
+    showToast(`Sprint "${saved.name}" saved`);
+    return saved;
+  }, [showToast]);
+
+  const deleteSprint = useCallback(async (id: string) => {
+    await api.deleteSprint(id);
+    setSprints(prev => prev.filter(s => s.id !== id));
+    setKanban(prev => prev.map(k => k.sprintId === id ? { ...k, sprintId: undefined } : k));
+    showToast('Sprint deleted (items moved to Backlog)');
+  }, [showToast]);
+
+  const startSprint = useCallback(async (id: string) => {
+    const target = sprints.find(s => s.id === id);
+    if (!target) return;
+    const updated: Sprint = { ...target, status: 'active' };
+    await api.saveSprint(updated);
+    setSprints(prev => prev.map(s => {
+      if (s.id === id) return updated;
+      if (s.status === 'active') return { ...s, status: 'planned' };
+      return s;
+    }));
+    showToast(`Started active sprint: ${target.name}`);
+  }, [sprints, showToast]);
+
+  const completeSprint = useCallback(async (id: string, rolloverSprintId?: string) => {
+    const target = sprints.find(s => s.id === id);
+    if (!target) return;
+
+    const sprintCards = kanban.filter(k => k.sprintId === id);
+    const completedCards = sprintCards.filter(k => k.stage === 'done' || k.stage === 'under_review');
+    const velocity = completedCards.reduce((acc, c) => acc + (c.storyPoints || 1), 0);
+
+    const completedSprint: Sprint = {
+      ...target,
+      status: 'completed',
+      completedAt: new Date().toISOString(),
+      velocityPoints: velocity,
+    };
+    await api.saveSprint(completedSprint);
+
+    // Roll uncompleted cards to rolloverSprintId or backlog
+    const incompleteCards = sprintCards.filter(k => k.stage !== 'done' && k.stage !== 'under_review');
+    for (const card of incompleteCards) {
+      const updatedCard = { ...card, sprintId: rolloverSprintId || undefined };
+      await api.saveKanban(updatedCard);
+    }
+
+    setSprints(prev => prev.map(s => s.id === id ? completedSprint : s));
+    setKanban(prev => prev.map(k => {
+      if (k.sprintId === id && k.stage !== 'done' && k.stage !== 'under_review') {
+        return { ...k, sprintId: rolloverSprintId || undefined };
+      }
+      return k;
+    }));
+
+    showToast(`Sprint completed! ${completedCards.length} deliverables finished (${velocity} pts)`);
+  }, [sprints, kanban, showToast]);
+
   // Kanban actions
-  const saveKanban = useCallback(async (item: KanbanMilestone) => {
+  const saveKanban = useCallback(async (item: KanbanMilestone, silent = false) => {
     const saved = await api.saveKanban(item);
     setKanban(prev => {
       const idx = prev.findIndex(k => k.id === saved.id);
@@ -570,14 +645,23 @@ export function useWorkspace(currentUserId?: string) {
       }
       return [...prev, saved];
     });
-    showToast('Milestone updated');
+    if (!silent) showToast('Card updated');
+    return saved;
   }, [showToast]);
 
   const deleteKanban = useCallback(async (id: string) => {
     await api.deleteKanban(id);
     setKanban(prev => prev.filter(k => k.id !== id));
-    showToast('Milestone removed');
+    showToast('Card removed');
   }, [showToast]);
+
+  const toggleSubtask = useCallback(async (milestoneId: string, subtaskId: string) => {
+    const card = kanban.find(k => k.id === milestoneId);
+    if (!card || !card.subtasks) return;
+    const updatedSubtasks = card.subtasks.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st);
+    const updatedCard = { ...card, subtasks: updatedSubtasks };
+    await saveKanban(updatedCard, true);
+  }, [kanban, saveKanban]);
 
   // Paper actions
   const savePaper = useCallback(async (paper: Paper) => {
@@ -905,6 +989,12 @@ export function useWorkspace(currentUserId?: string) {
     archiveTask,
     unarchiveTask,
     archiveAllCompleted,
+    sprints,
+    saveSprint,
+    deleteSprint,
+    startSprint,
+    completeSprint,
+    toggleSubtask,
     saveKanban,
     deleteKanban,
     savePaper,

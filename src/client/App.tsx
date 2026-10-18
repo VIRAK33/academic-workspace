@@ -27,7 +27,6 @@ import { AdvisorMeetingModal } from './components/modals/AdvisorMeetingModal';
 import { WeeklyDigestModal } from './components/modals/WeeklyDigestModal';
 import { CliCheatSheetModal } from './components/modals/CliCheatSheetModal';
 import { BackupModal } from './components/modals/BackupModal';
-import { KanbanModal } from './components/modals/KanbanModal';
 import { AuthModal } from './components/modals/AuthModal';
 import { AiScheduleImportModal } from './components/modals/AiScheduleImportModal';
 import { ClassRemindersModal } from './components/modals/ClassRemindersModal';
@@ -60,7 +59,6 @@ export function App() {
   const [isDigestModalOpen, setIsDigestModalOpen] = useState(false);
   const [isCliModalOpen, setIsCliModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
-  const [isKanbanModalOpen, setIsKanbanModalOpen] = useState(false);
   const [isAiImportModalOpen, setIsAiImportModalOpen] = useState(false);
   const [isRemindersModalOpen, setIsRemindersModalOpen] = useState(false);
   const [isCustomizeViewsOpen, setIsCustomizeViewsOpen] = useState(false);
@@ -90,7 +88,6 @@ export function App() {
     isDigestModalOpen ||
     isCliModalOpen ||
     isBackupModalOpen ||
-    isKanbanModalOpen ||
     isAiImportModalOpen ||
     isRemindersModalOpen ||
     isCustomizeViewsOpen ||
@@ -306,10 +303,7 @@ export function App() {
         )}
 
         {activeTab === 'kanban' && (
-          <ResearchKanbanView
-            ws={ws}
-            onOpenKanbanModal={() => setIsKanbanModalOpen(true)}
-          />
+          <ResearchKanbanView ws={ws} />
         )}
 
         {activeTab === 'papers' && (
@@ -408,7 +402,6 @@ export function App() {
       <WeeklyDigestModal ws={ws} isOpen={isDigestModalOpen} onClose={() => setIsDigestModalOpen(false)} />
       <CliCheatSheetModal ws={ws} isOpen={isCliModalOpen} onClose={() => setIsCliModalOpen(false)} />
       <BackupModal ws={ws} isOpen={isBackupModalOpen} onClose={() => setIsBackupModalOpen(false)} />
-      <KanbanModal ws={ws} isOpen={isKanbanModalOpen} onClose={() => setIsKanbanModalOpen(false)} />
       {auth.isAuthModalOpen && <AuthModal auth={auth} onClose={auth.closeAuthModal} />}
       <AiScheduleImportModal
         ws={ws}

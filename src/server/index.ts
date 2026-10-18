@@ -385,6 +385,28 @@ app.delete('/api/kanban/:id', async (c) => {
   return c.json({ success: true, id });
 });
 
+// --- SPRINTS ---
+app.get('/api/sprints', async (c) => {
+  const db = getDb(c);
+  const semId = c.req.query('semesterId');
+  const data = await db.getSprints(semId);
+  return c.json(data);
+});
+
+app.post('/api/sprints', async (c) => {
+  const db = getDb(c);
+  const body = await c.req.json();
+  const saved = await db.saveSprint(body);
+  return c.json(saved);
+});
+
+app.delete('/api/sprints/:id', async (c) => {
+  const db = getDb(c);
+  const id = c.req.param('id');
+  await db.deleteSprint(id);
+  return c.json({ success: true, id });
+});
+
 // --- PAPERS (LITERATURE) ---
 app.get('/api/papers', async (c) => {
   const db = getDb(c);

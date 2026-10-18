@@ -85,17 +85,56 @@ export interface Task {
   linkedMilestoneId?: string;
 }
 
-export type KanbanStage = 'lit_review' | 'experiments' | 'drafting' | 'under_review';
+export type KanbanStage =
+  | 'lit_review'
+  | 'experiments'
+  | 'drafting'
+  | 'under_review'
+  | 'todo'
+  | 'in_progress'
+  | 'review'
+  | 'done';
+
+export type KanbanPriority = 'urgent' | 'high' | 'medium' | 'low';
+export type KanbanIssueType = 'experiment' | 'writing' | 'reading' | 'code' | 'coursework';
+
+export interface SubtaskItem {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export type SprintStatus = 'planned' | 'active' | 'completed';
+
+export interface Sprint {
+  id: string;
+  semesterId?: string;
+  name: string; // e.g. 'Sprint 1: Baseline & Lit Review'
+  goal?: string; // e.g. 'Complete baseline evaluation and finish Chapter 3 draft'
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  status: SprintStatus;
+  completedAt?: string;
+  velocityPoints?: number;
+  retrospective?: string;
+}
 
 export interface KanbanMilestone {
   id: string;
   semesterId?: string;
+  sprintId?: string; // undefined or '' or 'backlog' = Backlog
   title: string;
   stage: KanbanStage;
   targetWeek: string; // 'W5'
   project: string; // 'Graph-RAG Paper'
   notes?: string;
   sortOrder?: number;
+  priority?: KanbanPriority;
+  issueType?: KanbanIssueType;
+  storyPoints?: number; // 1, 2, 3, 5, 8
+  isBlocked?: boolean;
+  blockedReason?: string;
+  subtasks?: SubtaskItem[];
 }
 
 export interface Paper {
@@ -156,6 +195,7 @@ export interface WorkspaceData {
   courses: Course[];
   events?: ScheduleEvent[];
   tasks: Task[];
+  sprints?: Sprint[];
   kanban: KanbanMilestone[];
   papers: Paper[];
   advisorMeetings: AdvisorMeeting[];
