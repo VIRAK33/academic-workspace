@@ -858,6 +858,33 @@ export class WorkspaceDatabase {
             return [];
           }
         })(),
+        tags: (() => {
+          try {
+            if (!r.connected_artifacts_json) return [];
+            const parsed = JSON.parse(r.connected_artifacts_json);
+            return (!Array.isArray(parsed) && parsed.tags) || [];
+          } catch {
+            return [];
+          }
+        })(),
+        isArchived: (() => {
+          try {
+            if (!r.connected_artifacts_json) return false;
+            const parsed = JSON.parse(r.connected_artifacts_json);
+            return (!Array.isArray(parsed) && Boolean(parsed.isArchived)) || false;
+          } catch {
+            return false;
+          }
+        })(),
+        archiveReason: (() => {
+          try {
+            if (!r.connected_artifacts_json) return undefined;
+            const parsed = JSON.parse(r.connected_artifacts_json);
+            return (!Array.isArray(parsed) && parsed.archiveReason) || undefined;
+          } catch {
+            return undefined;
+          }
+        })(),
         comments: (() => {
           try {
             return r.comments_json ? JSON.parse(r.comments_json) : [];
@@ -878,6 +905,9 @@ export class WorkspaceDatabase {
       const artifactsJson = JSON.stringify({
         artifacts: item.connectedArtifacts || [],
         attachments: item.attachments || [],
+        tags: item.tags || [],
+        isArchived: item.isArchived || false,
+        archiveReason: item.archiveReason || null,
       });
       const commentsJson = JSON.stringify(item.comments || []);
       const completedAt = item.stage === 'done' ? (item.completedAt || new Date().toISOString()) : (item.completedAt || null);
@@ -973,6 +1003,7 @@ export class WorkspaceDatabase {
         let isPaused: boolean | undefined;
         let policies: any;
         let streamAllocations: any;
+        let shippedHighlights: any;
 
         if (retro && typeof retro === 'string' && retro.startsWith('{')) {
           try {
@@ -982,6 +1013,7 @@ export class WorkspaceDatabase {
             isPaused = parsed.isPaused;
             policies = parsed.policies;
             streamAllocations = parsed.streamAllocations;
+            shippedHighlights = parsed.shippedHighlights;
           } catch {}
         }
 
@@ -1000,6 +1032,7 @@ export class WorkspaceDatabase {
           isPaused,
           policies,
           streamAllocations,
+          shippedHighlights,
         };
       });
     }
@@ -1011,13 +1044,14 @@ export class WorkspaceDatabase {
       if (!this.userId) throw new Error('Unauthorized');
       await ensureSprintSchema(this.d1);
       const retroPayload =
-        sprint.policies || sprint.maxCapacity != null || sprint.isPaused != null || sprint.streamAllocations
+        sprint.policies || sprint.maxCapacity != null || sprint.isPaused != null || sprint.streamAllocations || sprint.shippedHighlights
           ? JSON.stringify({
               retro: sprint.retrospective || null,
               maxCapacity: sprint.maxCapacity,
               isPaused: sprint.isPaused,
               policies: sprint.policies,
               streamAllocations: sprint.streamAllocations,
+              shippedHighlights: sprint.shippedHighlights,
             })
           : sprint.retrospective || null;
 

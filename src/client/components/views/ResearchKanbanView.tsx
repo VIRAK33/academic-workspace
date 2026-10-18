@@ -37,6 +37,7 @@ import { KanbanModal } from '../modals/KanbanModal';
 import { SprintModal } from '../modals/SprintModal';
 import { CompleteSprintModal } from '../modals/CompleteSprintModal';
 import { IssueDetailModal } from '../modals/IssueDetailModal';
+import { DeleteIssueModal } from '../modals/DeleteIssueModal';
 import { SprintInsightsView } from './SprintInsightsView';
 
 interface ResearchKanbanViewProps {
@@ -101,6 +102,10 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
   const [selectedDetailMilestone, setSelectedDetailMilestone] = useState<KanbanMilestone | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+  // Delete Issue Modal
+  const [milestoneToDelete, setMilestoneToDelete] = useState<KanbanMilestone | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   // Quick Backlog Input
   const [quickBacklogTitle, setQuickBacklogTitle] = useState('');
   const [quickBacklogPoints, setQuickBacklogPoints] = useState(3);
@@ -142,6 +147,7 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
 
   // Filter evaluation
   const filterCard = (card: KanbanMilestone): boolean => {
+    if (card.isArchived) return false;
     if (selectedProject !== 'all' && card.project !== selectedProject) return false;
     if (selectedType !== 'all' && card.issueType !== selectedType) return false;
     if (filterUrgentOnly && card.priority !== 'urgent') return false;
@@ -965,6 +971,18 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
                               </div>
 
                               <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMilestoneToDelete(card);
+                                    setIsDeleteModalOpen(true);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded transition-opacity"
+                                  title="Delete or Archive Issue"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
                                 <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-semibold">
                                   {card.storyPoints || 1}p
                                 </span>
@@ -1544,6 +1562,20 @@ export const ResearchKanbanView: React.FC<ResearchKanbanViewProps> = ({ ws }) =>
         isOpen={isCompleteModalOpen}
         onClose={() => setIsCompleteModalOpen(false)}
         sprint={sprintToComplete}
+      />
+
+      <DeleteIssueModal
+        ws={ws}
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setMilestoneToDelete(null);
+        }}
+        milestone={milestoneToDelete}
+        onDeleted={() => {
+          setIsDeleteModalOpen(false);
+          setMilestoneToDelete(null);
+        }}
       />
     </div>
   );

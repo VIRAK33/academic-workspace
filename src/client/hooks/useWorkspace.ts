@@ -655,6 +655,34 @@ export function useWorkspace(currentUserId?: string) {
     showToast('Card removed');
   }, [showToast]);
 
+  const archiveKanban = useCallback(async (id: string, reason: 'wont_fix' | 'parked' | 'completed' | 'duplicate' = 'parked') => {
+    const target = kanban.find(k => k.id === id);
+    if (!target) return;
+    const updated: KanbanMilestone = {
+      ...target,
+      isArchived: true,
+      archiveReason: reason,
+      sprintId: undefined, // remove from active sprint, move to cold backlog
+    };
+    await api.saveKanban(updated);
+    setKanban(prev => prev.map(k => k.id === id ? updated : k));
+    showToast(`Issue ${target.issueKey || target.title} archived to Cold Storage`);
+  }, [kanban, showToast]);
+
+  const restoreKanban = useCallback(async (id: string, sprintId?: string) => {
+    const target = kanban.find(k => k.id === id);
+    if (!target) return;
+    const updated: KanbanMilestone = {
+      ...target,
+      isArchived: false,
+      archiveReason: undefined,
+      sprintId: sprintId || undefined,
+    };
+    await api.saveKanban(updated);
+    setKanban(prev => prev.map(k => k.id === id ? updated : k));
+    showToast(`Issue ${target.issueKey || target.title} restored`);
+  }, [kanban, showToast]);
+
   const clearSprintData = useCallback(async () => {
     try {
       await api.clearSprintsAndKanban();
@@ -1010,6 +1038,8 @@ export function useWorkspace(currentUserId?: string) {
     toggleSubtask,
     saveKanban,
     deleteKanban,
+    archiveKanban,
+    restoreKanban,
     savePaper,
     deletePaper,
     saveConference,

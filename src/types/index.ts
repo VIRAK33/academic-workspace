@@ -134,6 +134,7 @@ export interface Sprint {
   isPaused?: boolean;
   policies?: SprintAutomationPolicies;
   streamAllocations?: SprintStreamAllocation[];
+  shippedHighlights?: { issueKey: string; title: string }[];
 }
 
 export interface IssueUser {
@@ -196,6 +197,9 @@ export interface KanbanMilestone {
   completedNote?: string;
   completedAt?: string; // ISO string when marked done
   createdAt?: string;
+  tags?: string[];
+  isArchived?: boolean;
+  archiveReason?: 'wont_fix' | 'parked' | 'completed' | 'duplicate';
 }
 
 export interface Paper {

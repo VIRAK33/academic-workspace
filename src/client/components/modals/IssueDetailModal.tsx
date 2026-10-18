@@ -11,6 +11,7 @@ import {
   IssueAttachment,
 } from '../../../types';
 import { ModalSheet } from '../common/ModalSheet';
+import { DeleteIssueModal } from './DeleteIssueModal';
 import { Twemoji, renderWithTwemoji } from '../common/Twemoji';
 import {
   X,
@@ -79,6 +80,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
   const [titleDraft, setTitleDraft] = useState('');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Active Tab: details vs attachments
   const [activeTab, setActiveTab] = useState<'details' | 'attachments'>('details');
@@ -493,6 +495,15 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                 </div>
               )}
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+              title="Delete or Archive Issue"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
 
             <button
               onClick={onClose}
@@ -1403,6 +1414,17 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
             </button>
           </div>
         )}
+
+        <DeleteIssueModal
+          ws={ws}
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          milestone={currentMilestone}
+          onDeleted={() => {
+            setIsDeleteModalOpen(false);
+            onClose();
+          }}
+        />
 
       </div>
     </ModalSheet>
