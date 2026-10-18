@@ -8,7 +8,6 @@ import {
   getTodayIsoDate,
   parseIsoDate,
   formatCourseDurationWeeks,
-  format12HourTime,
 } from '../../hooks/useWorkspace';
 import {
   Plus,
@@ -347,20 +346,6 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
           W{activeWeekNum}
         </span>
       )}
-
-      {/* Realtime clock indicator badge in Table tab */}
-      {viewMode === 'table' && (
-        <div
-          className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 font-mono text-[10px] sm:text-[11px] font-bold shadow-2xs shrink-0"
-          title={`Realtime: ${format12HourTime(simulatedMinutes, true)}`}
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
-          </span>
-          <span>{format12HourTime(simulatedMinutes, true)}</span>
-        </div>
-      )}
     </div>
   );
 
@@ -671,21 +656,10 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                   const isSessionOngoing = isViewingCurrentWeek && simulatedMinutes >= slotStartM && simulatedMinutes < slotEndM;
 
                   return (
-                    <tr key={slot.session} className={isSessionOngoing ? 'bg-rose-50/15 dark:bg-rose-950/10' : ''}>
-                      <td className={`py-1.5 px-1 sm:py-2 sm:px-2 w-14 sm:w-20 border-r border-slate-200 dark:border-slate-800 align-top text-center sm:text-left shrink-0 transition-colors ${
-                        isSessionOngoing
-                          ? 'bg-rose-50/60 dark:bg-rose-950/40 border-l-2 border-l-[#dc2626]'
-                          : 'bg-slate-50/50 dark:bg-slate-800/50'
-                      }`}>
-                        <div className="flex items-center gap-1 font-mono font-semibold text-[11px] sm:text-xs">
-                          <span className={isSessionOngoing ? 'text-[#dc2626] font-bold' : 'text-slate-800 dark:text-slate-200'}>
-                            S{slot.session}
-                          </span>
-                          {isSessionOngoing && (
-                            <span className="hidden sm:inline-flex items-center px-1 py-0.2 rounded bg-[#dc2626] text-white text-[8px] font-bold tracking-tight animate-pulse leading-tight">
-                              NOW
-                            </span>
-                          )}
+                    <tr key={slot.session}>
+                      <td className="py-1.5 px-1 sm:py-2 sm:px-2 w-14 sm:w-20 bg-slate-50/50 dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-800 align-top text-center sm:text-left shrink-0">
+                        <div className="font-mono font-semibold text-slate-800 dark:text-slate-200 text-[11px] sm:text-xs">
+                          S{slot.session}
                         </div>
                         <div className="font-mono text-[9px] sm:text-[10px] text-slate-400 mt-0.5 tabular-nums">
                           <span className="sm:hidden">{slot.startTime}</span>
@@ -738,28 +712,16 @@ export const WeeklyTimetableMatrixView: React.FC<WeeklyTimetableMatrixViewProps>
                             rowSpan={spanCount}
                             className={`p-1 sm:p-1.5 align-top relative transition-colors ${
                               dIdx < daysToDisplay.length - 1 ? 'border-r border-slate-200 dark:border-slate-800' : ''
-                            } ${isWeekend ? 'bg-slate-50/30 dark:bg-slate-800/20' : ''} ${
-                              isCellLive ? 'bg-rose-50/30 dark:bg-rose-950/20 ring-1 ring-inset ring-rose-300 dark:ring-rose-800/50' : ''
-                            }`}
+                            } ${isWeekend ? 'bg-slate-50/30 dark:bg-slate-800/20' : ''}`}
                           >
-                            {/* Live indicator line in today's active cell */}
+                            {/* Live indicator line in today's active cell (Same as tab Week: just dot and line only) */}
                             {isCellLive && (
                               <div
                                 className="absolute left-0 right-0 z-20 pointer-events-none flex items-center"
                                 style={{ top: `${progressPct}%` }}
                               >
-                                <span className="w-2 h-2 rounded-full bg-[#dc2626] -ml-1 shrink-0 animate-ping" />
-                                <div className="h-[2px] bg-[#dc2626] w-full shadow-2xs opacity-90" />
-                              </div>
-                            )}
-
-                            {isCellLive && (
-                              <div className="mb-1 flex items-center justify-between text-[8px] font-mono font-bold text-rose-600 dark:text-rose-400 bg-rose-100/70 dark:bg-rose-900/50 px-1 py-0.5 rounded leading-tight">
-                                <span className="flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                                  Live · {slotEndM - simulatedMinutes}m left
-                                </span>
-                                <span>{format12HourTime(simulatedMinutes, true)}</span>
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#dc2626] border-2 border-white dark:border-slate-900 -ml-1.5 shadow-sm shrink-0 animate-pulse" />
+                                <div className="h-[2px] bg-[#dc2626] w-full shadow-2xs" />
                               </div>
                             )}
 
