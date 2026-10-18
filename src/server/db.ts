@@ -47,10 +47,20 @@ function initMemoryStore(): WorkspaceData {
       const saved = localStorage.getItem(OFFLINE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && Array.isArray(parsed.semesters) && Array.isArray(parsed.courses) && Array.isArray(parsed.tasks)) {
-          if (!parsed.events) parsed.events = [];
-          if (!parsed.attendanceRecords) parsed.attendanceRecords = [];
-          return parsed;
+        if (parsed && typeof parsed === 'object') {
+          return {
+            semesters: Array.isArray(parsed.semesters) ? parsed.semesters : [],
+            timeSlots: Array.isArray(parsed.timeSlots) && parsed.timeSlots.length > 0 ? parsed.timeSlots : defaultWorkspaceData.timeSlots,
+            courses: Array.isArray(parsed.courses) ? parsed.courses : [],
+            events: Array.isArray(parsed.events) ? parsed.events : [],
+            tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+            kanban: Array.isArray(parsed.kanban) ? parsed.kanban : [],
+            papers: Array.isArray(parsed.papers) ? parsed.papers : [],
+            conferences: Array.isArray(parsed.conferences) ? parsed.conferences : [],
+            experimentLogs: Array.isArray(parsed.experimentLogs) ? parsed.experimentLogs : [],
+            advisorMeetings: Array.isArray(parsed.advisorMeetings) ? parsed.advisorMeetings : [],
+            attendanceRecords: Array.isArray(parsed.attendanceRecords) ? parsed.attendanceRecords : [],
+          };
         }
       }
     } catch (e) {
@@ -1197,8 +1207,8 @@ export class WorkspaceDatabase {
 
   // --- SAMPLE DATA & WORKSPACE RESET ---
   async loadSampleData(): Promise<void> {
-    if (!this.userId) throw new Error('Unauthorized');
-    const userSuffix = this.userId.replace(/[^a-zA-Z0-9]/g, '').slice(-6);
+    if (this.d1 && !this.userId) throw new Error('Unauthorized');
+    const userSuffix = this.userId ? this.userId.replace(/[^a-zA-Z0-9]/g, '').slice(-6) : 'local';
     
     // Deep clone default template
     const sample = JSON.parse(JSON.stringify(defaultWorkspaceData)) as WorkspaceData;
@@ -1267,8 +1277,8 @@ export class WorkspaceDatabase {
   }
 
   async clearUserData(): Promise<void> {
-    if (!this.userId) throw new Error('Unauthorized');
     if (this.d1) {
+      if (!this.userId) throw new Error('Unauthorized');
       await this.d1.prepare('DELETE FROM course_schedules WHERE course_id IN (SELECT id FROM courses WHERE user_id = ?)').bind(this.userId).run();
       await this.d1.prepare('DELETE FROM courses WHERE user_id = ?').bind(this.userId).run();
       await this.d1.prepare('DELETE FROM schedule_events WHERE user_id = ?').bind(this.userId).run();
